@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package marketplace.api.v1.marketplace;
+
+import "protoc-gen-swagger/options/annotations.proto";
+// import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "api/v1/marketplace/arts.proto";
+import "api/v1/marketplace/creators.proto";
+
+option go_package = "marketplace";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.messagename_all) = true;
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+    info: {
+        title: "Marketplace API";
+        version: "1.0";
+    };
+    host: "marketplace.dev.videocoin.network";
+    schemes: HTTPS;
+    consumes: "application/json";
+    produces: "application/json";
+    security_definitions: {
+        security: {
+            key: "ApiKeyAuth";
+            value: {
+                type: TYPE_API_KEY;
+                in: IN_HEADER;
+                name: "Authorization";
+            }
+        }
+    }
+    security: {
+        security_requirement: {
+            key: "ApiKeyAuth";
+            value: {};
+        }
+    }
+    responses: {
+        key: "401";
+        value: { description: "Returned when the user is not logged in."; }
+    }
+    responses: {
+        key: "403";
+        value: { description: "Returned when the user does not have permission to access the resource."; }
+    }
+    responses: {
+        key: "404";
+        value: {
+            description: "Returned when the resource does not exist.";
+            schema: { example: { value: '{ "message": "Not found", "fields": null }' } }
+        }
+    }
+};
+
+service MarketplaceService {
+
+    rpc CreateArt (CreateArtRequest) returns (ArtResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/arts",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Create an art";
+            tags: "Arts";
+        };
+    }
+
+    rpc GetArts (ArtsRequest) returns (ArtsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/arts"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of arts";
+            tags: "Arts";
+        };
+    }
+
+    rpc GetArt (ArtRequest) returns (ArtResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/arts/{id}"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get detail art info";
+            tags: "Arts";
+        };
+    }
+
+    rpc GetCreators (CreatorsRequest) returns (CreatorsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/creators"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of creators";
+            tags: "Creators";
+        };
+    }
+
+    rpc GetCreator (CreatorRequest) returns (CreatorResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/creators/{id}"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get detail info about creator";
+            tags: "Creators";
+        };
+    }
+
+    rpc GetArtsByCreator (ArtsByCreatorRequest) returns (ArtsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/creators/{creator_id}/arts"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of arts by creator";
+            tags: "Arts";
+        };
+    }
+
+    rpc GetSpotlightFeaturedArts (ArtsRequest) returns (ArtsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/spotlight/arts/featured"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of featured arts";
+            tags: "Spotlight";
+        };
+    }
+
+    rpc GetSpotlightLiveArts (ArtsRequest) returns (ArtsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/spotlight/arts/live"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of live arts";
+            tags: "Spotlight";
+        };
+    }
+
+    rpc GetSpotlightFeaturedCreators (CreatorsRequest) returns (CreatorsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/spotlight/creators/featured"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of featured creators";
+            tags: "Spotlight";
+        };
+    }
+
+    rpc GetMyArts (ArtsRequest) returns (ArtsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/my/arts"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get list of my arts";
+            tags: "Arts";
+        };
+    }
+}

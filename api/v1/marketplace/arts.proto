@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package marketplace.api.v1.marketplace;
+
+import "google/protobuf/wrappers.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "api/v1/marketplace/assets.proto";
+
+option go_package = "marketplace";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.messagename_all) = true;
+
+message CreateArtRequest {
+    string name = 1;
+    int64 asset_id = 2;
+    google.protobuf.StringValue description = 3;
+    google.protobuf.StringValue youtube_link = 4;
+}
+
+message ArtResponse {
+    int64 id = 1;
+    string name = 2;
+    string description = 3;
+    AssetResponse asset = 4;
+}
+
+message ArtRequest {
+    int64 id = 1;
+}
+
+message ArtsRequest {
+    uint64 offset = 1;
+    uint64 limit = 2;
+}
+
+message ArtsResponse {
+    repeated ArtResponse items = 1;
+    int64 total_count = 2;
+    int64 count = 3;
+    bool prev = 4;
+    bool next = 5;
+}

@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package marketplace.api.v1.accounts;
+
+import "protoc-gen-swagger/options/annotations.proto";
+//import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option go_package = "accounts";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.messagename_all) = true;
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+    info: {
+        title: "Marketplace Accounts API";
+        version: "1.0";
+    };
+    host: "marketplace.dev.videocoin.network";
+    schemes: HTTPS;
+    consumes: "application/json";
+    produces: "application/json";
+    security_definitions: {
+        security: {
+            key: "ApiKeyAuth";
+            value: {
+                type: TYPE_API_KEY;
+                in: IN_HEADER;
+                name: "Authorization";
+            }
+        }
+    }
+    security: {
+        security_requirement: {
+            key: "ApiKeyAuth";
+            value: {};
+        }
+    }
+    responses: {
+        key: "401";
+        value: { description: "Returned when the user is not logged in."; }
+    }
+    responses: {
+        key: "403";
+        value: { description: "Returned when the user does not have permission to access the resource."; }
+    }
+    responses: {
+        key: "404";
+        value: {
+            description: "Returned when the resource does not exist.";
+            schema: { example: { value: '{ "message": "Not found", "fields": null }' } }
+        }
+    }
+};
+
+service AccountsService {
+    rpc GetNonce (GetNonceRequest) returns (NonceResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/accounts/{address}/nonce"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get nonce by address account";
+            tags: "Registration";
+        };
+    }
+
+    rpc Register (RegisterRequest) returns (RegisterResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/accounts",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Register an account";
+            tags: "Registration";
+        };
+    }
+
+    rpc Auth (AuthRequest) returns (AuthResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/auth",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Auth";
+            tags: "Auth";
+        };
+    }
+
+    rpc GetAccount (AccountRequest) returns (AccountResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/account"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Get account info";
+            tags: "Proifle";
+        };
+    }
+
+    rpc UpdateAccount (UpdateAccountRequest) returns (AccountResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/account",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "";
+            summary: "Update account info";
+            tags: "Proifle";
+        };
+    }
+}
+
+message GetNonceRequest {
+    string address = 1;
+}
+
+message NonceResponse {
+    string nonce = 1;
+}
+
+message RegisterRequest {
+    string address = 1;
+}
+
+message RegisterResponse {
+    string address = 1;
+    string nonce = 2;
+}
+
+message AuthRequest {
+    string address = 1;
+    string signature = 2;
+}
+
+message AuthResponse {
+    string token = 1;
+}
+
+message AccountRequest {}
+
+message AccountResponse {
+    string address = 1;
+    google.protobuf.StringValue username = 2;
+    google.protobuf.StringValue name = 3;
+    google.protobuf.StringValue image_url = 4;
+}
+
+message UpdateAccountRequest {
+    google.protobuf.StringValue username = 1;
+    google.protobuf.StringValue name = 2;
+    google.protobuf.StringValue image_data = 3;
+}

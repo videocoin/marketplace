@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package marketplace.api.v1.proto.rpc;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option go_package = "rpc";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.goproto_registration) = true;
+option (gogoproto.messagename_all) = true;
+
+
+message ValidationError {
+    string field = 1;
+    string message = 2;
+}
+
+message MultiValidationError {
+    repeated ValidationError errors = 1;
+}
