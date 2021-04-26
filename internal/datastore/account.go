@@ -95,6 +95,14 @@ func (ds *AccountDatastore) List(ctx context.Context, fltr *AccountsFilter, limi
 	accounts := make([]*model.Account, 0)
 	selectStmt := tx.Select("*").From(ds.table)
 	if fltr != nil {
+		if fltr.Query != nil {
+			likeQ := "%" + *fltr.Query + "%"
+			selectStmt = selectStmt.Where(
+				"name ILIKE ? OR username ILIKE ?",
+				likeQ,
+				likeQ,
+			)
+		}
 		if fltr.Sort != nil && fltr.Sort.Field != "" {
 			selectStmt = selectStmt.OrderDir(fltr.Sort.Field, fltr.Sort.IsAsc)
 		}
@@ -365,6 +373,14 @@ func (ds *AccountDatastore) Count(ctx context.Context, fltr *AccountsFilter) (in
 
 	count := int64(0)
 	selectStmt := tx.Select("COUNT(id)").From(ds.table)
+	if fltr.Query != nil {
+		likeQ := "%" + *fltr.Query + "%"
+		selectStmt = selectStmt.Where(
+			"name ILIKE ? OR username ILIKE ?",
+			likeQ,
+			likeQ,
+		)
+	}
 
 	err = selectStmt.LoadOneContext(ctx, &count)
 	if err != nil {

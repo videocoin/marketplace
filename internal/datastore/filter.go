@@ -16,5 +16,6 @@ type AssetsFilter struct {
 }
 
 type AccountsFilter struct {
-	Sort *DatastoreSort
+	Query *string
+	Sort  *DatastoreSort
 }

@@ -2,9 +2,11 @@ package marketplace
 
 import (
 	"context"
+	"github.com/AlekSi/pointer"
 	"github.com/videocoin/marketplace/api/rpc"
 	v1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"strings"
 )
 
 func (s *Server) GetCreators(ctx context.Context, req *v1.CreatorsRequest) (*v1.CreatorsResponse, error) {
@@ -15,6 +17,11 @@ func (s *Server) GetCreators(ctx context.Context, req *v1.CreatorsRequest) (*v1.
 			IsAsc: true,
 		},
 	}
+	q := strings.TrimSpace(req.Q)
+	if len(q) > 0 {
+		fltr.Query = pointer.ToString(q)
+	}
+
 	creators, err := s.ds.Accounts.List(ctx, fltr, limitOpts)
 	if err != nil {
 		return nil, rpc.NewRpcInternalError(err)
