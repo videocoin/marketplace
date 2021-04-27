@@ -34,3 +34,10 @@ func WithGCPConfig(config *GCPConfig) Option {
 		return nil
 	}
 }
+
+func WithBucket(bucket string) Option {
+	return func(mc *MediaConverter) error {
+		mc.bucket = bucket
+		return nil
+	}
+}

@@ -580,8 +580,24 @@
         },
         "playback_url": {
           "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/marketplaceAssetStatus"
+        },
+        "youtube_id": {
+          "type": "string"
         }
       }
+    },
+    "marketplaceAssetStatus": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN_STATUS",
+        "PROCESSING",
+        "READY",
+        "FAILED"
+      ],
+      "default": "UNKNOWN_STATUS"
     },
     "marketplaceCreateArtRequest": {
       "type": "object",

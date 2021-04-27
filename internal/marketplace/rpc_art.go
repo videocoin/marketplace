@@ -3,7 +3,6 @@ package marketplace
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/AlekSi/pointer"
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/api/rpc"
@@ -11,7 +10,7 @@ import (
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/rpcauth"
-	"regexp"
+	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 	"strings"
 )
 
@@ -59,20 +58,15 @@ func (s *Server) CreateArt(ctx context.Context, req *v1.CreateArtRequest) (*v1.A
 	}
 
 	if req.YoutubeLink != nil {
-		artYTLink := strings.TrimSpace(req.YoutubeLink.Value)
-		if artYTLink != "" {
-			validYTLink := regexp.MustCompile(`^(http(s)?:\/\/)?((w){3}.)?youtu(be|.be)?(\.com)?\/.+`)
-			if !validYTLink.MatchString(artYTLink) {
-				return nil, rpc.NewRpcValidationError(&rpc.ValidationError{
-					Field:   "youtube_link",
-					Message: "wrong youtube link",
-				})
-			}
-			artYTLink = strings.ReplaceAll(artYTLink, "https://", "")
-			artYTLink = strings.ReplaceAll(artYTLink, "http://", "")
-			artYTLink = fmt.Sprintf("https://%s", artYTLink)
-			art.YTLink = dbr.NewNullString(artYTLink)
+		ytLink, err := pkgyt.ValidateVideoURL(req.YoutubeLink.Value)
+		if err != nil {
+			return nil, rpc.NewRpcValidationError(&rpc.ValidationError{
+				Field:   "youtube_link",
+				Message: "wrong youtube link",
+			})
 		}
+
+		art.YTLink = dbr.NewNullString(ytLink)
 	}
 
 	err = s.ds.Arts.Create(ctx, art)

@@ -7,6 +7,7 @@ import (
 	fmt "fmt"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
+	types "github.com/gogo/protobuf/types"
 	golang_proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
@@ -25,15 +26,48 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
+type AssetStatus int32
+
+const (
+	AssetStatusUnknown    AssetStatus = 0
+	AssetStatusProcessing AssetStatus = 1
+	AssetStatusReady      AssetStatus = 2
+	AssetStatusFailed     AssetStatus = 3
+)
+
+var AssetStatus_name = map[int32]string{
+	0: "UNKNOWN_STATUS",
+	1: "PROCESSING",
+	2: "READY",
+	3: "FAILED",
+}
+
+var AssetStatus_value = map[string]int32{
+	"UNKNOWN_STATUS": 0,
+	"PROCESSING":     1,
+	"READY":          2,
+	"FAILED":         3,
+}
+
+func (x AssetStatus) String() string {
+	return proto.EnumName(AssetStatus_name, int32(x))
+}
+
+func (AssetStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_028828bf06032c3b, []int{0}
+}
+
 type AssetResponse struct {
-	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	ContentType          string   `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	Url                  string   `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	ThumbnailUrl         string   `protobuf:"bytes,4,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
-	PlaybackUrl          string   `protobuf:"bytes,5,opt,name=playback_url,json=playbackUrl,proto3" json:"playback_url,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Id                   int64              `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentType          string             `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	Url                  *types.StringValue `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	ThumbnailUrl         *types.StringValue `protobuf:"bytes,4,opt,name=thumbnail_url,json=thumbnailUrl,proto3" json:"thumbnail_url,omitempty"`
+	PlaybackUrl          *types.StringValue `protobuf:"bytes,5,opt,name=playback_url,json=playbackUrl,proto3" json:"playback_url,omitempty"`
+	Status               AssetStatus        `protobuf:"varint,6,opt,name=status,proto3,enum=marketplace.api.v1.marketplace.AssetStatus" json:"status,omitempty"`
+	YoutubeId            *types.StringValue `protobuf:"bytes,7,opt,name=youtube_id,json=youtubeId,proto3" json:"youtube_id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
 func (m *AssetResponse) Reset()         { *m = AssetResponse{} }
@@ -83,33 +117,102 @@ func (m *AssetResponse) GetContentType() string {
 	return ""
 }
 
-func (m *AssetResponse) GetUrl() string {
+func (m *AssetResponse) GetUrl() *types.StringValue {
+	if m != nil {
+		return m.Url
+	}
+	return nil
+}
+
+func (m *AssetResponse) GetThumbnailUrl() *types.StringValue {
+	if m != nil {
+		return m.ThumbnailUrl
+	}
+	return nil
+}
+
+func (m *AssetResponse) GetPlaybackUrl() *types.StringValue {
+	if m != nil {
+		return m.PlaybackUrl
+	}
+	return nil
+}
+
+func (m *AssetResponse) GetStatus() AssetStatus {
+	if m != nil {
+		return m.Status
+	}
+	return AssetStatusUnknown
+}
+
+func (m *AssetResponse) GetYoutubeId() *types.StringValue {
+	if m != nil {
+		return m.YoutubeId
+	}
+	return nil
+}
+
+func (*AssetResponse) XXX_MessageName() string {
+	return "marketplace.api.v1.marketplace.AssetResponse"
+}
+
+type UploadAssetFromYoutubeRequest struct {
+	Url                  string   `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *UploadAssetFromYoutubeRequest) Reset()         { *m = UploadAssetFromYoutubeRequest{} }
+func (m *UploadAssetFromYoutubeRequest) String() string { return proto.CompactTextString(m) }
+func (*UploadAssetFromYoutubeRequest) ProtoMessage()    {}
+func (*UploadAssetFromYoutubeRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_028828bf06032c3b, []int{1}
+}
+func (m *UploadAssetFromYoutubeRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *UploadAssetFromYoutubeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_UploadAssetFromYoutubeRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *UploadAssetFromYoutubeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UploadAssetFromYoutubeRequest.Merge(m, src)
+}
+func (m *UploadAssetFromYoutubeRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *UploadAssetFromYoutubeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UploadAssetFromYoutubeRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UploadAssetFromYoutubeRequest proto.InternalMessageInfo
+
+func (m *UploadAssetFromYoutubeRequest) GetUrl() string {
 	if m != nil {
 		return m.Url
 	}
 	return ""
 }
 
-func (m *AssetResponse) GetThumbnailUrl() string {
-	if m != nil {
-		return m.ThumbnailUrl
-	}
-	return ""
-}
-
-func (m *AssetResponse) GetPlaybackUrl() string {
-	if m != nil {
-		return m.PlaybackUrl
-	}
-	return ""
-}
-
-func (*AssetResponse) XXX_MessageName() string {
-	return "marketplace.api.v1.marketplace.AssetResponse"
+func (*UploadAssetFromYoutubeRequest) XXX_MessageName() string {
+	return "marketplace.api.v1.marketplace.UploadAssetFromYoutubeRequest"
 }
 func init() {
+	proto.RegisterEnum("marketplace.api.v1.marketplace.AssetStatus", AssetStatus_name, AssetStatus_value)
+	golang_proto.RegisterEnum("marketplace.api.v1.marketplace.AssetStatus", AssetStatus_name, AssetStatus_value)
 	proto.RegisterType((*AssetResponse)(nil), "marketplace.api.v1.marketplace.AssetResponse")
 	golang_proto.RegisterType((*AssetResponse)(nil), "marketplace.api.v1.marketplace.AssetResponse")
+	proto.RegisterType((*UploadAssetFromYoutubeRequest)(nil), "marketplace.api.v1.marketplace.UploadAssetFromYoutubeRequest")
+	golang_proto.RegisterType((*UploadAssetFromYoutubeRequest)(nil), "marketplace.api.v1.marketplace.UploadAssetFromYoutubeRequest")
 }
 
 func init() { proto.RegisterFile("api/v1/marketplace/assets.proto", fileDescriptor_028828bf06032c3b) }
@@ -118,23 +221,39 @@ func init() {
 }
 
 var fileDescriptor_028828bf06032c3b = []byte{
-	// 251 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8f, 0x31, 0x4e, 0xc3, 0x30,
-	0x14, 0x40, 0xf5, 0x13, 0x40, 0xc2, 0x6d, 0x11, 0xf2, 0x14, 0x31, 0x98, 0x16, 0x96, 0x2e, 0xd8,
-	0xaa, 0x38, 0x01, 0x1c, 0x21, 0xa2, 0x0b, 0x4b, 0x65, 0xa7, 0x26, 0xb5, 0xea, 0xc4, 0x96, 0xed,
-	0x54, 0xca, 0x5d, 0x38, 0x0c, 0x63, 0x47, 0x8e, 0x80, 0xd2, 0x8b, 0xa0, 0x38, 0x50, 0x65, 0xfb,
-	0xff, 0x3d, 0xfb, 0x49, 0x1f, 0xdd, 0x73, 0xab, 0xd8, 0x61, 0xc5, 0x2a, 0xee, 0xf6, 0x32, 0x58,
-	0xcd, 0x0b, 0xc9, 0xb8, 0xf7, 0x32, 0x78, 0x6a, 0x9d, 0x09, 0x06, 0x93, 0x91, 0xa1, 0xdc, 0x2a,
-	0x7a, 0x58, 0xd1, 0x11, 0xba, 0x7b, 0x2a, 0x55, 0xd8, 0x35, 0x82, 0x16, 0xa6, 0x62, 0xa5, 0x29,
-	0x0d, 0x8b, 0xdf, 0x44, 0xf3, 0x11, 0xb7, 0xb8, 0xc4, 0x69, 0xc8, 0x3d, 0x7c, 0x02, 0x9a, 0xbd,
-	0xf4, 0xfd, 0x5c, 0x7a, 0x6b, 0x6a, 0x2f, 0xf1, 0x0d, 0x4a, 0xd4, 0x36, 0x83, 0x39, 0x2c, 0xd3,
-	0x3c, 0x51, 0x5b, 0xbc, 0x40, 0xd3, 0xc2, 0xd4, 0x41, 0xd6, 0x61, 0x13, 0x5a, 0x2b, 0xb3, 0x64,
-	0x0e, 0xcb, 0xeb, 0x7c, 0xf2, 0xc7, 0xde, 0x5a, 0x2b, 0xf1, 0x2d, 0x4a, 0x1b, 0xa7, 0xb3, 0x34,
-	0x9a, 0x7e, 0xc4, 0x8f, 0x68, 0x16, 0x76, 0x4d, 0x25, 0x6a, 0xae, 0xf4, 0xa6, 0x77, 0x17, 0xd1,
-	0x4d, 0xcf, 0x70, 0xed, 0x74, 0x5f, 0xb6, 0x9a, 0xb7, 0x82, 0x17, 0xfb, 0xf8, 0xe6, 0x72, 0x28,
-	0xff, 0xb3, 0xb5, 0xd3, 0xaf, 0x8b, 0x63, 0x47, 0xe0, 0xbb, 0x23, 0xf0, 0xd3, 0x11, 0xf8, 0x3a,
-	0x11, 0x38, 0x9e, 0x08, 0xbc, 0x4f, 0x46, 0x07, 0x8b, 0xab, 0x78, 0xc8, 0xf3, 0x6f, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xf8, 0x53, 0x6c, 0x5a, 0x3a, 0x01, 0x00, 0x00,
+	// 505 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x90, 0x41, 0x6f, 0xd3, 0x3c,
+	0x1c, 0xc6, 0xe7, 0xf6, 0x5d, 0x5f, 0xcd, 0xed, 0xaa, 0x60, 0x18, 0x2a, 0x11, 0x64, 0xe9, 0x4e,
+	0x65, 0x08, 0x57, 0x1d, 0x47, 0x0e, 0xa8, 0x6c, 0x2d, 0xaa, 0x40, 0xdd, 0x94, 0xb4, 0xa0, 0x71,
+	0xa9, 0x9c, 0xc4, 0x64, 0x56, 0xd3, 0xd8, 0xc4, 0xce, 0xa6, 0x7c, 0x03, 0xd4, 0xef, 0xd0, 0x13,
+	0x7c, 0x0a, 0x24, 0x24, 0x8e, 0x3b, 0xf2, 0x11, 0x50, 0xf7, 0x25, 0x38, 0xa2, 0xb8, 0x1d, 0xe4,
+	0x84, 0x7a, 0xb3, 0xfd, 0x7f, 0x7e, 0xcf, 0xf3, 0xf7, 0x03, 0xf7, 0x89, 0x60, 0xed, 0xcb, 0x4e,
+	0x7b, 0x46, 0x92, 0x29, 0x55, 0x22, 0x22, 0x3e, 0x6d, 0x13, 0x29, 0xa9, 0x92, 0x58, 0x24, 0x5c,
+	0x71, 0x64, 0x15, 0x26, 0x98, 0x08, 0x86, 0x2f, 0x3b, 0xb8, 0xf0, 0x64, 0x3e, 0x0d, 0x99, 0xba,
+	0x48, 0x3d, 0xec, 0xf3, 0x59, 0x3b, 0xe4, 0x21, 0x6f, 0x6b, 0xcc, 0x4b, 0x3f, 0xe8, 0x9b, 0xbe,
+	0xe8, 0xd3, 0xca, 0xce, 0xb4, 0x42, 0xce, 0xc3, 0x88, 0xfe, 0x55, 0x5d, 0x25, 0x44, 0x08, 0x9a,
+	0xac, 0xe3, 0x0e, 0x7e, 0x95, 0xe0, 0x6e, 0x37, 0xcf, 0x77, 0xa8, 0x14, 0x3c, 0x96, 0x14, 0xd5,
+	0x61, 0x89, 0x05, 0x0d, 0x60, 0x83, 0x56, 0xd9, 0x29, 0xb1, 0x00, 0x35, 0x61, 0xcd, 0xe7, 0xb1,
+	0xa2, 0xb1, 0x9a, 0xa8, 0x4c, 0xd0, 0x46, 0xc9, 0x06, 0xad, 0x1d, 0xa7, 0xba, 0x7e, 0x1b, 0x65,
+	0x82, 0x22, 0x0c, 0xcb, 0x69, 0x12, 0x35, 0xca, 0x36, 0x68, 0x55, 0x8f, 0x1e, 0xe2, 0x55, 0x24,
+	0xbe, 0x8d, 0xc4, 0xae, 0x4a, 0x58, 0x1c, 0xbe, 0x25, 0x51, 0x4a, 0x9d, 0x5c, 0x88, 0xba, 0x70,
+	0x57, 0x5d, 0xa4, 0x33, 0x2f, 0x26, 0x2c, 0x9a, 0xe4, 0xe4, 0x7f, 0x1b, 0x90, 0xb5, 0x3f, 0xc8,
+	0x38, 0x89, 0xd0, 0x0b, 0x58, 0x13, 0x11, 0xc9, 0x3c, 0xe2, 0x4f, 0xb5, 0xc3, 0xf6, 0x06, 0x0e,
+	0xd5, 0x5b, 0x22, 0x37, 0x38, 0x86, 0x15, 0xa9, 0x88, 0x4a, 0x65, 0xa3, 0x62, 0x83, 0x56, 0xfd,
+	0xe8, 0x09, 0xfe, 0x77, 0xf1, 0x58, 0xb7, 0xe4, 0x6a, 0xc4, 0x59, 0xa3, 0xe8, 0x39, 0x84, 0x19,
+	0x4f, 0x55, 0xea, 0xd1, 0x09, 0x0b, 0x1a, 0xff, 0x6f, 0xb0, 0xc3, 0xce, 0x5a, 0x3f, 0x08, 0x0e,
+	0x3a, 0xf0, 0xd1, 0x58, 0x44, 0x9c, 0x04, 0xda, 0xb9, 0x9f, 0xf0, 0xd9, 0xf9, 0x6a, 0xe6, 0xd0,
+	0x8f, 0x29, 0x95, 0x0a, 0x19, 0xab, 0x5a, 0x81, 0x2e, 0x3c, 0x3f, 0x1e, 0x7e, 0x03, 0xb0, 0x5a,
+	0xd8, 0x03, 0x1d, 0xc2, 0xfa, 0x78, 0xf8, 0x7a, 0x78, 0xfa, 0x6e, 0x38, 0x71, 0x47, 0xdd, 0xd1,
+	0xd8, 0x35, 0xb6, 0xcc, 0xfb, 0xf3, 0x85, 0x8d, 0x0a, 0xa2, 0x71, 0x3c, 0x8d, 0xf9, 0x55, 0x8c,
+	0x1e, 0x43, 0x78, 0xe6, 0x9c, 0x1e, 0xf7, 0x5c, 0x77, 0x30, 0x7c, 0x65, 0x00, 0xf3, 0xc1, 0x7c,
+	0x61, 0xef, 0x15, 0x74, 0x67, 0x09, 0xf7, 0xa9, 0x94, 0x2c, 0x0e, 0xd1, 0x3e, 0xdc, 0x76, 0x7a,
+	0xdd, 0x93, 0x73, 0xa3, 0x64, 0xde, 0x9b, 0x2f, 0x6c, 0xa3, 0xf8, 0x75, 0x4a, 0x82, 0x0c, 0x35,
+	0x61, 0xa5, 0xdf, 0x1d, 0xbc, 0xe9, 0x9d, 0x18, 0x65, 0x73, 0x6f, 0xbe, 0xb0, 0xef, 0x14, 0x14,
+	0x7d, 0xc2, 0x22, 0x1a, 0x98, 0x77, 0x3f, 0x7d, 0xb6, 0xb6, 0xbe, 0x7e, 0xb1, 0x8a, 0xfb, 0xbe,
+	0x6c, 0x5e, 0x2f, 0x2d, 0xf0, 0x63, 0x69, 0x81, 0x9f, 0x4b, 0x0b, 0x7c, 0xbf, 0xb1, 0xc0, 0xf5,
+	0x8d, 0x05, 0xde, 0x57, 0x0b, 0x35, 0x7b, 0x15, 0x5d, 0xdb, 0xb3, 0xdf, 0x01, 0x00, 0x00, 0xff,
+	0xff, 0xf2, 0x03, 0x9a, 0x52, 0x29, 0x03, 0x00, 0x00,
 }
 
 func (m *AssetResponse) Marshal() (dAtA []byte, err error) {
@@ -163,23 +282,77 @@ func (m *AssetResponse) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintAssets(dAtA, i, uint64(len(m.ContentType)))
 		i += copy(dAtA[i:], m.ContentType)
 	}
-	if len(m.Url) > 0 {
+	if m.Url != nil {
 		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintAssets(dAtA, i, uint64(m.Url.Size()))
+		n1, err1 := m.Url.MarshalTo(dAtA[i:])
+		if err1 != nil {
+			return 0, err1
+		}
+		i += n1
+	}
+	if m.ThumbnailUrl != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintAssets(dAtA, i, uint64(m.ThumbnailUrl.Size()))
+		n2, err2 := m.ThumbnailUrl.MarshalTo(dAtA[i:])
+		if err2 != nil {
+			return 0, err2
+		}
+		i += n2
+	}
+	if m.PlaybackUrl != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintAssets(dAtA, i, uint64(m.PlaybackUrl.Size()))
+		n3, err3 := m.PlaybackUrl.MarshalTo(dAtA[i:])
+		if err3 != nil {
+			return 0, err3
+		}
+		i += n3
+	}
+	if m.Status != 0 {
+		dAtA[i] = 0x30
+		i++
+		i = encodeVarintAssets(dAtA, i, uint64(m.Status))
+	}
+	if m.YoutubeId != nil {
+		dAtA[i] = 0x3a
+		i++
+		i = encodeVarintAssets(dAtA, i, uint64(m.YoutubeId.Size()))
+		n4, err4 := m.YoutubeId.MarshalTo(dAtA[i:])
+		if err4 != nil {
+			return 0, err4
+		}
+		i += n4
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *UploadAssetFromYoutubeRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *UploadAssetFromYoutubeRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Url) > 0 {
+		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAssets(dAtA, i, uint64(len(m.Url)))
 		i += copy(dAtA[i:], m.Url)
-	}
-	if len(m.ThumbnailUrl) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintAssets(dAtA, i, uint64(len(m.ThumbnailUrl)))
-		i += copy(dAtA[i:], m.ThumbnailUrl)
-	}
-	if len(m.PlaybackUrl) > 0 {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintAssets(dAtA, i, uint64(len(m.PlaybackUrl)))
-		i += copy(dAtA[i:], m.PlaybackUrl)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -209,15 +382,38 @@ func (m *AssetResponse) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovAssets(uint64(l))
 	}
+	if m.Url != nil {
+		l = m.Url.Size()
+		n += 1 + l + sovAssets(uint64(l))
+	}
+	if m.ThumbnailUrl != nil {
+		l = m.ThumbnailUrl.Size()
+		n += 1 + l + sovAssets(uint64(l))
+	}
+	if m.PlaybackUrl != nil {
+		l = m.PlaybackUrl.Size()
+		n += 1 + l + sovAssets(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovAssets(uint64(m.Status))
+	}
+	if m.YoutubeId != nil {
+		l = m.YoutubeId.Size()
+		n += 1 + l + sovAssets(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *UploadAssetFromYoutubeRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	l = len(m.Url)
-	if l > 0 {
-		n += 1 + l + sovAssets(uint64(l))
-	}
-	l = len(m.ThumbnailUrl)
-	if l > 0 {
-		n += 1 + l + sovAssets(uint64(l))
-	}
-	l = len(m.PlaybackUrl)
 	if l > 0 {
 		n += 1 + l + sovAssets(uint64(l))
 	}
@@ -317,6 +513,223 @@ func (m *AssetResponse) Unmarshal(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Url", wireType)
 			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAssets
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Url == nil {
+				m.Url = &types.StringValue{}
+			}
+			if err := m.Url.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ThumbnailUrl", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAssets
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ThumbnailUrl == nil {
+				m.ThumbnailUrl = &types.StringValue{}
+			}
+			if err := m.ThumbnailUrl.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PlaybackUrl", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAssets
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PlaybackUrl == nil {
+				m.PlaybackUrl = &types.StringValue{}
+			}
+			if err := m.PlaybackUrl.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= AssetStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field YoutubeId", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAssets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAssets
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.YoutubeId == nil {
+				m.YoutubeId = &types.StringValue{}
+			}
+			if err := m.YoutubeId.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAssets(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAssets
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *UploadAssetFromYoutubeRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAssets
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UploadAssetFromYoutubeRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UploadAssetFromYoutubeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Url", wireType)
+			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
@@ -344,70 +757,6 @@ func (m *AssetResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Url = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ThumbnailUrl", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAssets
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAssets
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAssets
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ThumbnailUrl = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PlaybackUrl", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAssets
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAssets
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAssets
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PlaybackUrl = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

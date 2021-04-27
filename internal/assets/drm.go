@@ -6,6 +6,7 @@ import (
 	"fmt"
 	eciesgo "github.com/ecies/go"
 	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/pkg/random"
 	"io"
 )
 
@@ -39,5 +40,5 @@ func GenerateDRMKey(pkStr, ekStr string) (string, error) {
 }
 
 func GenerateEncryptionKey() string {
-	return hex.EncodeToString([]byte(RandomString(16)))
+	return hex.EncodeToString([]byte(random.RandomString(16)))
 }

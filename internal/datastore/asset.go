@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/AlekSi/pointer"
 	"github.com/gocraft/dbr/v2"
+	v1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 	"time"
@@ -47,9 +48,9 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	}
 
 	cols := []string{
-		"created_at", "created_by_id", "content_type", "bucket",
-		"key", "thumb_key", "url", "thumbnail_url", "probe",
-		"drm_key_id", "drm_key", "ek", "enc_key",
+		"created_at", "created_by_id", "content_type", "bucket", "folder_id",
+		"key", "preview_key", "encrypted_key", "thumb_key", "yt_url", "yt_id",
+		"probe", "drm_key_id", "drm_key", "ek", "status",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -216,6 +217,44 @@ func (ds *AssetDatastore) MarkJobStatusAs(ctx context.Context, asset *model.Asse
 	asset.JobStatus = dbr.NewNullString(status)
 
 	return nil
+}
+
+func (ds *AssetDatastore) MarkStatusAs(ctx context.Context, asset *model.Asset, status v1.AssetStatus) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("status", status).
+		Where("id = ?", asset.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	asset.Status = status
+
+	return nil
+}
+
+func (ds *AssetDatastore) MarkStatusAsReady(ctx context.Context, asset *model.Asset) error {
+	return ds.MarkStatusAs(ctx, asset, v1.AssetStatusReady)
+}
+
+func (ds *AssetDatastore) MarkStatusAsFailed(ctx context.Context, asset *model.Asset) error {
+	return ds.MarkStatusAs(ctx, asset, v1.AssetStatusFailed)
 }
 
 func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *LimitOpts) ([]*model.Asset, error) {

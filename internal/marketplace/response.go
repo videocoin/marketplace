@@ -8,11 +8,15 @@ import (
 
 func toAssetResponse(asset *model.Asset) *v1.AssetResponse {
 	resp := &v1.AssetResponse{
-		Id:           asset.ID,
-		ContentType:  asset.ContentType,
-		Url:          asset.URL,
-		ThumbnailUrl: asset.ThumbnailURL,
-		PlaybackUrl:  asset.GetPlaybackURL(),
+		Id:          asset.ID,
+		ContentType: asset.ContentType,
+		Status:      asset.Status,
+	}
+
+	if asset.Status == v1.AssetStatusReady {
+		resp.Url = &types.StringValue{Value: asset.GetURL()}
+		resp.ThumbnailUrl = &types.StringValue{Value: asset.GetThumbnailURL()}
+		resp.PlaybackUrl = &types.StringValue{Value: asset.GetPlaybackURL()}
 	}
 
 	return resp
@@ -60,7 +64,7 @@ func toArtsResponse(arts []*model.Art, count *ItemsCountResponse) *v1.ArtsRespon
 
 func toCreatorResponse(creator *model.Account) *v1.CreatorResponse {
 	resp := &v1.CreatorResponse{
-		Id:   creator.ID,
+		Id:      creator.ID,
 		Address: creator.Address,
 	}
 

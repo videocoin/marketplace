@@ -37,6 +37,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		mediaconverter.WithLogger(logger.WithField("system", "mediaconverter")),
 		mediaconverter.WithDatastore(ds),
 		mediaconverter.WithIPFSGateway(cfg.IPFSGateway),
+		mediaconverter.WithBucket(cfg.Bucket),
 		mediaconverter.WithGCPConfig(&mediaconverter.GCPConfig{
 			Project:            cfg.GCPProject,
 			Region:             cfg.GCPRegion,

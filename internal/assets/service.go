@@ -1,27 +1,26 @@
 package assets
 
 import (
+	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
+	"github.com/hashicorp/go-multierror"
+	ipfsapi "github.com/ipfs/go-ipfs-api"
+	"github.com/kkdai/youtube/v2"
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
+	marketplacev1 "github.com/videocoin/marketplace/api/v1/marketplace"
+	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/pkg/jsonpb"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
 	"sync"
-
-	"cloud.google.com/go/storage"
-	"github.com/gocraft/dbr/v2"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/hashicorp/go-multierror"
-	ipfsapi "github.com/ipfs/go-ipfs-api"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
-	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
-	"github.com/videocoin/marketplace/internal/model"
 )
 
 type AssetsService struct {
@@ -34,6 +33,8 @@ type AssetsService struct {
 	storageCli *storage.Client
 	bh         *storage.BucketHandle
 	mc         *mediaconverter.MediaConverter
+	yt         *youtube.Client
+	marshaler  *jsonpb.JSONPb
 }
 
 func NewAssetsService(ctx context.Context, opts ...Option) (*AssetsService, error) {
@@ -55,14 +56,22 @@ func NewAssetsService(ctx context.Context, opts ...Option) (*AssetsService, erro
 	}
 
 	svc.bh = svc.storageCli.Bucket(svc.bucket)
+	svc.yt = &youtube.Client{}
+
+	svc.marshaler = &jsonpb.JSONPb{
+		EmitDefaults: true,
+		Indent:       "  ",
+		OrigName:     true,
+	}
 
 	return svc, nil
 }
 
 func (s *AssetsService) InitRoutes(e *echo.Echo) {
-	g := e.Group("/api/v1/assets/upload")
+	g := e.Group("/api/v1/assets")
 	g.Use(JWTAuth(s.logger, s.ds, s.authSecret))
-	g.POST("", s.upload)
+	g.POST("/upload", s.upload)
+	g.POST("/ytupload", s.ytUpload)
 }
 
 func (s *AssetsService) upload(c echo.Context) error {
@@ -81,7 +90,7 @@ func (s *AssetsService) upload(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	meta := NewAssetMetaFromRequest(file, account.ID, s.bucket)
+	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID)
 
 	ek := GenerateEncryptionKey()
 	drmKey, err := GenerateDRMKey(account.PublicKey.String, ek)
@@ -111,16 +120,16 @@ func (s *AssetsService) upload(c echo.Context) error {
 		CreatedByID:  account.ID,
 		ContentType:  meta.ContentType,
 		Bucket:       s.bucket,
+		FolderID:     meta.FolderID,
 		Key:          meta.DestKey,
+		PreviewKey:   meta.DestPreviewKey,
 		ThumbKey:     meta.DestThumbKey,
-		EncKey:       dbr.NewNullString(meta.DestEncKey),
-		URL:          meta.URL,
-		ThumbnailURL: meta.ThumbnailURL,
-		PlaybackURL:  dbr.NewNullString(meta.PlaybackURL),
+		EncryptedKey: meta.DestEncKey,
 		Probe:        &model.AssetProbe{Data: meta.Probe},
-		DRMKey:       dbr.NewNullString(drmKey),
-		DRMKeyID:     dbr.NewNullString(GenerateDRMKeyID(account)),
-		EK:           dbr.NewNullString(ek),
+		DRMKey:       drmKey,
+		DRMKeyID:     GenerateDRMKeyID(account),
+		EK:           ek,
+		Status:       marketplacev1.AssetStatusProcessing,
 	}
 	err = s.ds.Assets.Create(ctx, asset)
 	if err != nil {
@@ -135,12 +144,13 @@ func (s *AssetsService) upload(c echo.Context) error {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, echo.Map{
-		"id":            asset.ID,
-		"content_type":  asset.ContentType,
-		"url":           asset.URL,
-		"thumbnail_url": asset.ThumbnailURL,
+	resp, _ := s.marshaler.Marshal(&marketplacev1.AssetResponse{
+		Id:          asset.ID,
+		Status:      asset.Status,
+		ContentType: asset.ContentType,
 	})
+
+	return c.Blob(http.StatusOK, "application/json", resp)
 }
 
 func (s *AssetsService) handleUploadFile(ctx context.Context, file *multipart.FileHeader, meta *model.AssetMeta) error {
@@ -277,29 +287,4 @@ func (s *AssetsService) generateThumbnail(ctx context.Context, meta *model.Asset
 	}
 
 	return nil
-}
-
-func NewAssetMetaFromRequest(file *multipart.FileHeader, userID int64, bucket string) *model.AssetMeta {
-	filename := fmt.Sprintf("original%s", filepath.Ext(file.Filename))
-	encFilename := fmt.Sprintf("encrypted%s", filepath.Ext(file.Filename))
-	folder := fmt.Sprintf("a/%d/%s", userID, GenAssetFolderID())
-	tmpFilename := GenAssetFolderID()
-
-	destKey := fmt.Sprintf("%s/%s", folder, filename)
-	destEncKey := fmt.Sprintf("%s/%s", folder, encFilename)
-	destThumbKey := fmt.Sprintf("%s/thumb.jpg", folder)
-
-	return &model.AssetMeta{
-		ContentType:    file.Header.Get("Content-Type"),
-		Name:           filename,
-		DestKey:        destKey,
-		DestThumbKey:   destThumbKey,
-		DestEncKey:     destEncKey,
-		LocalDest:      path.Join("/tmp", tmpFilename+filepath.Ext(filename)),
-		LocalEncDest:   path.Join("/tmp", tmpFilename+"_enc"+filepath.Ext(filename)),
-		LocalThumbDest: path.Join("/tmp", tmpFilename+".jpg"),
-		URL:            fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, destKey),
-		ThumbnailURL:   fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, destThumbKey),
-		PlaybackURL:    fmt.Sprintf("https://storage.googleapis.com/%s/%s/preview.mp4", bucket, folder),
-	}
 }

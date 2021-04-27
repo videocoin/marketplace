@@ -1,9 +1,7 @@
 package random
 
 import (
-	"fmt"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -20,12 +18,4 @@ func RandomStringWithCharset(length int, charset string) string {
 
 func RandomString(length int) string {
 	return RandomStringWithCharset(length, charset)
-}
-
-func StringWithTS(length int) string {
-	return fmt.Sprintf(
-		"%s-%s",
-		RandomString(6),
-		strconv.FormatInt(time.Now().UnixNano(), 10),
-	)
 }
