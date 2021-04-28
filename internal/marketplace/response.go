@@ -14,9 +14,9 @@ func toAssetResponse(asset *model.Asset) *v1.AssetResponse {
 	}
 
 	if asset.Status == v1.AssetStatusReady {
-		resp.Url = &types.StringValue{Value: asset.GetURL()}
 		resp.ThumbnailUrl = &types.StringValue{Value: asset.GetThumbnailURL()}
-		resp.PlaybackUrl = &types.StringValue{Value: asset.GetPlaybackURL()}
+		resp.PreviewUrl = &types.StringValue{Value: asset.GetPreviewURL()}
+		resp.EncryptedUrl = &types.StringValue{Value: asset.GetEncryptedURL()}
 	}
 
 	return resp

@@ -50,7 +50,7 @@ func (s *AssetsService) ytUpload(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	meta := model.NewAssetMeta(fmt.Sprintf("%s.mp4", ytVideo.ID), "video/mp4", account.ID)
+	meta := model.NewAssetMeta(fmt.Sprintf("%s.mp4", ytVideo.ID), "video/mp4", account.ID, s.gcpBucket)
 	meta.YTVideo = ytVideo
 
 	ek := GenerateEncryptionKey()
@@ -63,19 +63,15 @@ func (s *AssetsService) ytUpload(c echo.Context) error {
 	asset := &model.Asset{
 		CreatedByID:  account.ID,
 		ContentType:  meta.ContentType,
-		Bucket:       s.bucket,
-		FolderID:     meta.FolderID,
+		Status:       marketplacev1.AssetStatusProcessing,
 		Key:          meta.DestKey,
 		PreviewKey:   meta.DestPreviewKey,
-		ThumbKey:     meta.DestThumbKey,
+		ThumbnailKey: meta.DestThumbKey,
 		EncryptedKey: meta.DestEncKey,
-		YouTubeURL:   dbr.NewNullString(ytURL),
 		YouTubeID:    dbr.NewNullString(ytVideoID),
-		Probe:        &model.AssetProbe{Data: meta.Probe},
 		DRMKey:       drmKey,
 		DRMKeyID:     GenerateDRMKeyID(account),
 		EK:           ek,
-		Status:       marketplacev1.AssetStatusProcessing,
 	}
 	err = s.ds.Assets.Create(ctx, asset)
 	if err != nil {
@@ -94,7 +90,7 @@ func (s *AssetsService) ytUpload(c echo.Context) error {
 		Id:          asset.ID,
 		Status:      asset.Status,
 		ContentType: asset.ContentType,
-		YoutubeId:   &types.StringValue{Value: ytVideoID},
+		YtVideoId:   &types.StringValue{Value: ytVideoID},
 	})
 
 	return c.Blob(http.StatusOK, "application/json", resp)

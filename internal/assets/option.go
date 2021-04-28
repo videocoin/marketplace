@@ -3,6 +3,7 @@ package assets
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 )
 
@@ -29,16 +30,9 @@ func WithDatastore(ds *datastore.Datastore) Option {
 	}
 }
 
-func WithIPFSGateway(addr string) Option {
+func WithGCPBucket(bucket string) Option {
 	return func(s *AssetsService) error {
-		s.ipfsGw = addr
-		return nil
-	}
-}
-
-func WithBucket(bucket string) Option {
-	return func(s *AssetsService) error {
-		s.bucket = bucket
+		s.gcpBucket = bucket
 		return nil
 	}
 }
@@ -46,6 +40,13 @@ func WithBucket(bucket string) Option {
 func WithMediaConverter(mc *mediaconverter.MediaConverter) Option {
 	return func(s *AssetsService) error {
 		s.mc = mc
+		return nil
+	}
+}
+
+func WithStorage(storage *storage.Storage) Option {
+	return func(s *AssetsService) error {
+		s.storage = storage
 		return nil
 	}
 }

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/videocoin/marketplace/internal/storage"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
@@ -32,13 +33,23 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	storageCli, err := storage.NewStorage(storage.WithConfig(&storage.TextileConfig{
+		AuthKey:       cfg.TextileAuthKey,
+		AuthSecret:    cfg.TextileAuthSecret,
+		ThreadID:      cfg.TextileThreadID,
+		BucketRootKey: cfg.TextileBucketRootKey,
+	}))
+	if err != nil {
+		return nil, err
+	}
+
 	mc, err := mediaconverter.NewMediaConverter(
 		ctx,
 		mediaconverter.WithLogger(logger.WithField("system", "mediaconverter")),
 		mediaconverter.WithDatastore(ds),
-		mediaconverter.WithIPFSGateway(cfg.IPFSGateway),
-		mediaconverter.WithBucket(cfg.Bucket),
+		mediaconverter.WithStorage(storageCli),
 		mediaconverter.WithGCPConfig(&mediaconverter.GCPConfig{
+			Bucket:             cfg.GCPBucket,
 			Project:            cfg.GCPProject,
 			Region:             cfg.GCPRegion,
 			PubSubTopic:        cfg.GCPPubSubTopic,
@@ -63,11 +74,11 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 
 	assetsSvc, err := assets.NewAssetsService(
 		ctx,
-		assets.WithLogger(logger.WithField("system", "uploader")),
+		assets.WithLogger(logger.WithField("system", "assets")),
 		assets.WithAuthSecret(cfg.AuthSecret),
 		assets.WithDatastore(ds),
-		assets.WithIPFSGateway(cfg.IPFSGateway),
-		assets.WithBucket(cfg.Bucket),
+		assets.WithStorage(storageCli),
+		assets.WithGCPBucket(cfg.GCPBucket),
 		assets.WithMediaConverter(mc),
 	)
 	if err != nil {

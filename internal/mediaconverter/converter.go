@@ -2,17 +2,17 @@ package mediaconverter
 
 import (
 	"cloud.google.com/go/pubsub"
-	"cloud.google.com/go/storage"
+	gcpstorage "cloud.google.com/go/storage"
 	transcoder "cloud.google.com/go/video/transcoder/apiv1beta1"
 	"context"
 	"encoding/json"
 	"fmt"
-	ipfsapi "github.com/ipfs/go-ipfs-api"
 	"github.com/kkdai/youtube/v2"
 	"github.com/sirupsen/logrus"
 	v1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/storage"
 	transcoderpb "google.golang.org/genproto/googleapis/cloud/video/transcoder/v1beta1"
 	"io"
 	"os"
@@ -23,27 +23,17 @@ import (
 	"time"
 )
 
-type GCPConfig struct {
-	Project            string
-	Region             string
-	PubSubTopic        string
-	PubSubSubscription string
-}
-
 type MediaConverter struct {
+	JobCh      chan model.MediaConverterJob
 	logger     *logrus.Entry
 	ds         *datastore.Datastore
-	bucket     string
-	ipfsGw     string
 	gcpConfig  *GCPConfig
-	JobCh      chan model.MediaConverterJob
 	transcoder *transcoder.Client
-	storage    *storage.Client
-	bh         *storage.BucketHandle
 	pubsub     *pubsub.Client
 	sub        *pubsub.Subscription
-	ipfsShell  *ipfsapi.Shell
 	yt         *youtube.Client
+	storage    *storage.Storage
+	gcpStorage *gcpstorage.Client
 }
 
 func NewMediaConverter(ctx context.Context, opts ...Option) (*MediaConverter, error) {
@@ -54,21 +44,12 @@ func NewMediaConverter(ctx context.Context, opts ...Option) (*MediaConverter, er
 		}
 	}
 
-	mc.ipfsShell = ipfsapi.NewShell(mc.ipfsGw)
-
 	trans, err := transcoder.NewClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 	mc.JobCh = make(chan model.MediaConverterJob, 1)
 	mc.transcoder = trans
-
-	mc.storage, err = storage.NewClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	mc.bh = mc.storage.Bucket(mc.bucket)
 
 	mc.pubsub, err = pubsub.NewClient(ctx, mc.gcpConfig.Project)
 	if err != nil {
@@ -81,7 +62,23 @@ func NewMediaConverter(ctx context.Context, opts ...Option) (*MediaConverter, er
 
 	mc.yt = &youtube.Client{}
 
+	mc.gcpStorage, err = gcpstorage.NewClient(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	return mc, nil
+}
+
+func (mc *MediaConverter) Start(errCh chan error) {
+	mc.logger.Info("starting media converter")
+	errCh <- mc.dispatch()
+}
+
+func (m *MediaConverter) Stop() error {
+	m.logger.Info("stopping media converter")
+	m.transcoder.Close()
+	return nil
 }
 
 func (mc *MediaConverter) dispatch() error {
@@ -98,25 +95,12 @@ func (mc *MediaConverter) dispatch() error {
 
 func (mc *MediaConverter) dispatchJobs() {
 	for job := range mc.JobCh {
-		go func() {
-			wg := &sync.WaitGroup{}
+		if job.Meta.YTVideo != nil {
+			go mc.runYTPipeline(job)
+			return
+		}
 
-			if job.Meta.YTVideo == nil {
-				wg.Add(1)
-				go mc.runConvertJob(wg, job)
-
-				wg.Add(1)
-				go mc.runEncryptJob(wg, job)
-
-				wg.Wait()
-
-				defer func() {
-					_ = os.Remove(job.Meta.LocalDest)
-				}()
-			} else {
-				go mc.runUploadFromYouTubePipeline(job)
-			}
-		}()
+		go mc.runGeneralPipeline(job)
 	}
 }
 
@@ -175,6 +159,36 @@ func (mc *MediaConverter) runConvertJob(wg *sync.WaitGroup, job model.MediaConve
 	logger.Info("running media converter job")
 
 	ctx := context.Background()
+
+	bh := mc.gcpStorage.Bucket(mc.gcpConfig.Bucket)
+	w := bh.Object(job.Meta.DestKey).NewWriter(ctx)
+	w.ContentType = job.Meta.ContentType
+
+	logger.Info("upload original video to gcp storage")
+
+	f, err := httpGet(ctx, job.Asset.URL.String)
+	if err != nil {
+		logger.WithError(err).Error("failed to get original video url")
+		return
+	}
+	defer f.Body.Close()
+
+	if _, err := io.Copy(w, f.Body); err != nil {
+		logger.
+			WithError(err).
+			Error("failed to copy original video to gcp storage")
+		return
+	}
+
+	if err := w.Close(); err != nil {
+		logger.
+			WithError(err).
+			Error("failed to close original video")
+		return
+	}
+
+	logger.Info("uploading original video to gcp storage has been completed")
+
 	objectKeyParts := strings.Split(job.Asset.Key, "/")
 
 	videoES := &transcoderpb.ElementaryStream{
@@ -203,7 +217,7 @@ func (mc *MediaConverter) runConvertJob(wg *sync.WaitGroup, job model.MediaConve
 	ess := []*transcoderpb.ElementaryStream{videoES}
 	esKeys := []string{"vs0"}
 
-	if job.Asset.Probe.Data.FirstAudioStream() != nil {
+	if job.Meta.Probe.FirstAudioStream() != nil {
 		ess = append(ess, audioES)
 		esKeys = append(esKeys, "as0")
 	}
@@ -223,8 +237,8 @@ func (mc *MediaConverter) runConvertJob(wg *sync.WaitGroup, job model.MediaConve
 			mc.gcpConfig.Region,
 		),
 		Job: &transcoderpb.Job{
-			InputUri:  fmt.Sprintf("gs://%s/%s", job.Asset.Bucket, job.Asset.Key),
-			OutputUri: fmt.Sprintf("gs://%s/%s/", job.Asset.Bucket, strings.Join(objectKeyParts[0:len(objectKeyParts)-1], "/")),
+			InputUri:  fmt.Sprintf("gs://%s/%s", job.Meta.GCPBucket, job.Meta.DestKey),
+			OutputUri: fmt.Sprintf("gs://%s/%s/", job.Meta.GCPBucket, strings.Join(objectKeyParts[0:len(objectKeyParts)-1], "/")),
 			JobConfig: &transcoderpb.Job_Config{
 				Config: &transcoderpb.JobConfig{
 					ElementaryStreams: ess,
@@ -289,16 +303,36 @@ func (mc *MediaConverter) runConvertJob(wg *sync.WaitGroup, job model.MediaConve
 		}
 
 		if trJob.State == transcoderpb.Job_SUCCEEDED {
-			acl := mc.storage.Bucket(job.Asset.Bucket).Object(job.Asset.PreviewKey).ACL()
-			err = acl.Set(ctx, storage.AllUsers, storage.RoleReader)
+			r, err := bh.Object(job.Meta.DestPreviewKey).NewReader(ctx)
 			if err != nil {
-				logger.WithError(err).Error("failed to set public acl")
+				logger.Error("failed to get object from gcp storage: %s", err)
+				_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
+				return
+			}
+
+			link, err := mc.storage.PushPath(job.Meta.DestPreviewKey, r)
+			if err != nil {
+				logger.Error("failed to push preview video to storage: %s", err)
+				_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
+				return
+			}
+
+			_ = r.Close()
+
+			err = mc.ds.Assets.UpdatePreviewURL(ctx, job.Asset, link)
+			if err != nil {
+				logger.Error("failed to update asset preview url: %s", err)
+				_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
+				return
 			}
 
 			asset, _ := mc.ds.Assets.GetByID(ctx, job.Asset.ID)
 			if asset != nil && asset.Status != v1.AssetStatusFailed {
-				mc.ds.Assets.MarkStatusAsReady(ctx, job.Asset)
+				_ = mc.ds.Assets.MarkStatusAsReady(ctx, job.Asset)
 			}
+
+			_ = bh.Object(job.Meta.DestKey).Delete(ctx)
+			_ = bh.Object(job.Meta.DestPreviewKey).Delete(ctx)
 
 			break
 		}
@@ -348,60 +382,25 @@ func (mc *MediaConverter) runEncryptJob(wg *sync.WaitGroup, job model.MediaConve
 		_ = os.Remove(meta.LocalEncDest)
 	}()
 
-	w := mc.storage.Bucket(job.Asset.Bucket).Object(meta.DestEncKey).NewWriter(ctx)
-	w.ContentType = meta.ContentType
-	w.ACL = []storage.ACLRule{
-		{
-			Entity: storage.AllUsers,
-			Role:   storage.RoleReader,
-		},
-	}
-
-	if _, err := io.Copy(w, f); err != nil {
+	link, err := mc.storage.PushPath(meta.DestEncKey, f)
+	if err != nil {
 		logger.
 			WithError(err).
-			Error("failed to copy encrypted video")
+			Error("failed to push encrypted video to storage")
 		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
 		return
 	}
 
-	if err := w.Close(); err != nil {
+	err = mc.ds.Assets.UpdateEncryptedURL(ctx, job.Asset, link)
+	if err != nil {
 		logger.
 			WithError(err).
-			Error("failed to close encrypted video")
+			Error("failed to update asset encrypted url")
 		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
 		return
 	}
 
-	encFile, err := os.Open(meta.LocalEncDest)
-	if err != nil {
-		logger.
-			WithError(err).
-			Error("failed to open encrypted file")
-		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
-		return
-	}
-	defer encFile.Close()
-
-	hash, err := mc.ipfsShell.Add(encFile)
-	if err != nil {
-		logger.
-			WithError(err).
-			Error("failed to add file to ipfs")
-		return
-	}
-
-	err = mc.ds.Assets.UpdateIPFSHash(ctx, job.Asset, hash)
-	if err != nil {
-		logger.
-			WithError(err).
-			Error("failed to uddate asset ipfs hash")
-		return
-	}
-
-	logger.
-		WithField("ipfs_hash", hash).
-		Info("encrypt job has been completed")
+	logger.WithField("link", link).Info("encrypt job has been completed")
 }
 
 func (mc *MediaConverter) runMuxAndUploadPreviewVideoJob(
@@ -444,13 +443,19 @@ func (mc *MediaConverter) runMuxAndUploadPreviewVideoJob(
 		_ = f.Close()
 	}()
 
-	err = mc.uploadToStorage(ctx, f, "video/mp4", job.Meta.DestPreviewKey)
+	link, err := mc.storage.PushPath(job.Meta.DestPreviewKey, f)
 	if err != nil {
 		errCh <- fmt.Errorf("failed to upload preview video to storage: %s", err)
 		return
 	}
 
-	logger.Info("uploading preview video to storage has been completed")
+	err = mc.ds.Assets.UpdatePreviewURL(ctx, job.Asset, link)
+	if err != nil {
+		errCh <- fmt.Errorf("failed to update preview url: %s", err)
+		return
+	}
+
+	logger.WithField("link", link).Info("uploading preview video to storage has been completed")
 }
 
 func (mc *MediaConverter) runMuxAndUploadOriginalVideoJob(
@@ -493,9 +498,15 @@ func (mc *MediaConverter) runMuxAndUploadOriginalVideoJob(
 		_ = f.Close()
 	}()
 
-	err = mc.uploadToStorage(ctx, f, "video/mp4", job.Meta.DestKey)
+	link, err := mc.storage.PushPath(job.Meta.DestKey, f)
 	if err != nil {
 		errCh <- fmt.Errorf("failed to upload original video to storage: %s", err)
+		return
+	}
+
+	err = mc.ds.Assets.UpdateURL(ctx, job.Asset, link)
+	if err != nil {
+		errCh <- fmt.Errorf("failed to update asset url: %s", err)
 		return
 	}
 
@@ -512,19 +523,51 @@ func (mc *MediaConverter) runUploadYTThumbnailJob(
 		WithField("asset_id", job.Asset.ID)
 	logger.Info("uploading thumbnail from youtube")
 
-	err := mc.uploadThumbnailFromYouTube(ctx, job.Meta)
+	link, err := mc.uploadThumbnailFromYouTube(ctx, job.Meta)
 	if err != nil {
 		errCh <- fmt.Errorf("failed to upload thumbnail from youtube: %s", err)
 		return
 	}
 
+	err = mc.ds.Assets.UpdateThumbnailURL(ctx, job.Asset, link)
+	if err != nil {
+		errCh <- fmt.Errorf("failed to update asset thumbnail url: %s", err)
+		return
+	}
+
 	logger.
-		WithField("bucket", mc.bucket).
-		WithField("key", job.Meta.DestThumbKey).
+		WithField("link", link).
 		Info("thumbnail from youtube has been uploaded")
 }
 
-func (mc *MediaConverter) runUploadFromYouTubePipeline(job model.MediaConverterJob) {
+func (mc *MediaConverter) runGeneralPipeline(job model.MediaConverterJob) {
+	defer func() {
+		_ = os.Remove(job.Meta.LocalDest)
+	}()
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go mc.runConvertJob(wg, job)
+
+	wg.Add(1)
+	go mc.runEncryptJob(wg, job)
+
+	wg.Wait()
+
+	if !job.Asset.StatusIsFailed() {
+		ctx := context.Background()
+		err := mc.ds.Assets.MarkStatusAsReady(ctx, job.Asset)
+		if err != nil {
+			mc.logger.
+				WithField("asset_id", job.Asset.ID).
+				WithError(err).
+				Error("failed to mark asset status as ready")
+		}
+	}
+}
+
+func (mc *MediaConverter) runYTPipeline(job model.MediaConverterJob) {
 	defer func() {
 		_ = os.Remove(job.Meta.LocalPreviewDest)
 		_ = os.Remove(job.Meta.LocalDest)
@@ -559,7 +602,7 @@ func (mc *MediaConverter) runUploadFromYouTubePipeline(job model.MediaConverterJ
 
 	go func() {
 		select {
-		case err := <- errCh:
+		case err := <-errCh:
 			if err != nil {
 				logger.WithError(err).Error("failed to upload video from youtube")
 				_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
@@ -577,15 +620,4 @@ func (mc *MediaConverter) runUploadFromYouTubePipeline(job model.MediaConverterJ
 
 	logger.Info("marking asset status as ready")
 	_ = mc.ds.Assets.MarkStatusAsReady(ctx, job.Asset)
-}
-
-func (mc *MediaConverter) Start(errCh chan error) {
-	mc.logger.Info("starting media converter")
-	errCh <- mc.dispatch()
-}
-
-func (m *MediaConverter) Stop() error {
-	m.logger.Info("stopping media converter")
-	m.transcoder.Close()
-	return nil
 }

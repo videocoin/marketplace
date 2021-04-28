@@ -48,9 +48,9 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	}
 
 	cols := []string{
-		"created_at", "created_by_id", "content_type", "bucket", "folder_id",
-		"key", "preview_key", "encrypted_key", "thumb_key", "yt_url", "yt_id",
-		"probe", "drm_key_id", "drm_key", "ek", "status",
+		"created_at", "created_by_id", "content_type", "yt_video_id", "status",
+		"key", "preview_key", "encrypted_key", "thumbnail_key",
+		"drm_key_id", "drm_key", "ek",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -159,7 +159,7 @@ func (ds *AssetDatastore) UpdateJobID(ctx context.Context, asset *model.Asset, j
 	return nil
 }
 
-func (ds *AssetDatastore) UpdateIPFSHash(ctx context.Context, asset *model.Asset, hash string) error {
+func (ds *AssetDatastore) UpdateURL(ctx context.Context, asset *model.Asset, url string) error {
 	var err error
 	tx, ok := dbrutil.DbTxFromContext(ctx)
 	if !ok {
@@ -177,14 +177,104 @@ func (ds *AssetDatastore) UpdateIPFSHash(ctx context.Context, asset *model.Asset
 
 	_, err = tx.
 		Update(ds.table).
-		Set("ipfs_hash", hash).
+		Set("url", url).
 		Where("id = ?", asset.ID).
 		ExecContext(ctx)
 	if err != nil {
 		return err
 	}
 
-	asset.IPFSHash = dbr.NewNullString(hash)
+	asset.URL = dbr.NewNullString(url)
+
+	return nil
+}
+
+func (ds *AssetDatastore) UpdateThumbnailURL(ctx context.Context, asset *model.Asset, url string) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("thumbnail_url", url).
+		Where("id = ?", asset.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	asset.ThumbnailURL = dbr.NewNullString(url)
+
+	return nil
+}
+
+func (ds *AssetDatastore) UpdatePreviewURL(ctx context.Context, asset *model.Asset, url string) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("preview_url", url).
+		Where("id = ?", asset.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	asset.PreviewURL = dbr.NewNullString(url)
+
+	return nil
+}
+
+func (ds *AssetDatastore) UpdateEncryptedURL(ctx context.Context, asset *model.Asset, url string) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("encrypted_url", url).
+		Where("id = ?", asset.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	asset.EncryptedURL = dbr.NewNullString(url)
 
 	return nil
 }
@@ -247,6 +337,10 @@ func (ds *AssetDatastore) MarkStatusAs(ctx context.Context, asset *model.Asset, 
 	asset.Status = status
 
 	return nil
+}
+
+func (ds *AssetDatastore) MarkStatusAsProcessing(ctx context.Context, asset *model.Asset) error {
+	return ds.MarkStatusAs(ctx, asset, v1.AssetStatusProcessing)
 }
 
 func (ds *AssetDatastore) MarkStatusAsReady(ctx context.Context, asset *model.Asset) error {

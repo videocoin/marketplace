@@ -3,6 +3,7 @@ package mediaconverter
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/storage"
 )
 
 type Option func(*MediaConverter) error
@@ -21,13 +22,6 @@ func WithDatastore(ds *datastore.Datastore) Option {
 	}
 }
 
-func WithIPFSGateway(addr string) Option {
-	return func(mc *MediaConverter) error {
-		mc.ipfsGw = addr
-		return nil
-	}
-}
-
 func WithGCPConfig(config *GCPConfig) Option {
 	return func(mc *MediaConverter) error {
 		mc.gcpConfig = config
@@ -35,9 +29,9 @@ func WithGCPConfig(config *GCPConfig) Option {
 	}
 }
 
-func WithBucket(bucket string) Option {
+func WithStorage(s *storage.Storage) Option {
 	return func(mc *MediaConverter) error {
-		mc.bucket = bucket
+		mc.storage = s
 		return nil
 	}
 }

@@ -17,13 +17,13 @@ require (
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/gocraft/dbr/v2 v2.7.1
-	github.com/gogo/googleapis v1.1.0
+	github.com/gogo/googleapis v1.4.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
-	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/ipfs/go-ipfs-api v0.2.0
 	github.com/jinzhu/copier v0.2.8 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -33,11 +33,14 @@ require (
 	github.com/lestrrat/go-jwx v0.0.0-20210302221443-a9d01c1b7121 // indirect
 	github.com/lestrrat/go-pdebug v0.0.0-20180220043741-569c97477ae8 // indirect
 	github.com/lib/pq v1.10.0
+	github.com/libp2p/go-libp2p-core v0.7.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/plutov/echo-logrus v1.0.0
 	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac
+	github.com/textileio/textile/v2 v2.6.8
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/net v0.0.0-20210330142815-c8897c278d10 // indirect
 	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558 // indirect

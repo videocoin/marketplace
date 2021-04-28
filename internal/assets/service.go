@@ -1,12 +1,10 @@
 package assets
 
 import (
-	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/hashicorp/go-multierror"
-	ipfsapi "github.com/ipfs/go-ipfs-api"
 	"github.com/kkdai/youtube/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -14,6 +12,7 @@ import (
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/jsonpb"
 	"io"
 	"mime/multipart"
@@ -26,20 +25,15 @@ import (
 type AssetsService struct {
 	logger     *logrus.Entry
 	authSecret string
-	bucket     string
-	ipfsGw     string
+	gcpBucket  string
 	ds         *datastore.Datastore
-	ipfsShell  *ipfsapi.Shell
-	storageCli *storage.Client
-	bh         *storage.BucketHandle
+	storage    *storage.Storage
 	mc         *mediaconverter.MediaConverter
 	yt         *youtube.Client
 	marshaler  *jsonpb.JSONPb
 }
 
 func NewAssetsService(ctx context.Context, opts ...Option) (*AssetsService, error) {
-	var err error
-
 	svc := &AssetsService{
 		logger: ctxlogrus.Extract(ctx).WithField("system", "assets"),
 	}
@@ -49,15 +43,7 @@ func NewAssetsService(ctx context.Context, opts ...Option) (*AssetsService, erro
 		}
 	}
 
-	svc.ipfsShell = ipfsapi.NewShell(svc.ipfsGw)
-	svc.storageCli, err = storage.NewClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	svc.bh = svc.storageCli.Bucket(svc.bucket)
 	svc.yt = &youtube.Client{}
-
 	svc.marshaler = &jsonpb.JSONPb{
 		EmitDefaults: true,
 		Indent:       "  ",
@@ -90,7 +76,7 @@ func (s *AssetsService) upload(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID)
+	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID, s.gcpBucket)
 
 	ek := GenerateEncryptionKey()
 	drmKey, err := GenerateDRMKey(account.PublicKey.String, ek)
@@ -104,7 +90,24 @@ func (s *AssetsService) upload(c echo.Context) error {
 		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": err.Error()})
 	}
 
-	err = s.handleUploadFile(ctx, file, meta)
+	asset := &model.Asset{
+		CreatedByID:  account.ID,
+		ContentType:  meta.ContentType,
+		Key:          meta.DestKey,
+		PreviewKey:   meta.DestPreviewKey,
+		ThumbnailKey: meta.DestThumbKey,
+		EncryptedKey: meta.DestEncKey,
+		DRMKey:       drmKey,
+		DRMKeyID:     GenerateDRMKeyID(account),
+		EK:           ek,
+	}
+	err = s.ds.Assets.Create(ctx, asset)
+	if err != nil {
+		logger.WithError(err).Error("failed to create asset")
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": ErrInvalidVideo.Error()})
+	}
+
+	err = s.handleUploadFile(ctx, file, asset, meta)
 	if err != nil {
 		logger.WithError(err).Error("failed to upload file")
 		return echo.ErrInternalServerError
@@ -116,25 +119,10 @@ func (s *AssetsService) upload(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": ErrInvalidVideo.Error()})
 	}
 
-	asset := &model.Asset{
-		CreatedByID:  account.ID,
-		ContentType:  meta.ContentType,
-		Bucket:       s.bucket,
-		FolderID:     meta.FolderID,
-		Key:          meta.DestKey,
-		PreviewKey:   meta.DestPreviewKey,
-		ThumbKey:     meta.DestThumbKey,
-		EncryptedKey: meta.DestEncKey,
-		Probe:        &model.AssetProbe{Data: meta.Probe},
-		DRMKey:       drmKey,
-		DRMKeyID:     GenerateDRMKeyID(account),
-		EK:           ek,
-		Status:       marketplacev1.AssetStatusProcessing,
-	}
-	err = s.ds.Assets.Create(ctx, asset)
+	err = s.ds.Assets.MarkStatusAsProcessing(ctx, asset)
 	if err != nil {
-		logger.WithError(err).Error("failed to create asset")
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": ErrInvalidVideo.Error()})
+		logger.WithError(err).Error("failed to mark asset as processing")
+		return echo.ErrInternalServerError
 	}
 
 	go func() {
@@ -153,7 +141,7 @@ func (s *AssetsService) upload(c echo.Context) error {
 	return c.Blob(http.StatusOK, "application/json", resp)
 }
 
-func (s *AssetsService) handleUploadFile(ctx context.Context, file *multipart.FileHeader, meta *model.AssetMeta) error {
+func (s *AssetsService) handleUploadFile(ctx context.Context, file *multipart.FileHeader, asset *model.Asset, meta *model.AssetMeta) error {
 	src, err := file.Open()
 	if err != nil {
 		return err
@@ -170,21 +158,14 @@ func (s *AssetsService) handleUploadFile(ctx context.Context, file *multipart.Fi
 	go func() {
 		defer pw.Close()
 
-		w := s.bh.Object(meta.DestKey).NewWriter(ctx)
-		w.ContentType = meta.ContentType
-		w.ACL = []storage.ACLRule{
-			{
-				Entity: storage.AllUsers,
-				Role:   storage.RoleReader,
-			},
-		}
-
-		if _, err := io.Copy(w, tr); err != nil {
+		link, err := s.storage.PushPath(meta.DestKey, tr)
+		if err != nil {
 			uploadErrCh <- err
 			return
 		}
 
-		if err := w.Close(); err != nil {
+		err = s.ds.Assets.UpdateURL(ctx, asset, link)
+		if err != nil {
 			uploadErrCh <- err
 			return
 		}
@@ -239,7 +220,7 @@ func (s *AssetsService) handleUploadFile(ctx context.Context, file *multipart.Fi
 		return udErr
 	}
 
-	err = s.generateThumbnail(ctx, meta)
+	err = s.generateThumbnail(ctx, asset, meta)
 	if err != nil {
 		return err
 	}
@@ -247,7 +228,7 @@ func (s *AssetsService) handleUploadFile(ctx context.Context, file *multipart.Fi
 	return nil
 }
 
-func (s *AssetsService) generateThumbnail(ctx context.Context, meta *model.AssetMeta) error {
+func (s *AssetsService) generateThumbnail(ctx context.Context, asset *model.Asset, meta *model.AssetMeta) error {
 	cmdArgs := []string{
 		"-hide_banner", "-loglevel", "info", "-y", "-ss", "2", "-i", meta.LocalDest,
 		"-an", "-vf", "scale=1280:-1", "-vframes", "1", meta.LocalThumbDest,
@@ -269,20 +250,13 @@ func (s *AssetsService) generateThumbnail(ctx context.Context, meta *model.Asset
 		_ = os.Remove(meta.LocalThumbDest)
 	}()
 
-	w := s.bh.Object(meta.DestThumbKey).NewWriter(ctx)
-	w.ContentType = "image/jpeg"
-	w.ACL = []storage.ACLRule{
-		{
-			Entity: storage.AllUsers,
-			Role:   storage.RoleReader,
-		},
-	}
-
-	if _, err := io.Copy(w, f); err != nil {
+	link, err := s.storage.PushPath(meta.DestThumbKey, f)
+	if err != nil {
 		return err
 	}
 
-	if err := w.Close(); err != nil {
+	err = s.ds.Assets.UpdateThumbnailURL(ctx, asset, link)
+	if err != nil {
 		return err
 	}
 

@@ -75,16 +75,21 @@ func (mc *MediaConverter) getAudioStreamURL(ctx context.Context, video *youtube.
 	return url, nil
 }
 
-func (mc *MediaConverter) uploadThumbnailFromYouTube(ctx context.Context, meta *model.AssetMeta) error {
+func (mc *MediaConverter) uploadThumbnailFromYouTube(ctx context.Context, meta *model.AssetMeta) (string, error) {
 	url := meta.YTVideo.Thumbnails[len(meta.YTVideo.Thumbnails)-1].URL
 
 	resp, err := httpGet(ctx, url)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	return mc.uploadToStorage(ctx, resp.Body, "image/jpeg", meta.DestThumbKey)
+	link, err := mc.storage.PushPath(meta.DestThumbKey, resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return link, nil
 }
 
 func httpGet(ctx context.Context, url string) (*http.Response, error) {

@@ -32,9 +32,10 @@ type AssetMeta struct {
 	DestThumbKey     string
 	DestEncKey       string
 	YTVideo          *youtube.Video
+	GCPBucket        string
 }
 
-func NewAssetMeta(name, contentType string, userID int64) *AssetMeta {
+func NewAssetMeta(name, contentType string, userID int64, gcpBucket string) *AssetMeta {
 	filename := fmt.Sprintf("original%s", filepath.Ext(name))
 	previewFilename := fmt.Sprintf("preview%s", filepath.Ext(name))
 	encFilename := fmt.Sprintf("encrypted%s", filepath.Ext(name))
@@ -58,6 +59,7 @@ func NewAssetMeta(name, contentType string, userID int64) *AssetMeta {
 		LocalPreviewDest: path.Join("/tmp", tmpFilename+"_preview"+filepath.Ext(filename)),
 		LocalEncDest:     path.Join("/tmp", tmpFilename+"_encrypted"+filepath.Ext(filename)),
 		LocalThumbDest:   path.Join("/tmp", tmpFilename+".jpg"),
+		GCPBucket:        gcpBucket,
 	}
 }
 
@@ -80,24 +82,28 @@ func (p *AssetProbe) Scan(value interface{}) error {
 }
 
 type Asset struct {
-	ID           int64                     `db:"id"`
-	CreatedAt    *time.Time                `db:"created_at"`
-	CreatedByID  int64                     `db:"created_by_id"`
-	ContentType  string                    `db:"content_type"`
-	Bucket       string                    `db:"bucket"`
-	FolderID     string                    `db:"folder_id"`
-	Key          string                    `db:"key"`
-	PreviewKey   string                    `db:"preview_key"`
-	ThumbKey     string                    `db:"thumb_key"`
-	EncryptedKey string                    `db:"encrypted_key"`
-	DRMKey       string                    `db:"drm_key"`
-	DRMKeyID     string                    `db:"drm_key_id"`
-	EK           string                    `db:"ek"`
-	YouTubeURL   dbr.NullString            `db:"yt_url"`
-	YouTubeID    dbr.NullString            `db:"yt_id"`
-	IPFSHash     dbr.NullString            `db:"ipfs_hash"`
-	Probe        *AssetProbe               `db:"probe"`
-	Status       marketplacev1.AssetStatus `db:"status"`
+	ID          int64      `db:"id"`
+	CreatedAt   *time.Time `db:"created_at"`
+	CreatedByID int64      `db:"created_by_id"`
+	ContentType string     `db:"content_type"`
+
+	Key          string `db:"key"`
+	PreviewKey   string `db:"preview_key"`
+	ThumbnailKey string `db:"thumbnail_key"`
+	EncryptedKey string `db:"encrypted_key"`
+
+	YouTubeID dbr.NullString `db:"yt_video_id"`
+
+	URL          dbr.NullString `db:"url"`
+	PreviewURL   dbr.NullString `db:"preview_url"`
+	ThumbnailURL dbr.NullString `db:"thumbnail_url"`
+	EncryptedURL dbr.NullString `db:"encrypted_url"`
+
+	DRMKey   string `db:"drm_key"`
+	DRMKeyID string `db:"drm_key_id"`
+	EK       string `db:"ek"`
+
+	Status marketplacev1.AssetStatus `db:"status"`
 
 	JobID     dbr.NullString `db:"job_id"`
 	JobStatus dbr.NullString `db:"job_status"`
@@ -105,20 +111,28 @@ type Asset struct {
 	Account *Account `db:"-"`
 }
 
-func (a *Asset) GetURL() string {
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", a.Bucket, a.Key)
+func (a *Asset) StatusIsFailed() bool {
+	return a.Status == marketplacev1.AssetStatusFailed
 }
 
-func (a *Asset) GetPlaybackURL() string {
+func (a *Asset) GetURL() string {
+	return a.URL.String
+}
+
+func (a *Asset) GetEncryptedURL() string {
+	return a.EncryptedURL.String
+}
+
+func (a *Asset) GetPreviewURL() string {
 	if a.Status == marketplacev1.AssetStatusReady {
-		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", a.Bucket, a.PreviewKey)
+		return a.PreviewURL.String
 	}
 
 	return a.GetURL()
 }
 
 func (a *Asset) GetThumbnailURL() string {
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", a.Bucket, a.ThumbKey)
+	return a.ThumbnailURL.String
 }
 
 func GenAssetFolderID() string {
