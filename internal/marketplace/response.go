@@ -32,6 +32,10 @@ func toArtResponse(art *model.Art) *v1.ArtResponse {
 		resp.Asset = toAssetResponse(art.Asset)
 	}
 
+	if art.Account != nil {
+		resp.Creator = toCreatorResponse(art.Account)
+	}
+
 	return resp
 }
 
