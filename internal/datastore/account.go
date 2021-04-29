@@ -18,10 +18,11 @@ var (
 type UpdateAccountFields struct {
 	Username *string
 	Name     *string
+	ImageURL *string
 }
 
 func (f *UpdateAccountFields) IsEmpty() bool {
-	return f != nil && f.Username == nil && f.Name == nil
+	return f != nil && f.Username == nil && f.Name == nil && f.ImageURL == nil
 }
 
 type AccountDatastore struct {
@@ -343,6 +344,11 @@ func (ds *AccountDatastore) Update(ctx context.Context, account *model.Account, 
 	if fields.Name != nil {
 		stmt.Set("name", dbr.NewNullString(*fields.Name))
 		account.Name = dbr.NewNullString(*fields.Name)
+	}
+
+	if fields.ImageURL != nil {
+		stmt.Set("image_url", dbr.NewNullString(*fields.ImageURL))
+		account.ImageURL = dbr.NewNullString(*fields.ImageURL)
 	}
 
 	_, err = stmt.Where("id = ?", account.ID).ExecContext(ctx)

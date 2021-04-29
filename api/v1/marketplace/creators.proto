@@ -17,6 +17,7 @@ message CreatorResponse {
     string address = 2;
     google.protobuf.StringValue username = 3;
     google.protobuf.StringValue name = 4;
+    google.protobuf.StringValue image_url = 5;
 }
 
 message CreatorRequest {

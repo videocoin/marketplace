@@ -36,5 +36,11 @@ func toAccountResponse(account *model.Account) *v1.AccountResponse {
 		}
 	}
 
+	if account.ImageURL.Valid {
+		resp.ImageUrl = &types.StringValue{
+			Value: account.ImageURL.String,
+		}
+	}
+
 	return resp
 }

@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/grpcutil"
 )
 
@@ -22,5 +23,11 @@ func WithDatastore(ds *datastore.Datastore) ServerOption {
 func WithAuthSecret(secret string) ServerOption {
 	return func(s *Server) {
 		s.authSecret = secret
+	}
+}
+
+func WithStorage(storage *storage.Storage) ServerOption {
+	return func(s *Server) {
+		s.storage = storage
 	}
 }

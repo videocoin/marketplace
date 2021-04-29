@@ -1,18 +1,28 @@
 package accounts
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/AlekSi/pointer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
+	"github.com/nfnt/resize"
+	"github.com/oliamb/cutter"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/api/rpc"
 	v1 "github.com/videocoin/marketplace/api/v1/accounts"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/rpcauth"
+	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/grpcutil"
+	"github.com/videocoin/marketplace/pkg/random"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"strings"
 )
 
@@ -21,6 +31,7 @@ type Server struct {
 	validator  *grpcutil.RequestValidator
 	authSecret string
 	ds         *datastore.Datastore
+	storage    *storage.Storage
 }
 
 func NewServer(ctx context.Context, opts ...ServerOption) *Server {
@@ -155,6 +166,18 @@ func (s *Server) UpdateAccount(ctx context.Context, req *v1.UpdateAccountRequest
 		updateFields.Name = pointer.ToString(req.Name.Value)
 	}
 
+	if req.ImageData != nil {
+		link, err := s.handleImageData(req.ImageData.Value, account.ID)
+		if err != nil {
+			if err == ErrInvalidImageData {
+				return nil, rpc.NewRpcSimpleValidationError(err)
+			}
+			return nil, rpc.NewRpcInternalError(err)
+		}
+
+		updateFields.ImageURL = pointer.ToString(link)
+	}
+
 	if !updateFields.IsEmpty() {
 		err := s.ds.Accounts.Update(ctx, account, *updateFields)
 		if err != nil {
@@ -164,4 +187,81 @@ func (s *Server) UpdateAccount(ctx context.Context, req *v1.UpdateAccountRequest
 
 	resp := toAccountResponse(account)
 	return resp, nil
+}
+
+func (s *Server) handleImageData(data string, accountID int64) (string, error) {
+	var (
+		imageData    image.Image
+		strImageData string
+		isPng        bool
+	)
+
+	if strings.HasPrefix(data, "data:image/jpeg;base64,") {
+		strImageData = strings.TrimPrefix(data, "data:image/jpeg;base64,")
+	} else if strings.HasPrefix(data, "data:image/png;base64,") {
+		strImageData = strings.TrimPrefix(data, "data:image/png;base64,")
+		isPng = true
+	} else {
+		return "", ErrInvalidImageData
+	}
+
+	srcImageData, err := base64.StdEncoding.DecodeString(strImageData)
+	if err != nil {
+		return "", ErrInvalidImageData
+	}
+
+	imageReader := bytes.NewReader(srcImageData)
+	if isPng {
+		imageData, err = png.Decode(imageReader)
+		if err != nil {
+			return "", ErrInvalidImageData
+		}
+	} else {
+		imageData, err = jpeg.Decode(imageReader)
+		if err != nil {
+			return "", ErrInvalidImageData
+		}
+	}
+
+	resizedImage := resize.Resize(400, 0, imageData, resize.Lanczos2)
+	croppedImage, err := cutter.Crop(resizedImage, cutter.Config{
+		Width:  400,
+		Height: 400,
+		Mode: cutter.Centered,
+	})
+
+	rcImageJpeg := new(bytes.Buffer)
+	err = jpeg.Encode(rcImageJpeg, croppedImage, nil)
+	if err != nil {
+		return "", err
+	}
+
+	imageID := random.RandomString(5)
+
+	k := fmt.Sprintf("u/%d/r_%s.jpg", accountID, imageID)
+	link, err := s.storage.PushPath(k, rcImageJpeg)
+	if err != nil {
+		return "", err
+	}
+
+	go func() {
+		logger := s.logger.
+			WithField("account_id", accountID).
+			WithField("image_id", imageID)
+		originalImageJpeg := new(bytes.Buffer)
+		err = jpeg.Encode(originalImageJpeg, imageData, nil)
+		if err != nil {
+			logger.WithError(err).Error("failed to encode account image")
+			return
+		}
+
+		k = fmt.Sprintf("u/%d/o_%s.jpg", accountID, imageID)
+		_, err = s.storage.PushPath(k, originalImageJpeg)
+		if err != nil {
+			logger.WithError(err).Error("failed to push account image to storage")
+			return
+		}
+	}()
+
+	return link, nil
 }

@@ -632,6 +632,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "image_url": {
+          "type": "string"
         }
       }
     },

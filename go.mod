@@ -24,7 +24,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/ipfs/go-ipfs-api v0.2.0
+	github.com/ipfs/go-ipfs-api v0.2.0 // indirect
 	github.com/jinzhu/copier v0.2.8 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kkdai/youtube/v2 v2.6.1
@@ -34,7 +34,8 @@ require (
 	github.com/lestrrat/go-pdebug v0.0.0-20180220043741-569c97477ae8 // indirect
 	github.com/lib/pq v1.10.0
 	github.com/libp2p/go-libp2p-core v0.7.0 // indirect
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/oliamb/cutter v0.2.2
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/plutov/echo-logrus v1.0.0
 	github.com/prometheus/client_golang v1.9.0

@@ -6,8 +6,9 @@ import (
 	accountsv1 "github.com/videocoin/marketplace/api/v1/accounts"
 	marketplacev1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/internal/accounts"
-	"github.com/videocoin/marketplace/internal/marketplace"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/marketplace"
+	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/grpcutil"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -24,6 +25,7 @@ type Server struct {
 	grpcOpts   []grpc.ServerOption
 	authSecret string
 	ds         *datastore.Datastore
+	storage    *storage.Storage
 }
 
 func NewServer(ctx context.Context, opts ...Option) (*Server, error) {
@@ -56,6 +58,7 @@ func NewServer(ctx context.Context, opts ...Option) (*Server, error) {
 			accounts.WithValidator(validator),
 			accounts.WithDatastore(srv.ds),
 			accounts.WithAuthSecret(srv.authSecret),
+			accounts.WithStorage(srv.storage),
 		),
 	)
 	marketplacev1.RegisterMarketplaceServiceServer(

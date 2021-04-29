@@ -3,6 +3,7 @@ package rpc
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/storage"
 	"google.golang.org/grpc"
 )
 
@@ -39,6 +40,13 @@ func WithDatastore(ds *datastore.Datastore) Option {
 func WithAuthSecret(secret string) Option {
 	return func(s *Server) error {
 		s.authSecret = secret
+		return nil
+	}
+}
+
+func WithStorage(storage *storage.Storage) Option {
+	return func(s *Server) error {
+		s.storage = storage
 		return nil
 	}
 }

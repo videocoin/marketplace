@@ -76,6 +76,12 @@ func toCreatorResponse(creator *model.Account) *v1.CreatorResponse {
 		resp.Name = &types.StringValue{Value: creator.Name.String}
 	}
 
+	if creator.ImageURL.Valid {
+		resp.ImageUrl = &types.StringValue{
+			Value: creator.ImageURL.String,
+		}
+	}
+
 	return resp
 }
 

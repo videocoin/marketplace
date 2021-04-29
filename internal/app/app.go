@@ -67,6 +67,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		rpc.WithGRPCServerOpts(grpcutil.DefaultServerOpts(logger)),
 		rpc.WithAuthSecret(cfg.AuthSecret),
 		rpc.WithDatastore(ds),
+		rpc.WithStorage(storageCli),
 	)
 	if err != nil {
 		return nil, err
