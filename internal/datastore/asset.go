@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/AlekSi/pointer"
 	"github.com/gocraft/dbr/v2"
-	v1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 	"time"
@@ -309,7 +308,7 @@ func (ds *AssetDatastore) MarkJobStatusAs(ctx context.Context, asset *model.Asse
 	return nil
 }
 
-func (ds *AssetDatastore) MarkStatusAs(ctx context.Context, asset *model.Asset, status v1.AssetStatus) error {
+func (ds *AssetDatastore) MarkStatusAs(ctx context.Context, asset *model.Asset, status model.AssetStatus) error {
 	var err error
 	tx, ok := dbrutil.DbTxFromContext(ctx)
 	if !ok {
@@ -340,15 +339,15 @@ func (ds *AssetDatastore) MarkStatusAs(ctx context.Context, asset *model.Asset, 
 }
 
 func (ds *AssetDatastore) MarkStatusAsProcessing(ctx context.Context, asset *model.Asset) error {
-	return ds.MarkStatusAs(ctx, asset, v1.AssetStatusProcessing)
+	return ds.MarkStatusAs(ctx, asset, model.AssetStatusProcessing)
 }
 
 func (ds *AssetDatastore) MarkStatusAsReady(ctx context.Context, asset *model.Asset) error {
-	return ds.MarkStatusAs(ctx, asset, v1.AssetStatusReady)
+	return ds.MarkStatusAs(ctx, asset, model.AssetStatusReady)
 }
 
 func (ds *AssetDatastore) MarkStatusAsFailed(ctx context.Context, asset *model.Asset) error {
-	return ds.MarkStatusAs(ctx, asset, v1.AssetStatusFailed)
+	return ds.MarkStatusAs(ctx, asset, model.AssetStatusFailed)
 }
 
 func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *LimitOpts) ([]*model.Asset, error) {

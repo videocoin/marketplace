@@ -4,8 +4,7 @@ type Config struct {
 	Name    string `envconfig:"-"`
 	Version string `envconfig:"-"`
 
-	RPCAddr    string `envconfig:"RPC_ADDR" default:"0.0.0.0:8888"`
-	GWAddr     string `envconfig:"GW_ADDR" default:"0.0.0.0:8088"`
+	Addr       string `envconfig:"ADDR" default:"0.0.0.0:8088"`
 	DBURI      string `envconfig:"DBURI" default:"host=127.0.0.1 port=5432 dbname=marketplace sslmode=disable"`
 	AuthSecret string `envconfig:"AUTH_SECRET"`
 

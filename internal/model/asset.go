@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/gocraft/dbr/v2"
 	"github.com/kkdai/youtube/v2"
-	marketplacev1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/pkg/random"
 	"gopkg.in/vansante/go-ffprobe.v2"
 	"os"
@@ -81,6 +80,15 @@ func (p *AssetProbe) Scan(value interface{}) error {
 	return json.Unmarshal(b, &p)
 }
 
+type AssetStatus string
+
+const (
+	AssetStatusUnknown    AssetStatus = "UNKNOWN"
+	AssetStatusProcessing AssetStatus = "PROCESSING"
+	AssetStatusReady      AssetStatus = "READY"
+	AssetStatusFailed     AssetStatus = "FAILED"
+)
+
 type Asset struct {
 	ID          int64      `db:"id"`
 	CreatedAt   *time.Time `db:"created_at"`
@@ -103,7 +111,7 @@ type Asset struct {
 	DRMKeyID string `db:"drm_key_id"`
 	EK       string `db:"ek"`
 
-	Status marketplacev1.AssetStatus `db:"status"`
+	Status AssetStatus `db:"status"`
 
 	JobID     dbr.NullString `db:"job_id"`
 	JobStatus dbr.NullString `db:"job_status"`
@@ -112,7 +120,7 @@ type Asset struct {
 }
 
 func (a *Asset) StatusIsFailed() bool {
-	return a.Status == marketplacev1.AssetStatusFailed
+	return a.Status == AssetStatusFailed
 }
 
 func (a *Asset) GetURL() string {
@@ -124,7 +132,7 @@ func (a *Asset) GetEncryptedURL() string {
 }
 
 func (a *Asset) GetPreviewURL() string {
-	if a.Status == marketplacev1.AssetStatusReady {
+	if a.Status == AssetStatusReady {
 		return a.PreviewURL.String
 	}
 

@@ -3,7 +3,7 @@ package datastore
 import "github.com/AlekSi/pointer"
 
 const (
-	DefaultLimit = uint64(50)
+	DefaultLimit    = uint64(50)
 	DefaultMaxLimit = uint64(100)
 )
 
@@ -22,6 +22,6 @@ func NewLimitOpts(offset, limit uint64) *LimitOpts {
 	}
 	return &LimitOpts{
 		Offset: pointer.ToUint64(offset),
-		Limit: pointer.ToUint64(newLimit),
+		Limit:  pointer.ToUint64(newLimit),
 	}
 }

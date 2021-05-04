@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/kkdai/youtube/v2"
 	"github.com/sirupsen/logrus"
-	v1 "github.com/videocoin/marketplace/api/v1/marketplace"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
@@ -327,7 +326,7 @@ func (mc *MediaConverter) runConvertJob(wg *sync.WaitGroup, job model.MediaConve
 			}
 
 			asset, _ := mc.ds.Assets.GetByID(ctx, job.Asset.ID)
-			if asset != nil && asset.Status != v1.AssetStatusFailed {
+			if asset != nil && !asset.StatusIsFailed() {
 				_ = mc.ds.Assets.MarkStatusAsReady(ctx, job.Asset)
 			}
 

@@ -1,7 +1,5 @@
 protoc: protoc-rpc \
-	protoc-v1-accounts \
 	protoc-v1-marketplace \
-	protoc-gw-v1-accounts \
 	protoc-gw-v1-marketplace
 
 protoc-rpc:
