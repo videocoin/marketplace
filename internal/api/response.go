@@ -45,11 +45,11 @@ type AssetResponse struct {
 }
 
 type ArtResponse struct {
-	ID          int64            `json:"id,omitempty"`
-	Name        string           `json:"name,omitempty"`
-	Description string           `json:"description,omitempty"`
-	Asset       *AssetResponse   `json:"asset,omitempty"`
-	Creator     *AccountResponse `json:"creator,omitempty"`
+	ID          int64            `json:"id"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Asset       *AssetResponse   `json:"asset"`
+	Creator     *AccountResponse `json:"creator"`
 }
 
 type ArtsResponse struct {
