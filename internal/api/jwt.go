@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/videocoin/marketplace/internal/model"
-	"github.com/videocoin/marketplace/pkg/auth"
+	"github.com/videocoin/marketplace/internal/auth"
 	"strconv"
 	"time"
 )

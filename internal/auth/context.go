@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"github.com/dgrijalva/jwt-go"
+	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 )
 
 type key int
@@ -38,3 +40,35 @@ func JWTClaimsFromContext(ctx context.Context) (*Claims, bool) {
 	claims, ok := ctx.Value(jwtClaimsKey).(*Claims)
 	return claims, ok
 }
+
+func AuthFromContext(ctx context.Context) (context.Context, error) {
+	tokenStr, err := grpcauth.AuthFromMD(ctx, "bearer")
+	if err != nil {
+		return ctx, ErrInvalidToken
+	}
+
+	secret, ok := SecretKeyFromContext(ctx)
+	if !ok {
+		return ctx, ErrInvalidToken
+	}
+
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return ctx, err
+	}
+
+	if !token.Valid {
+		return ctx, ErrInvalidToken
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok {
+		return ctx, ErrInvalidToken
+	}
+
+	ctx = NewContextWithJWTClaims(ctx, claims)
+	return ctx, nil
+}
+

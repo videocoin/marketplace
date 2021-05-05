@@ -61,25 +61,18 @@ github.com/fomichev/secp256k1
 github.com/getsentry/raven-go
 # github.com/go-playground/locales v0.13.0
 ## explicit
-github.com/go-playground/locales
-github.com/go-playground/locales/currency
-github.com/go-playground/locales/en
 # github.com/go-playground/universal-translator v0.17.0
 ## explicit
-github.com/go-playground/universal-translator
 # github.com/gocraft/dbr/v2 v2.7.1
 ## explicit
 github.com/gocraft/dbr/v2
 github.com/gocraft/dbr/v2/dialect
 # github.com/gogo/googleapis v1.4.0
 ## explicit
-github.com/gogo/googleapis/google/api
 github.com/gogo/googleapis/google/rpc
 # github.com/gogo/protobuf v1.3.2
 ## explicit
-github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
-github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/types
 # github.com/gogo/status v1.1.0
@@ -88,18 +81,13 @@ github.com/gogo/status
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.5.2
 ## explicit
-github.com/golang/protobuf/descriptor
 github.com/golang/protobuf/internal/gengogrpc
-github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go
-github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
-github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/ptypes/timestamp
-github.com/golang/protobuf/ptypes/wrappers
 # github.com/google/go-cmp v0.5.5
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -114,22 +102,13 @@ github.com/gosimple/slug
 ## explicit
 github.com/grpc-ecosystem/go-grpc-middleware
 github.com/grpc-ecosystem/go-grpc-middleware/auth
-github.com/grpc-ecosystem/go-grpc-middleware/logging
-github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus
 github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus
 github.com/grpc-ecosystem/go-grpc-middleware/tags
-github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing
 github.com/grpc-ecosystem/go-grpc-middleware/util/metautils
-github.com/grpc-ecosystem/go-grpc-middleware/validator
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 ## explicit
-github.com/grpc-ecosystem/go-grpc-prometheus
 # github.com/grpc-ecosystem/grpc-gateway v1.16.0
 ## explicit
-github.com/grpc-ecosystem/grpc-gateway/internal
-github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options
-github.com/grpc-ecosystem/grpc-gateway/runtime
-github.com/grpc-ecosystem/grpc-gateway/utilities
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.1.0
@@ -166,7 +145,6 @@ github.com/labstack/gommon/log
 github.com/labstack/gommon/random
 # github.com/leodido/go-urn v1.2.1
 ## explicit
-github.com/leodido/go-urn
 # github.com/lestrrat/go-jwx v0.0.0-20210302221443-a9d01c1b7121
 ## explicit
 # github.com/lestrrat/go-pdebug v0.0.0-20180220043741-569c97477ae8
@@ -222,9 +200,6 @@ github.com/nfnt/resize
 github.com/oliamb/cutter
 # github.com/opentracing/opentracing-go v1.2.0
 ## explicit
-github.com/opentracing/opentracing-go
-github.com/opentracing/opentracing-go/ext
-github.com/opentracing/opentracing-go/log
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/plutov/echo-logrus v1.0.0
@@ -401,7 +376,6 @@ google.golang.org/appengine/urlfetch
 # google.golang.org/genproto v0.0.0-20210329143202-679c6ae281ee
 ## explicit
 google.golang.org/genproto/googleapis/api/annotations
-google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/cloud/video/transcoder/v1beta1
 google.golang.org/genproto/googleapis/iam/v1
 google.golang.org/genproto/googleapis/pubsub/v1
@@ -436,8 +410,6 @@ google.golang.org/grpc/credentials/oauth
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
-google.golang.org/grpc/health
-google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancerload
@@ -463,8 +435,6 @@ google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
-google.golang.org/grpc/reflection
-google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/resolver
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
@@ -473,14 +443,12 @@ google.golang.org/grpc/tap
 # google.golang.org/protobuf v1.26.0
 google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo
 google.golang.org/protobuf/compiler/protogen
-google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/encoding/defval
-google.golang.org/protobuf/internal/encoding/json
 google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
@@ -506,14 +474,10 @@ google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/fieldmaskpb
-google.golang.org/protobuf/types/known/structpb
 google.golang.org/protobuf/types/known/timestamppb
-google.golang.org/protobuf/types/known/wrapperspb
 google.golang.org/protobuf/types/pluginpb
 # gopkg.in/go-playground/validator.v9 v9.31.0
 ## explicit
-gopkg.in/go-playground/validator.v9
-gopkg.in/go-playground/validator.v9/translations/en
 # gopkg.in/vansante/go-ffprobe.v2 v2.0.2
 ## explicit
 gopkg.in/vansante/go-ffprobe.v2
