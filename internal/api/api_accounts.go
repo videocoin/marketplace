@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
+	"github.com/videocoin/marketplace/internal/auth"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/random"
@@ -105,7 +106,7 @@ func (s *Server) auth(c echo.Context) error {
 		return err
 	}
 
-	token, err := CreateAuthToken(ctx, s.authSecret, account)
+	token, err := auth.CreateAuthToken(ctx, s.authSecret, account)
 	if err != nil {
 		return err
 	}
