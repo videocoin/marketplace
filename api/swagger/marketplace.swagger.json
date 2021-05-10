@@ -1,0 +1,1075 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Marketplace API",
+    "version": "1.0"
+  },
+  "host": "marketplace.dev.videocoin.network",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/account": {
+      "get": {
+        "summary": "Get account info",
+        "operationId": "GetAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AccountResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "tags": [
+          "Proifle"
+        ]
+      },
+      "put": {
+        "summary": "Update account info",
+        "operationId": "UpdateAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AccountResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateAccountRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Proifle"
+        ]
+      }
+    },
+    "/api/v1/accounts": {
+      "post": {
+        "summary": "Register account",
+        "operationId": "Register",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/RegisterResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Registration"
+        ]
+      }
+    },
+    "/api/v1/accounts/{address}/nonce": {
+      "get": {
+        "summary": "Get nonce by address account",
+        "operationId": "GetNonce",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/NonceResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Registration"
+        ]
+      }
+    },
+    "/api/v1/auth": {
+      "post": {
+        "summary": "Auth",
+        "operationId": "Auth",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AuthResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "summary": "Get list of assets",
+        "operationId": "GetAssets",
+        "security": [],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "tags": [
+          "Assets"
+        ]
+      },
+      "post": {
+        "summary": "Create asset",
+        "operationId": "CreateAsset",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateAssetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/assets/upload": {
+      "post": {
+        "summary": "Upload asset",
+        "operationId": "UploadAsset",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formdata",
+            "type": "file",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/assets/ytupload": {
+      "post": {
+        "summary": "Upload asset from YouTube",
+        "operationId": "YTUploadAsset",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/YTUploadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/assets/{id}": {
+      "get": {
+        "summary": "Get detail asset info",
+        "operationId": "GetAsset",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/asset/{contract_address}/{token_id}": {
+      "get": {
+        "summary": "Get detail asset info by contract address and token id",
+        "operationId": "GetAssetByContractAddressAndTokenID",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "contract_address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "token_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/creators": {
+      "get": {
+        "summary": "Get list of creators",
+        "operationId": "GetCreators",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AccountsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Creators"
+        ]
+      }
+    },
+    "/api/v1/creators/{creator_id}/assets": {
+      "get": {
+        "summary": "Get list of assets by creator",
+        "operationId": "GetAssetsByCreator",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "creator_id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/creators/{id}": {
+      "get": {
+        "summary": "Get detail info about creator",
+        "operationId": "GetCreator",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AccountResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Creators"
+        ]
+      }
+    },
+    "/api/v1/my/assets": {
+      "get": {
+        "summary": "Get list of my assets",
+        "operationId": "GetMyAssets",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "tags": [
+          "Assets"
+        ]
+      }
+    },
+    "/api/v1/spotlight/assets/featured": {
+      "get": {
+        "summary": "Get list of featured assets",
+        "operationId": "GetSpotlightFeaturedAssets",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "tags": [
+          "Spotlight"
+        ]
+      }
+    },
+    "/api/v1/spotlight/assets/live": {
+      "get": {
+        "summary": "Get list of live assets",
+        "operationId": "GetSpotlightLiveAssets",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AssetsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "tags": [
+          "Spotlight"
+        ]
+      }
+    },
+    "/api/v1/spotlight/creators/featured": {
+      "get": {
+        "summary": "Get list of featured creators",
+        "operationId": "GetSpotlightFeaturedCreators",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AccountsResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Spotlight"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthRequest": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        }
+      }
+    },
+    "YTUploadRequest": {
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string"
+        }
+      }
+    },
+    "CreateAssetRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "asset_id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "desc": {
+          "type": "string"
+        },
+        "yt_video_link": {
+          "type": "string"
+        }
+      }
+    },
+    "RegisterResponse": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "nonce": {
+          "type": "string"
+        }
+      }
+    },
+    "NonceResponse": {
+      "type": "object",
+      "properties": {
+        "nonce": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateAccountRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "image_data": {
+          "type": "string"
+        }
+      }
+    },
+    "AuthResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "UserResponse": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "AccountResponse": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/UserResponse"
+        },
+        "image_url": {
+          "type": "string"
+        }
+      }
+    },
+    "AccountsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AccountResponse"
+          }
+        },
+        "total_count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "prev": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "next": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "AssetContractResponse": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "asset_contract_type": {
+          "type": "string"
+        },
+        "schema_name": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "buyer_fee_basis_points": {
+          "type": "number"
+        },
+        "seller_fee_basis_points": {
+          "type": "number"
+        },
+        "opensea_buyer_fee_basis_points": {
+          "type": "number"
+        },
+        "opensea_seller_fee_basis_points": {
+          "type": "number"
+        },
+        "dev_buyer_fee_basis_points": {
+          "type": "number"
+        },
+        "dev_seller_fee_basis_points": {
+          "type": "number"
+        }
+      }
+    },
+    "AssetResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "token_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "content_type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "thumbnail_url": {
+          "type": "string"
+        },
+        "preview_url": {
+          "type": "string"
+        },
+        "encrypted_url": {
+          "type": "string"
+        },
+        "yt_video_id": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/AccountResponse"
+        },
+        "asset_contract": {
+          "$ref": "#/definitions/AssetContractResponse"
+        }
+      }
+    },
+    "AssetsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetResponse"
+          }
+        },
+        "total_count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "prev": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "next": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "ApiKeyAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}

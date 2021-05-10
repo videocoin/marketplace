@@ -59,6 +59,7 @@ func (s *Server) route() {
 	s.e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	v1 := s.e.Group("/api/v1")
+	v1.GET("/swagger.json", s.getSwagger)
 
 	registerGroup := v1.Group("/accounts")
 	registerGroup.POST("", s.register)
