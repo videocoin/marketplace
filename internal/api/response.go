@@ -77,6 +77,17 @@ type AssetsResponse struct {
 	Next       bool             `json:"next"`
 }
 
+type TokenResponse struct {
+	ID       int64   `json:"id"`
+	Symbol   string  `json:"symbol"`
+	Address  string  `json:"address"`
+	ImageURL string  `json:"image_url"`
+	Name     string  `json:"name"`
+	Decimals int     `json:"decimals"`
+	EthPrice float64 `json:"eth_price"`
+	USDPrice float64 `json:"usd_price"`
+}
+
 type ItemsCountResponse struct {
 	TotalCount int64
 	Count      int64

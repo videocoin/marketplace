@@ -466,7 +466,7 @@ func (s *Server) getAsset(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (s *Server) getAssetWithCA(c echo.Context) error {
+func (s *Server) getAssetByContractAddressAndTokenID(c echo.Context) error {
 	ctx := context.Background()
 
 	ca := c.Param("contract_address")
