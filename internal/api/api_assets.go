@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/AlekSi/pointer"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
 	"github.com/hashicorp/go-multierror"
 	"github.com/labstack/echo/v4"
@@ -337,6 +338,11 @@ func (s *Server) createAsset(c echo.Context) error {
 
 	updatedFields := &datastore.AssetUpdatedFields{
 		ContractAddress: pointer.ToString(s.minter.ContractAddress().Hex()),
+	}
+
+	err = s.minter.Mint(ctx, common.HexToAddress(account.Address))
+	if err != nil {
+		return err
 	}
 
 	assetName := strings.TrimSpace(req.Name)

@@ -19,12 +19,16 @@ type AuthResponse struct {
 	Token string `json:"token"`
 }
 
-type AccountResponse struct {
-	ID       int64   `json:"id"`
-	Address  string  `json:"address"`
+type UserResponse struct {
 	Username *string `json:"username"`
 	Name     *string `json:"name"`
-	ImageUrl *string `json:"image_url"`
+}
+
+type AccountResponse struct {
+	ID       int64         `json:"id"`
+	Address  string        `json:"address"`
+	ImageUrl *string       `json:"profile_img_url"`
+	User     *UserResponse `json:"user"`
 }
 
 type AccountsResponse struct {
@@ -97,14 +101,15 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 	resp := &AccountResponse{
 		ID:      account.ID,
 		Address: account.Address,
+		User:    &UserResponse{},
 	}
 
 	if account.Username.Valid {
-		resp.Username = pointer.ToString(account.Username.String)
+		resp.User.Username = pointer.ToString(account.Username.String)
 	}
 
 	if account.Name.Valid {
-		resp.Name = pointer.ToString(account.Name.String)
+		resp.User.Name = pointer.ToString(account.Name.String)
 	}
 
 	if account.ImageURL.Valid {
