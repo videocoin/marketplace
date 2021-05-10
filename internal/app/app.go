@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	minter "github.com/videocoin/marketplace/internal/minter"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/api"
@@ -55,16 +56,21 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	m, err := minter.NewMinter(cfg.BlockchainURL, cfg.ERC1155ContractAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	apiSrv, err := api.NewServer(
 		ctx,
 		api.WithAddr(cfg.Addr),
 		api.WithLogger(logger.WithField("system", "assets")),
 		api.WithAuthSecret(cfg.AuthSecret),
-		api.WithERC1155ContractAddress(cfg.ERC1155ContractAddress),
 		api.WithDatastore(ds),
 		api.WithStorage(storageCli),
 		api.WithGCPBucket(cfg.GCPBucket),
 		api.WithMediaConverter(mc),
+		api.WithMinter(m),
 	)
 	if err != nil {
 		return nil, err

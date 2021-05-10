@@ -12,6 +12,7 @@ import (
 	"github.com/videocoin/marketplace/internal/auth"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/storage"
 	"net/http"
 )
@@ -21,12 +22,12 @@ type Server struct {
 	addr       string
 	authSecret string
 	gcpBucket  string
-	erc1155ca  string
 	ds         *datastore.Datastore
 	storage    *storage.Storage
 	mc         *mediaconverter.MediaConverter
 	yt         *youtube.Client
 	e          *echo.Echo
+	minter     *minter.Minter
 }
 
 func NewServer(ctx context.Context, opts ...ServerOption) (*Server, error) {

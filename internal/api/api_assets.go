@@ -336,7 +336,7 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	updatedFields := &datastore.AssetUpdatedFields{
-		ContractAddress: pointer.ToString(s.erc1155ca),
+		ContractAddress: pointer.ToString(s.minter.ContractAddress().Hex()),
 	}
 
 	assetName := strings.TrimSpace(req.Name)

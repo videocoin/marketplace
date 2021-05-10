@@ -92,6 +92,7 @@ github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1/src/modules/recove
 github.com/ethereum/go-ethereum/eth/downloader
 github.com/ethereum/go-ethereum/eth/protocols/eth
 github.com/ethereum/go-ethereum/eth/protocols/snap
+github.com/ethereum/go-ethereum/ethclient
 github.com/ethereum/go-ethereum/ethdb
 github.com/ethereum/go-ethereum/ethdb/leveldb
 github.com/ethereum/go-ethereum/ethdb/memorydb

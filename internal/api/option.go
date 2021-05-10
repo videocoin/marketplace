@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 )
@@ -58,9 +59,9 @@ func WithStorage(storage *storage.Storage) ServerOption {
 	}
 }
 
-func WithERC1155ContractAddress(addr string) ServerOption {
+func WithMinter(m *minter.Minter) ServerOption {
 	return func(s *Server) error {
-		s.erc1155ca = addr
+		s.minter = m
 		return nil
 	}
 }

@@ -19,5 +19,6 @@ type Config struct {
 	TextileThreadID      string `envconfig:"TEXTILE_THREAD_ID"`
 	TextileBucketRootKey string `envconfig:"TEXTILE_BUCKET_ROOT_KEY"`
 
+	BlockchainURL          string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
 	ERC1155ContractAddress string `envconfig:"ERC1155_CONTRACT_ADDRESS"`
 }
