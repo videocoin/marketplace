@@ -4,8 +4,6 @@ VERSION?=$$(git rev-parse HEAD)
 REGISTRY_SERVER?=registry.videocoin.net
 REGISTRY_PROJECT?=cloud
 
-include protoc.mk
-
 default: build
 version:
 	@echo ${VERSION}
