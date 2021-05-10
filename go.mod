@@ -28,6 +28,7 @@ require (
 	github.com/jinzhu/copier v0.2.8 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kkdai/youtube/v2 v2.6.1
+	github.com/labstack/echo v3.3.10+incompatible // indirect
 	github.com/labstack/echo/v4 v4.2.1
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat/go-jwx v0.0.0-20210302221443-a9d01c1b7121 // indirect
