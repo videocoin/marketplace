@@ -14,7 +14,7 @@ func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
-		Sort: &datastore.DatastoreSort{
+		Sort: &datastore.SortOption{
 			Field: "id",
 			IsAsc: true,
 		},
@@ -43,7 +43,7 @@ func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
-		Sort: &datastore.DatastoreSort{
+		Sort: &datastore.SortOption{
 			Field: "name",
 			IsAsc: false,
 		},
@@ -72,7 +72,7 @@ func (s *Server) getSpotlightFeaturedCreators(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AccountsFilter{
-		Sort: &datastore.DatastoreSort{
+		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: true,
 		},

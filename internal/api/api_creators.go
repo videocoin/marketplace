@@ -16,7 +16,7 @@ func (s *Server) GetCreators(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AccountsFilter{
-		Sort: &datastore.DatastoreSort{
+		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: true,
 		},

@@ -9,11 +9,6 @@ import (
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 )
 
-type SortOption struct {
-	Field string
-	IsAsc bool
-}
-
 type Datastore struct {
 	conn *dbr.Connection
 

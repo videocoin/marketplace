@@ -20,7 +20,7 @@ func (s *Server) getMyAssets(c echo.Context) error {
 
 	fltr := &datastore.AssetsFilter{
 		CreatedByID: pointer.ToInt64(account.ID),
-		Sort: &datastore.DatastoreSort{
+		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,
 		},
