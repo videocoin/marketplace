@@ -9,7 +9,8 @@
     "https"
   ],
   "consumes": [
-    "application/json"
+    "application/json",
+    "multipart/form-data"
   ],
   "produces": [
     "application/json"
@@ -339,7 +340,7 @@
         "parameters": [
           {
             "name": "file",
-            "in": "formdata",
+            "in": "formData",
             "type": "file",
             "required": true
           }
