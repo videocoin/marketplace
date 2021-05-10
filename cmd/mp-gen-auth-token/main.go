@@ -31,6 +31,7 @@ func main() {
 	}
 
 	address := os.Getenv("ACCOUNT_ADDRESS")
+	pk := os.Getenv("ACCOUNT_PUBLIC_KEY")
 	isNew := strings.ToLower(os.Getenv("NEW_ACCOUNT"))
 
 	var account *model.Account
@@ -39,11 +40,20 @@ func main() {
 		log.Fatal("invalid account address")
 	}
 
+	if pk == "" {
+		log.Fatal("invalid account public key")
+	}
+
 	if isNew == "y" {
 		account = &model.Account{Address: strings.ToLower(address)}
 		err := ds.Accounts.Create(ctx, account)
 		if err != nil {
 			log.Fatalf("failed to get account by address: %s", err)
+		}
+
+		err = ds.Accounts.UpdatePublicKey(ctx, account, pk)
+		if err != nil {
+			log.Fatalf("failed to update public key: %s", err)
 		}
 	} else {
 		account, err = ds.Accounts.GetByAddress(ctx, address)
