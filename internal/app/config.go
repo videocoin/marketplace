@@ -6,7 +6,7 @@ type Config struct {
 
 	Addr       string `envconfig:"ADDR" default:"0.0.0.0:8088"`
 	DBURI      string `envconfig:"DBURI" default:"host=127.0.0.1 port=5432 dbname=marketplace sslmode=disable"`
-	AuthSecret string `envconfig:"AUTH_SECRET"`
+	AuthSecret string `envconfig:"AUTH_SECRET" default:"secret"`
 
 	GCPBucket             string `envconfig:"GCP_BUCKET"`
 	GCPProject            string `envconfig:"GCP_PROJECT"`

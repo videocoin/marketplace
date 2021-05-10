@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	ErrAccountNotFound = errors.New("account is not found")
+	ErrAccountNotFound = errors.New("account not found")
 )
 
 type UpdateAccountFields struct {
