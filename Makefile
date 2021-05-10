@@ -4,6 +4,8 @@ VERSION?=$$(git rev-parse HEAD)
 REGISTRY_SERVER?=registry.videocoin.net
 REGISTRY_PROJECT?=cloud
 
+DB_URI?="host=127.0.0.1 port=5432 dbname=marketplace sslmode=disable"
+
 default: build
 version:
 	@echo ${VERSION}
@@ -34,3 +36,12 @@ docker-push:
 	docker push ${REGISTRY_SERVER}/${REGISTRY_PROJECT}/${NAME}:${VERSION}
 
 release: docker-build docker-push
+
+db-status:
+	goose -dir migrations postgres ${DB_URI} status
+
+db-up:
+	goose -dir migrations postgres ${DB_URI} up
+
+db-down:
+	goose -dir migrations postgres ${DB_URI} down
