@@ -5,11 +5,6 @@ type DatastoreSort struct {
 	IsAsc bool
 }
 
-type ArtsFilter struct {
-	CreatedByID *int64
-	Sort        *DatastoreSort
-}
-
 type AssetsFilter struct {
 	CreatedByID *int64
 	Sort        *DatastoreSort

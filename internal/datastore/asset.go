@@ -14,6 +14,12 @@ var (
 	ErrAssetNotFound = errors.New("asset not found")
 )
 
+type AssetUpdatedFields struct {
+	Name        *string
+	Desc        *string
+	YTVideoLink *string
+}
+
 type AssetDatastore struct {
 	conn  *dbr.Connection
 	table string
@@ -126,6 +132,46 @@ func (ds *AssetDatastore) GetByJobID(ctx context.Context, id string) (*model.Ass
 	}
 
 	return asset, nil
+}
+
+func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields AssetUpdatedFields) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	stmt := tx.Update(ds.table)
+	if fields.Name != nil {
+		stmt.Set("name", dbr.NewNullString(*fields.Name))
+		asset.Name = dbr.NewNullString(*fields.Name)
+	}
+
+	if fields.Desc != nil {
+		stmt.Set("desc", dbr.NewNullString(*fields.Desc))
+		asset.Desc = dbr.NewNullString(*fields.Desc)
+	}
+
+	if fields.YTVideoLink != nil {
+		stmt.Set("yt_video_link", dbr.NewNullString(*fields.YTVideoLink))
+		asset.YTVideoLink = dbr.NewNullString(*fields.YTVideoLink)
+	}
+
+	_, err = stmt.Where("id = ?", asset.ID).ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ds *AssetDatastore) UpdateJobID(ctx context.Context, asset *model.Asset, jobID string) error {
@@ -373,6 +419,9 @@ func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *L
 		if fltr.CreatedByID != nil {
 			selectStmt = selectStmt.Where("created_by_id = ?", *fltr.CreatedByID)
 		}
+		if fltr.Sort != nil && fltr.Sort.Field != "" {
+			selectStmt = selectStmt.OrderDir(fltr.Sort.Field, fltr.Sort.IsAsc)
+		}
 	}
 
 	if limit != nil {
@@ -390,4 +439,37 @@ func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *L
 	}
 
 	return assets, nil
+}
+
+func (ds *AssetDatastore) Count(ctx context.Context, fltr *AssetsFilter) (int64, error) {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return 0, err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	count := int64(0)
+
+	selectStmt := tx.Select("COUNT(id)").From(ds.table)
+	if fltr != nil {
+		if fltr.CreatedByID != nil {
+			selectStmt = selectStmt.Where("created_by_id = ?", *fltr.CreatedByID)
+		}
+	}
+
+	err = selectStmt.LoadOneContext(ctx, &count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

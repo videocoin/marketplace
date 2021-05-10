@@ -36,28 +36,23 @@ type AccountsResponse struct {
 
 type AssetResponse struct {
 	ID           int64             `json:"id"`
+	Name         *string           `json:"name"`
+	Desc         *string           `json:"desc"`
 	ContentType  string            `json:"content_type"`
 	Status       model.AssetStatus `json:"status"`
-	ThumbnailUrl *string           `json:"thumbnail_url"`
-	PreviewUrl   *string           `json:"preview_url"`
-	EncryptedUrl *string           `json:"encrypted_url"`
-	YtVideoId    *string           `json:"yt_video_id"`
+	ThumbnailURL *string           `json:"thumbnail_url"`
+	PreviewURL   *string           `json:"preview_url"`
+	EncryptedURL *string           `json:"encrypted_url"`
+	YTVideoID    *string           `json:"yt_video_id"`
+	Creator      *AccountResponse  `json:"creator"`
 }
 
-type ArtResponse struct {
-	ID          int64            `json:"id"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Asset       *AssetResponse   `json:"asset"`
-	Creator     *AccountResponse `json:"creator"`
-}
-
-type ArtsResponse struct {
-	Items      []*ArtResponse `json:"items"`
-	TotalCount int64          `json:"total_count"`
-	Count      int64          `json:"count"`
-	Prev       bool           `json:"prev"`
-	Next       bool           `json:"next"`
+type AssetsResponse struct {
+	Items      []*AssetResponse `json:"items"`
+	TotalCount int64            `json:"total_count"`
+	Count      int64            `json:"count"`
+	Prev       bool             `json:"prev"`
+	Next       bool             `json:"next"`
 }
 
 type ItemsCountResponse struct {
@@ -108,43 +103,34 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		Status:      asset.Status,
 	}
 
+	if asset.Name.Valid {
+		resp.Name = pointer.ToString(asset.Name.String)
+	}
+
+	if asset.Desc.Valid {
+		resp.Name = pointer.ToString(asset.Desc.String)
+	}
+
 	if asset.Status == model.AssetStatusReady {
-		resp.ThumbnailUrl = pointer.ToString(asset.GetThumbnailURL())
-		resp.PreviewUrl = pointer.ToString(asset.GetPreviewURL())
-		resp.EncryptedUrl = pointer.ToString(asset.GetEncryptedURL())
+		resp.ThumbnailURL = pointer.ToString(asset.GetThumbnailURL())
+		resp.PreviewURL = pointer.ToString(asset.GetPreviewURL())
+		resp.EncryptedURL = pointer.ToString(asset.GetEncryptedURL())
+	}
+
+	if asset.Account != nil {
+		resp.Creator = toAccountResponse(asset.Account)
 	}
 
 	return resp
 }
 
-func toArtResponse(art *model.Art) *ArtResponse {
-	resp := &ArtResponse{
-		ID:   art.ID,
-		Name: art.Name,
+func toAssetsResponse(assets []*model.Asset, count *ItemsCountResponse) *AssetsResponse {
+	resp := &AssetsResponse{
+		Items: []*AssetResponse{},
 	}
 
-	if art.Desc.Valid {
-		resp.Description = art.Desc.String
-	}
-
-	if art.Asset != nil {
-		resp.Asset = toAssetResponse(art.Asset)
-	}
-
-	if art.Account != nil {
-		resp.Creator = toAccountResponse(art.Account)
-	}
-
-	return resp
-}
-
-func toArtsResponse(arts []*model.Art, count *ItemsCountResponse) *ArtsResponse {
-	resp := &ArtsResponse{
-		Items: []*ArtResponse{},
-	}
-
-	for _, art := range arts {
-		resp.Items = append(resp.Items, toArtResponse(art))
+	for _, asset := range assets {
+		resp.Items = append(resp.Items, toAssetResponse(asset))
 	}
 
 	resp.Count = int64(len(resp.Items))
@@ -157,17 +143,13 @@ func toArtsResponse(arts []*model.Art, count *ItemsCountResponse) *ArtsResponse 
 	return resp
 }
 
-func toCreatorResponse(account *model.Account) *AccountResponse {
-	return toAccountResponse(account)
-}
-
-func toCreatorsResponse(creators []*model.Account, count *ItemsCountResponse) *AccountsResponse {
+func toAccountsResponse(creators []*model.Account, count *ItemsCountResponse) *AccountsResponse {
 	resp := &AccountsResponse{
 		Items: []*AccountResponse{},
 	}
 
 	for _, creator := range creators {
-		resp.Items = append(resp.Items, toCreatorResponse(creator))
+		resp.Items = append(resp.Items, toAccountResponse(creator))
 	}
 
 	resp.Count = int64(len(resp.Items))

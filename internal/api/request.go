@@ -19,9 +19,9 @@ type YTUploadRequest struct {
 	Link string `json:"link"`
 }
 
-type CreateArtRequest struct {
+type CreateAssetRequest struct {
 	Name        string  `json:"name"`
 	AssetID     int64   `json:"asset_id"`
-	Description *string `json:"description"`
-	YoutubeLink *string `json:"youtube_link"`
+	Desc        *string `json:"desc"`
+	YTVideoLink *string `json:"yt_video_link"`
 }

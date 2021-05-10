@@ -19,7 +19,6 @@ type Datastore struct {
 
 	Accounts *AccountDatastore
 	Assets   *AssetDatastore
-	Arts     *ArtDatastore
 }
 
 func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
@@ -53,40 +52,27 @@ func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
 
 	ds.Assets = assetsDs
 
-	artsDs, err := NewArtDatastore(ctx, conn)
-	if err != nil {
-		return nil, err
-	}
-
-	ds.Arts = artsDs
-
 	return ds, nil
 }
 
-func (ds *Datastore) GetArtsList(ctx context.Context, fltr *ArtsFilter, opts *LimitOpts) ([]*model.Art, error) {
+func (ds *Datastore) GetAssetsList(ctx context.Context, fltr *AssetsFilter, opts *LimitOpts) ([]*model.Asset, error) {
 	accounts, err := ds.Accounts.List(ctx, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	assets, err := ds.Assets.List(ctx, nil, nil)
+	assets, err := ds.Assets.List(ctx, fltr, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	arts, err := ds.Arts.List(ctx, fltr, opts)
-	if err != nil {
-		return nil, err
-	}
+	JoinAccountsToAsset(ctx, assets, accounts)
 
-	JoinAccountsToArts(ctx, arts, accounts)
-	JoinAssetsToArts(ctx, arts, assets)
-
-	return arts, nil
+	return assets, nil
 }
 
-func (ds *Datastore) GetArtsListCount(ctx context.Context, fltr *ArtsFilter) (int64, error) {
-	count, err := ds.Arts.Count(ctx, fltr)
+func (ds *Datastore) GetAssetsListCount(ctx context.Context, fltr *AssetsFilter) (int64, error) {
+	count, err := ds.Assets.Count(ctx, fltr)
 	if err != nil {
 		return 0, err
 	}
@@ -94,22 +80,12 @@ func (ds *Datastore) GetArtsListCount(ctx context.Context, fltr *ArtsFilter) (in
 	return count, nil
 }
 
-func JoinAccountsToArts(ctx context.Context, arts []*model.Art, accounts []*model.Account) {
+func JoinAccountsToAsset(ctx context.Context, assets []*model.Asset, accounts []*model.Account) {
 	byID := map[int64]*model.Account{}
 	for _, item := range accounts {
 		byID[item.ID] = item
 	}
-	for _, art := range arts {
-		art.Account = byID[art.CreatedByID]
-	}
-}
-
-func JoinAssetsToArts(ctx context.Context, arts []*model.Art, assets []*model.Asset) {
-	byID := map[int64]*model.Asset{}
-	for _, item := range assets {
-		byID[item.ID] = item
-	}
-	for _, art := range arts {
-		art.Asset = byID[art.AssetID]
+	for _, asset := range assets {
+		asset.Account = byID[asset.CreatedByID]
 	}
 }

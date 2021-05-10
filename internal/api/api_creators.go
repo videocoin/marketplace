@@ -40,7 +40,7 @@ func (s *Server) GetCreators(c echo.Context) error {
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toCreatorsResponse(creators, countResp)
+	resp := toAccountsResponse(creators, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -59,6 +59,6 @@ func (s *Server) GetCreator(c echo.Context) error {
 		return err
 	}
 
-	resp := toCreatorResponse(creator)
+	resp := toAccountResponse(creator)
 	return c.JSON(http.StatusOK, resp)
 }

@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func (s *Server) getMyArts(c echo.Context) error {
+func (s *Server) getMyAssets(c echo.Context) error {
 	ctxAccount := c.Get("account")
 	account := ctxAccount.(*model.Account)
 
@@ -18,7 +18,7 @@ func (s *Server) getMyArts(c echo.Context) error {
 	limit, _ := strconv.ParseUint(c.FormValue("limit"), 10, 64)
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
-	fltr := &datastore.ArtsFilter{
+	fltr := &datastore.AssetsFilter{
 		CreatedByID: pointer.ToInt64(account.ID),
 		Sort: &datastore.DatastoreSort{
 			Field: "created_at",
@@ -27,18 +27,18 @@ func (s *Server) getMyArts(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	arts, err := s.ds.GetArtsList(ctx, fltr, limitOpts)
+	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
 	if err != nil {
 		return err
 	}
 
-	tc, _ := s.ds.GetArtsListCount(ctx, fltr)
+	tc, _ := s.ds.GetAssetsListCount(ctx, fltr)
 	countResp := &ItemsCountResponse{
 		TotalCount: tc,
 		Offset:     *limitOpts.Offset,
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toArtsResponse(arts, countResp)
+	resp := toAssetsResponse(arts, countResp)
 	return c.JSON(http.StatusOK, resp)
 }

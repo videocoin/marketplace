@@ -71,26 +71,24 @@ func (s *Server) route() {
 	authGroup.POST("", s.auth)
 
 	assetsGroup := v1.Group("/assets")
-	assetsGroup.Use(auth.JWTAuth(s.logger, s.ds, s.authSecret))
-	assetsGroup.POST("/upload", s.upload)
-	assetsGroup.POST("/ytupload", s.ytUpload)
+	assetsGroup.GET("", s.getAssets)
+	assetsGroup.POST("", s.createAsset, auth.JWTAuth(s.logger, s.ds, s.authSecret))
+	assetsGroup.GET("/:asset_id", s.getAsset)
+	assetsGroup.POST("/upload", s.upload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
+	assetsGroup.POST("/ytupload", s.ytUpload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
+
+	myGroup := v1.Group("/my/assets")
+	myGroup.Use(auth.JWTAuth(s.logger, s.ds, s.authSecret))
+	myGroup.GET("", s.getMyAssets)
 
 	creatorsGroup := v1.Group("/creators")
 	creatorsGroup.GET("", s.GetCreators)
 	creatorsGroup.GET("/:creator_id", s.GetCreator)
-	creatorsGroup.GET("/:creator_id/arts", s.getArtsByCreator)
-
-	artsGroup := v1.Group("/arts")
-	artsGroup.POST("", s.createArt, auth.JWTAuth(s.logger, s.ds, s.authSecret))
-	artsGroup.GET("", s.getArts)
-	artsGroup.GET("/:art_id", s.getArt)
-
-	myGroup := v1.Group("/my/arts")
-	myGroup.GET("", s.getMyArts)
+	creatorsGroup.GET("/:creator_id/assets", s.getAssetsByCreator)
 
 	spotlightGroup := v1.Group("/spotlight")
-	spotlightGroup.GET("/arts/featured", s.getSpotlightFeaturedArts)
-	spotlightGroup.GET("/arts/live", s.getSpotlightLiveArts)
+	spotlightGroup.GET("/assets/featured", s.getSpotlightFeaturedAssets)
+	spotlightGroup.GET("/assets/live", s.getSpotlightLiveAssets)
 	spotlightGroup.GET("/creators/featured", s.getSpotlightFeaturedCreators)
 }
 

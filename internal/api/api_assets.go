@@ -7,6 +7,7 @@ import (
 	"github.com/gocraft/dbr/v2"
 	"github.com/hashicorp/go-multierror"
 	"github.com/labstack/echo/v4"
+	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
@@ -15,6 +16,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -276,7 +279,7 @@ func (s *Server) ytUpload(c echo.Context) error {
 		PreviewKey:   meta.DestPreviewKey,
 		ThumbnailKey: meta.DestThumbKey,
 		EncryptedKey: meta.DestEncKey,
-		YouTubeID:    dbr.NewNullString(ytVideoID),
+		YTVideoID:    dbr.NewNullString(ytVideoID),
 		DRMKey:       drmKey,
 		DRMKeyID:     GenerateDRMKeyID(account),
 		EK:           ek,
@@ -298,8 +301,159 @@ func (s *Server) ytUpload(c echo.Context) error {
 		ID:          asset.ID,
 		Status:      asset.Status,
 		ContentType: asset.ContentType,
-		YtVideoId:   pointer.ToString(ytVideoID),
+		YTVideoID:   pointer.ToString(ytVideoID),
 	}
 
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) createAsset(c echo.Context) error {
+	ctxAccount := c.Get("account")
+	account := ctxAccount.(*model.Account)
+
+	req := new(CreateAssetRequest)
+	err := c.Bind(req)
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	if req.AssetID == 0 {
+		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "asset file not found"})
+	}
+
+	ctx := context.Background()
+	asset, err := s.ds.Assets.GetByID(ctx, req.AssetID)
+	if err != nil {
+		if err == datastore.ErrAssetNotFound {
+			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "asset not found"})
+		}
+
+		return err
+	}
+
+	if asset.CreatedByID != account.ID {
+		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "asset file not found"})
+	}
+
+	updatedFields := new(datastore.AssetUpdatedFields)
+
+	assetName := strings.TrimSpace(req.Name)
+	if assetName == "" {
+		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "missing name"})
+	}
+	updatedFields.Name = pointer.ToString(assetName)
+
+	if req.Desc != nil {
+		assetDesc := strings.TrimSpace(*req.Desc)
+		if assetDesc != "" {
+			updatedFields.Desc = pointer.ToString(assetDesc)
+		}
+	}
+
+	if req.YTVideoLink != nil {
+		ytLink, err := pkgyt.ValidateVideoURL(*req.YTVideoLink)
+		if err != nil {
+			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "wrong youtube link"})
+		}
+
+		updatedFields.YTVideoLink = pointer.ToString(ytLink)
+	}
+
+	err = s.ds.Assets.Update(ctx, asset, *updatedFields)
+	if err != nil {
+		return err
+	}
+
+	resp := toAssetResponse(asset)
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) getAssets(c echo.Context) error {
+	offset, _ := strconv.ParseUint(c.FormValue("offset"), 10, 64)
+	limit, _ := strconv.ParseUint(c.FormValue("limit"), 10, 64)
+	limitOpts := datastore.NewLimitOpts(offset, limit)
+	fltr := &datastore.AssetsFilter{
+		Sort: &datastore.DatastoreSort{
+			Field: "created_at",
+			IsAsc: false,
+		},
+	}
+
+	ctx := context.Background()
+	assets, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	if err != nil {
+		return err
+	}
+
+	tc, _ := s.ds.GetAssetsListCount(ctx, fltr)
+	countResp := &ItemsCountResponse{
+		TotalCount: tc,
+		Offset:     *limitOpts.Offset,
+		Limit:      *limitOpts.Limit,
+	}
+
+	resp := toAssetsResponse(assets, countResp)
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) getAssetsByCreator(c echo.Context) error {
+	offset, _ := strconv.ParseUint(c.FormValue("offset"), 10, 64)
+	limit, _ := strconv.ParseUint(c.FormValue("limit"), 10, 64)
+	limitOpts := datastore.NewLimitOpts(offset, limit)
+
+	creatorID, _ := strconv.ParseInt(c.Param("creator_id"), 10, 64)
+	if creatorID == 0 {
+		return echo.ErrNotFound
+	}
+
+	fltr := &datastore.AssetsFilter{
+		CreatedByID: pointer.ToInt64(creatorID),
+		Sort: &datastore.DatastoreSort{
+			Field: "created_at",
+			IsAsc: false,
+		},
+	}
+
+	ctx := context.Background()
+	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	if err != nil {
+		return err
+	}
+
+	tc, _ := s.ds.GetAssetsListCount(ctx, fltr)
+	countResp := &ItemsCountResponse{
+		TotalCount: tc,
+		Offset:     *limitOpts.Offset,
+		Limit:      *limitOpts.Limit,
+	}
+
+	resp := toAssetsResponse(arts, countResp)
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) getAsset(c echo.Context) error {
+	ctx := context.Background()
+
+	assetID, _ := strconv.ParseInt(c.Param("asset_id"), 10, 64)
+	if assetID == 0 {
+		return echo.ErrNotFound
+	}
+
+	asset, err := s.ds.Assets.GetByID(ctx, assetID)
+	if err != nil {
+		if err == datastore.ErrAssetNotFound {
+			return echo.ErrNotFound
+		}
+		return err
+	}
+
+	account, err := s.ds.Accounts.GetByID(ctx, asset.CreatedByID)
+	if err != nil {
+		return err
+	}
+
+	asset.Account = account
+
+	resp := toAssetResponse(asset)
 	return c.JSON(http.StatusOK, resp)
 }

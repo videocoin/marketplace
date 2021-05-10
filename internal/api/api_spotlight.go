@@ -8,12 +8,12 @@ import (
 	"strconv"
 )
 
-func (s *Server) getSpotlightFeaturedArts(c echo.Context) error {
+func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 	offset, _ := strconv.ParseUint(c.FormValue("offset"), 10, 64)
 	limit, _ := strconv.ParseUint(c.FormValue("limit"), 10, 64)
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
-	fltr := &datastore.ArtsFilter{
+	fltr := &datastore.AssetsFilter{
 		Sort: &datastore.DatastoreSort{
 			Field: "id",
 			IsAsc: true,
@@ -21,28 +21,28 @@ func (s *Server) getSpotlightFeaturedArts(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	arts, err := s.ds.GetArtsList(ctx, fltr, limitOpts)
+	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
 	if err != nil {
 		return err
 	}
 
-	tc, _ := s.ds.GetArtsListCount(ctx, fltr)
+	tc, _ := s.ds.GetAssetsListCount(ctx, fltr)
 	countResp := &ItemsCountResponse{
 		TotalCount: tc,
 		Offset:     *limitOpts.Offset,
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toArtsResponse(arts, countResp)
+	resp := toAssetsResponse(arts, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (s *Server) getSpotlightLiveArts(c echo.Context) error {
+func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 	offset, _ := strconv.ParseUint(c.FormValue("offset"), 10, 64)
 	limit, _ := strconv.ParseUint(c.FormValue("limit"), 10, 64)
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
-	fltr := &datastore.ArtsFilter{
+	fltr := &datastore.AssetsFilter{
 		Sort: &datastore.DatastoreSort{
 			Field: "name",
 			IsAsc: false,
@@ -50,19 +50,19 @@ func (s *Server) getSpotlightLiveArts(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	arts, err := s.ds.GetArtsList(ctx, fltr, limitOpts)
+	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
 	if err != nil {
 		return err
 	}
 
-	tc, _ := s.ds.GetArtsListCount(ctx, fltr)
+	tc, _ := s.ds.GetAssetsListCount(ctx, fltr)
 	countResp := &ItemsCountResponse{
 		TotalCount: tc,
 		Offset:     *limitOpts.Offset,
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toArtsResponse(arts, countResp)
+	resp := toAssetsResponse(arts, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -91,6 +91,6 @@ func (s *Server) getSpotlightFeaturedCreators(c echo.Context) error {
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toCreatorsResponse(creators, countResp)
+	resp := toAccountsResponse(creators, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
