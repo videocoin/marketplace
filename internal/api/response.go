@@ -155,10 +155,14 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		resp.Name = pointer.ToString(asset.Desc.String)
 	}
 
-	if asset.Status == model.AssetStatusReady {
-		resp.ThumbnailURL = pointer.ToString(asset.GetThumbnailURL())
-		resp.PreviewURL = pointer.ToString(asset.GetPreviewURL())
-		resp.EncryptedURL = pointer.ToString(asset.GetEncryptedURL())
+	resp.PreviewURL = pointer.ToString(asset.GetPreviewURL())
+
+	if asset.ThumbnailURL.Valid {
+		resp.ThumbnailURL = pointer.ToString(asset.ThumbnailURL.String)
+	}
+
+	if asset.EncryptedURL.Valid {
+		resp.EncryptedURL = pointer.ToString(asset.EncryptedURL.String)
 	}
 
 	if asset.Account != nil {
