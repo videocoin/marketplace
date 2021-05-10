@@ -100,8 +100,9 @@ type Asset struct {
 	ThumbnailKey string `db:"thumbnail_key"`
 	EncryptedKey string `db:"encrypted_key"`
 
-	Name dbr.NullString `db:"name"`
-	Desc dbr.NullString `db:"description"`
+	Name            dbr.NullString `db:"name"`
+	Desc            dbr.NullString `db:"description"`
+	ContractAddress dbr.NullString `db:"contract_address"`
 
 	YTVideoLink dbr.NullString `db:"yt_video_link"`
 	YTVideoID   dbr.NullString `db:"yt_video_id"`

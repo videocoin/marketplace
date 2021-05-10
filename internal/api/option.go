@@ -57,3 +57,10 @@ func WithStorage(storage *storage.Storage) ServerOption {
 		return nil
 	}
 }
+
+func WithERC1155ContractAddress(addr string) ServerOption {
+	return func(s *Server) error {
+		s.erc1155ca = addr
+		return nil
+	}
+}

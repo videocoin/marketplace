@@ -15,9 +15,10 @@ var (
 )
 
 type AssetUpdatedFields struct {
-	Name        *string
-	Desc        *string
-	YTVideoLink *string
+	Name            *string
+	Desc            *string
+	YTVideoLink     *string
+	ContractAddress *string
 }
 
 type AssetDatastore struct {
@@ -71,6 +72,38 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 }
 
 func (ds *AssetDatastore) GetByID(ctx context.Context, id int64) (*model.Asset, error) {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	asset := new(model.Asset)
+	err = tx.
+		Select("*").
+		From(ds.table).
+		Where("id = ?", id).
+		LoadOneContext(ctx, asset)
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return nil, ErrAssetNotFound
+		}
+		return nil, err
+	}
+
+	return asset, nil
+}
+
+func (ds *AssetDatastore) GetByTokenID(ctx context.Context, id int64) (*model.Asset, error) {
 	var err error
 	tx, ok := dbrutil.DbTxFromContext(ctx)
 	if !ok {
@@ -164,6 +197,11 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if fields.YTVideoLink != nil {
 		stmt.Set("yt_video_link", dbr.NewNullString(*fields.YTVideoLink))
 		asset.YTVideoLink = dbr.NewNullString(*fields.YTVideoLink)
+	}
+
+	if fields.ContractAddress != nil {
+		stmt.Set("contract_address", dbr.NewNullString(*fields.ContractAddress))
+		asset.ContractAddress = dbr.NewNullString(*fields.ContractAddress)
 	}
 
 	_, err = stmt.Where("id = ?", asset.ID).ExecContext(ctx)

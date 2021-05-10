@@ -60,6 +60,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		api.WithAddr(cfg.Addr),
 		api.WithLogger(logger.WithField("system", "assets")),
 		api.WithAuthSecret(cfg.AuthSecret),
+		api.WithERC1155ContractAddress(cfg.ERC1155ContractAddress),
 		api.WithDatastore(ds),
 		api.WithStorage(storageCli),
 		api.WithGCPBucket(cfg.GCPBucket),

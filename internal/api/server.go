@@ -21,6 +21,7 @@ type Server struct {
 	addr       string
 	authSecret string
 	gcpBucket  string
+	erc1155ca  string
 	ds         *datastore.Datastore
 	storage    *storage.Storage
 	mc         *mediaconverter.MediaConverter
@@ -74,6 +75,7 @@ func (s *Server) route() {
 	assetsGroup.GET("", s.getAssets)
 	assetsGroup.POST("", s.createAsset, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 	assetsGroup.GET("/:asset_id", s.getAsset)
+	assetsGroup.GET("/:contract_address/:token_id", s.getAssetWithCA)
 	assetsGroup.POST("/upload", s.upload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 	assetsGroup.POST("/ytupload", s.ytUpload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 

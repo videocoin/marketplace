@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/AlekSi/pointer"
 	"github.com/videocoin/marketplace/internal/model"
+	"strconv"
 )
 
 type NonceResponse struct {
@@ -34,17 +35,34 @@ type AccountsResponse struct {
 	Next       bool               `json:"next"`
 }
 
+type AssetContractResponse struct {
+	Address                     string `json:"address"`
+	Name                        string `json:"name"`
+	Desc                        string `json:"description"`
+	ContractType                string `json:"asset_contract_type"`
+	SchemaName                  string `json:"schema_name"`
+	Symbol                      string `json:"symbol"`
+	BuyerFeeBasisPoints         int64  `json:"buyer_fee_basis_points"`
+	SellerFeeBasisPoints        int64  `json:"seller_fee_basis_points"`
+	OpenSeaBuyerFeeBasisPoints  int64  `json:"opensea_buyer_fee_basis_points"`
+	OpenSeaSellerFeeBasisPoints int64  `json:"opensea_seller_fee_basis_points"`
+	DevBuyerFeeBasisPoints      int64  `json:"dev_buyer_fee_basis_points"`
+	DevSellerFeeBasisPoints     int64  `json:"dev_seller_fee_basis_points"`
+}
+
 type AssetResponse struct {
-	ID           int64             `json:"id"`
-	Name         *string           `json:"name"`
-	Desc         *string           `json:"desc"`
-	ContentType  string            `json:"content_type"`
-	Status       model.AssetStatus `json:"status"`
-	ThumbnailURL *string           `json:"thumbnail_url"`
-	PreviewURL   *string           `json:"preview_url"`
-	EncryptedURL *string           `json:"encrypted_url"`
-	YTVideoID    *string           `json:"yt_video_id"`
-	Creator      *AccountResponse  `json:"creator"`
+	ID           int64                  `json:"id"`
+	TokenID      *string                `json:"token_id"`
+	Name         *string                `json:"name"`
+	Desc         *string                `json:"description"`
+	ContentType  string                 `json:"content_type"`
+	Status       model.AssetStatus      `json:"status"`
+	ThumbnailURL *string                `json:"thumbnail_url"`
+	PreviewURL   *string                `json:"preview_url"`
+	EncryptedURL *string                `json:"encrypted_url"`
+	YTVideoID    *string                `json:"yt_video_id"`
+	Creator      *AccountResponse       `json:"owner"`
+	Contract     *AssetContractResponse `json:"asset_contract"`
 }
 
 type AssetsResponse struct {
@@ -99,8 +117,18 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 func toAssetResponse(asset *model.Asset) *AssetResponse {
 	resp := &AssetResponse{
 		ID:          asset.ID,
+		TokenID:     pointer.ToString(strconv.FormatInt(asset.ID, 10)),
 		ContentType: asset.ContentType,
 		Status:      asset.Status,
+		Contract: &AssetContractResponse{
+			SchemaName:                  model.ContractSchemaTypeERC1155.String(),
+			SellerFeeBasisPoints:        250,
+			OpenSeaSellerFeeBasisPoints: 250,
+		},
+	}
+
+	if asset.ContractAddress.Valid {
+		resp.Contract.Address = asset.ContractAddress.String
 	}
 
 	if asset.Name.Valid {

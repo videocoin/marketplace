@@ -18,4 +18,6 @@ type Config struct {
 	TextileAuthSecret    string `envconfig:"TEXTILE_AUTH_SECRET"`
 	TextileThreadID      string `envconfig:"TEXTILE_THREAD_ID"`
 	TextileBucketRootKey string `envconfig:"TEXTILE_BUCKET_ROOT_KEY"`
+
+	ERC1155ContractAddress string `envconfig:"ERC1155_CONTRACT_ADDRESS"`
 }

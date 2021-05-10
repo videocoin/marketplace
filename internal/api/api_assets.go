@@ -335,7 +335,9 @@ func (s *Server) createAsset(c echo.Context) error {
 		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "asset file not found"})
 	}
 
-	updatedFields := new(datastore.AssetUpdatedFields)
+	updatedFields := &datastore.AssetUpdatedFields{
+		ContractAddress: pointer.ToString(s.erc1155ca),
+	}
 
 	assetName := strings.TrimSpace(req.Name)
 	if assetName == "" {
@@ -445,6 +447,38 @@ func (s *Server) getAsset(c echo.Context) error {
 			return echo.ErrNotFound
 		}
 		return err
+	}
+
+	account, err := s.ds.Accounts.GetByID(ctx, asset.CreatedByID)
+	if err != nil {
+		return err
+	}
+
+	asset.Account = account
+
+	resp := toAssetResponse(asset)
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) getAssetWithCA(c echo.Context) error {
+	ctx := context.Background()
+
+	ca := c.Param("contract_address")
+	tokenID, _ := strconv.ParseInt(c.Param("token_id"), 10, 64)
+	if tokenID == 0 {
+		return echo.ErrNotFound
+	}
+
+	asset, err := s.ds.Assets.GetByTokenID(ctx, tokenID)
+	if err != nil {
+		if err == datastore.ErrAssetNotFound {
+			return echo.ErrNotFound
+		}
+		return err
+	}
+
+	if ca != asset.ContractAddress.String {
+		return echo.ErrNotFound
 	}
 
 	account, err := s.ds.Accounts.GetByID(ctx, asset.CreatedByID)
