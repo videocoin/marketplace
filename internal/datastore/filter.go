@@ -14,3 +14,8 @@ type AccountsFilter struct {
 	Query *string
 	Sort  *SortOption
 }
+
+type TokensFilter struct {
+	Symbol *string
+	Sort   *SortOption
+}

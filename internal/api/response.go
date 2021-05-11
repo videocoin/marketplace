@@ -78,14 +78,14 @@ type AssetsResponse struct {
 }
 
 type TokenResponse struct {
-	ID       int64   `json:"id"`
-	Symbol   string  `json:"symbol"`
-	Address  string  `json:"address"`
-	ImageURL string  `json:"image_url"`
-	Name     string  `json:"name"`
-	Decimals int     `json:"decimals"`
-	EthPrice float64 `json:"eth_price"`
-	USDPrice float64 `json:"usd_price"`
+	ID       int64    `json:"id"`
+	Symbol   *string  `json:"symbol"`
+	Address  string   `json:"address"`
+	ImageURL *string  `json:"image_url"`
+	Name     *string  `json:"name"`
+	Decimals int      `json:"decimals"`
+	EthPrice *float64 `json:"eth_price"`
+	USDPrice *float64 `json:"usd_price"`
 }
 
 type ItemsCountResponse struct {
@@ -205,6 +205,40 @@ func toAccountsResponse(creators []*model.Account, count *ItemsCountResponse) *A
 		resp.TotalCount = count.TotalCount
 		resp.Prev = resp.Count > 0 && count.Offset > 0
 		resp.Next = resp.Count > 0 && resp.TotalCount > (resp.Count+int64(count.Offset))
+	}
+
+	return resp
+}
+
+func toTokenResponse(token *model.Token) *TokenResponse {
+	resp := &TokenResponse{
+		ID:       token.ID,
+		Address:  token.Address,
+		Decimals: token.Decimals,
+	}
+	if token.Symbol.Valid {
+		resp.Symbol = pointer.ToString(token.Symbol.String)
+	}
+	if token.Name.Valid {
+		resp.Name = pointer.ToString(token.Name.String)
+	}
+	if token.ImageURL.Valid {
+		resp.ImageURL = pointer.ToString(token.ImageURL.String)
+	}
+	if token.USDPrice.Valid {
+		resp.USDPrice = pointer.ToFloat64(token.USDPrice.Float64)
+	}
+	if token.EthPrice.Valid {
+		resp.EthPrice = pointer.ToFloat64(token.EthPrice.Float64)
+	}
+	return resp
+}
+
+func toTokensResponse(tokens []*model.Token) []*TokenResponse {
+	resp := make([]*TokenResponse, 0)
+
+	for _, token := range tokens {
+		resp = append(resp, toTokenResponse(token))
 	}
 
 	return resp

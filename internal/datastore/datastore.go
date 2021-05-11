@@ -14,6 +14,7 @@ type Datastore struct {
 
 	Accounts *AccountDatastore
 	Assets   *AssetDatastore
+	Tokens   *TokenDatastore
 }
 
 func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
@@ -46,6 +47,13 @@ func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
 	}
 
 	ds.Assets = assetsDs
+
+	tokensDs, err := NewTokenDatastore(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	ds.Tokens = tokensDs
 
 	return ds, nil
 }
