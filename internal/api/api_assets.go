@@ -3,6 +3,16 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
+	"math/big"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"sync"
+
 	"github.com/AlekSi/pointer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
@@ -12,14 +22,6 @@ import (
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"os"
-	"os/exec"
-	"strconv"
-	"strings"
-	"sync"
 )
 
 func (s *Server) upload(c echo.Context) error {
@@ -340,7 +342,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		ContractAddress: pointer.ToString(s.minter.ContractAddress().Hex()),
 	}
 
-	err = s.minter.Mint(ctx, common.HexToAddress(account.Address))
+	err = s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(req.AssetID))
 	if err != nil {
 		return err
 	}
