@@ -43,7 +43,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac
 	github.com/textileio/textile/v2 v2.6.8
-	github.com/videocoin/common v0.0.0-20200510014350-b8f6b3848d06
+	github.com/videocoin/common v0.0.0-20200510014350-b8f6b3848d06 // indirect
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/net v0.0.0-20210330142815-c8897c278d10 // indirect
 	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558 // indirect

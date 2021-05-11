@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/videocoin/common/crypto"
 	"github.com/videocoin/marketplace/internal/contracts/dev/nft"
 	"math/big"
 	"sync"
@@ -25,7 +25,7 @@ type Minter struct {
 	mtx      sync.Mutex
 }
 
-func NewMinter(url string, contractAddress string, contractKeyFile string, contractKeyPass string) (*Minter, error) {
+func NewMinter(url string, contractAddress string, contractKey string, contractKeyPass string) (*Minter, error) {
 	cli, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, err
@@ -37,9 +37,9 @@ func NewMinter(url string, contractAddress string, contractKeyFile string, contr
 		return nil, err
 	}
 
-	key, err := crypto.DecryptKeyFile(contractKeyFile, contractKeyPass)
+	key, err := keystore.DecryptKey([]byte(contractKey), contractKeyPass)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decrypt a key %s: %v", contractKey, err)
 	}
 
 	return &Minter{

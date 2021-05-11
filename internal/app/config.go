@@ -21,6 +21,6 @@ type Config struct {
 
 	BlockchainURL          string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
 	ERC1155ContractAddress string `envconfig:"ERC1155_CONTRACT_ADDRESS"`
-	ERC1155ContractKeyFile string `envconfig:"ERC1155_CONTRACT_KEY_FILE"`
+	ERC1155ContractKeyFile string `envconfig:"ERC1155_CONTRACT_KEY"`
 	ERC1155ContractKeyPass string `envconfig:"ERC1155_CONTRACT_KEY_PASS"`
 }
