@@ -103,6 +103,7 @@ type Asset struct {
 	Name            dbr.NullString `db:"name"`
 	Desc            dbr.NullString `db:"description"`
 	ContractAddress dbr.NullString `db:"contract_address"`
+	MintTxID        dbr.NullString `db:"mint_tx_id"`
 
 	YTVideoLink dbr.NullString `db:"yt_video_link"`
 	YTVideoID   dbr.NullString `db:"yt_video_id"`

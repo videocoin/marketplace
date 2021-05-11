@@ -3,16 +3,14 @@ package minter
 import (
 	"context"
 	"fmt"
-	"math/big"
-	"sync"
-
-	"github.com/videocoin/common/crypto"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/videocoin/common/crypto"
 	"github.com/videocoin/marketplace/internal/contracts/dev/nft"
+	"math/big"
+	"sync"
 )
 
 const (
@@ -56,26 +54,26 @@ func (m *Minter) ContractAddress() common.Address {
 	return m.ca
 }
 
-func (m *Minter) Mint(ctx context.Context, to common.Address, id *big.Int) error {
+func (m *Minter) Mint(ctx context.Context, to common.Address, id *big.Int) (*types.Transaction, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
 	opts := m.getCallOpts(ctx)
 	balance, err := m.contract.BalanceOf(opts, to, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if balance.Cmp(big.NewInt(0)) != 0 {
-		return fmt.Errorf("token with ID %s already exists", id.String())
+		return nil, fmt.Errorf("token with ID %s already exists", id.String())
 	}
 
 	txOpts := m.getTxOpts(ctx)
 	tx, err := m.contract.Mint0(txOpts, to, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return m.waitMined(ctx, tx)
+	return tx, m.waitMined(ctx, tx)
 }
 
 func (m *Minter) getCallOpts(ctx context.Context) *bind.CallOpts {

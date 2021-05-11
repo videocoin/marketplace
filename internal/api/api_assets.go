@@ -342,9 +342,13 @@ func (s *Server) createAsset(c echo.Context) error {
 		ContractAddress: pointer.ToString(s.minter.ContractAddress().Hex()),
 	}
 
-	err = s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(req.AssetID))
+	mintTx, err := s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(asset.ID))
 	if err != nil {
 		return err
+	}
+
+	if mintTx != nil {
+		updatedFields.MintTxID = pointer.ToString(mintTx.Hash().Hex())
 	}
 
 	assetName := strings.TrimSpace(req.Name)

@@ -19,6 +19,7 @@ type AssetUpdatedFields struct {
 	Desc            *string
 	YTVideoLink     *string
 	ContractAddress *string
+	MintTxID        *string
 }
 
 type AssetDatastore struct {
@@ -202,6 +203,11 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if fields.ContractAddress != nil {
 		stmt.Set("contract_address", dbr.NewNullString(*fields.ContractAddress))
 		asset.ContractAddress = dbr.NewNullString(*fields.ContractAddress)
+	}
+
+	if fields.MintTxID != nil {
+		stmt.Set("mint_tx_id", dbr.NewNullString(*fields.MintTxID))
+		asset.MintTxID = dbr.NewNullString(*fields.MintTxID)
 	}
 
 	_, err = stmt.Where("id = ?", asset.ID).ExecContext(ctx)
