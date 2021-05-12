@@ -25,10 +25,11 @@ type UserResponse struct {
 }
 
 type AccountResponse struct {
-	ID       int64         `json:"id"`
-	Address  string        `json:"address"`
-	ImageUrl *string       `json:"profile_img_url"`
-	User     *UserResponse `json:"user"`
+	ID         int64         `json:"id"`
+	Address    string        `json:"address"`
+	ImageUrl   *string       `json:"profile_img_url"`
+	User       *UserResponse `json:"user"`
+	IsVerified bool          `json:"is_verified"`
 }
 
 type AccountsResponse struct {
@@ -110,9 +111,10 @@ func toRegisterResponse(account *model.Account) *RegisterResponse {
 
 func toAccountResponse(account *model.Account) *AccountResponse {
 	resp := &AccountResponse{
-		ID:      account.ID,
-		Address: account.Address,
-		User:    &UserResponse{},
+		ID:         account.ID,
+		Address:    account.Address,
+		User:       &UserResponse{},
+		IsVerified: account.IsVerified,
 	}
 
 	if account.Username.Valid {
