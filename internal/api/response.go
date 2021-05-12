@@ -68,6 +68,7 @@ type AssetResponse struct {
 	YTVideoID    *string                `json:"yt_video_id"`
 	Creator      *AccountResponse       `json:"owner"`
 	Contract     *AssetContractResponse `json:"asset_contract"`
+	DRMKey       *string                `json:"drm_key"`
 }
 
 type AssetsResponse struct {
@@ -143,6 +144,10 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			SellerFeeBasisPoints:        250,
 			OpenSeaSellerFeeBasisPoints: 250,
 		},
+	}
+
+	if asset.DRMKey != "" {
+		resp.DRMKey = pointer.ToString(asset.DRMKey)
 	}
 
 	if asset.ContractAddress.Valid {
