@@ -30,6 +30,7 @@ require (
 	github.com/kkdai/youtube/v2 v2.6.1
 	github.com/labstack/echo v3.3.10+incompatible // indirect
 	github.com/labstack/echo/v4 v4.2.1
+	github.com/labstack/gommon v0.3.0
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat/go-jwx v0.0.0-20210302221443-a9d01c1b7121 // indirect
 	github.com/lestrrat/go-pdebug v0.0.0-20180220043741-569c97477ae8 // indirect
@@ -38,7 +39,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oliamb/cutter v0.2.2
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/plutov/echo-logrus v1.0.0
+	github.com/plutov/echo-logrus v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac

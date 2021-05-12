@@ -6,7 +6,6 @@ import (
 	"github.com/kkdai/youtube/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	echologrus "github.com/plutov/echo-logrus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/auth"
@@ -14,6 +13,7 @@ import (
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/storage"
+	"github.com/videocoin/marketplace/pkg/logger"
 	"net/http"
 )
 
@@ -50,10 +50,10 @@ func NewServer(ctx context.Context, opts ...ServerOption) (*Server, error) {
 }
 
 func (s *Server) route() {
-	echologrus.Logger = s.logger.Logger
+	logger.EchoLogger = s.logger
 
 	s.e.Use(middleware.CORS())
-	s.e.Use(echologrus.Hook())
+	s.e.Use(logger.NewEchoLogrus())
 
 	s.e.GET("/healthz", s.health)
 	s.e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
