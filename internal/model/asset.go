@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -133,8 +134,24 @@ func (a *Asset) GetURL() string {
 	return a.URL.String
 }
 
+func (a *Asset) GetIPFSURL() string {
+	urlParts := strings.Split(a.URL.String, "/")
+	if len(urlParts) > 4 {
+		return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+	}
+	return ""
+}
+
 func (a *Asset) GetEncryptedURL() string {
 	return a.EncryptedURL.String
+}
+
+func (a *Asset) GetIPFSEncryptedURL() string {
+	urlParts := strings.Split(a.EncryptedURL.String, "/")
+	if len(urlParts) > 4 {
+		return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+	}
+	return ""
 }
 
 func (a *Asset) GetPreviewURL() string {
@@ -147,6 +164,14 @@ func (a *Asset) GetPreviewURL() string {
 
 func (a *Asset) GetThumbnailURL() string {
 	return a.ThumbnailURL.String
+}
+
+func (a *Asset) GetIPFSThumbnailURL() string {
+	urlParts := strings.Split(a.ThumbnailURL.String, "/")
+	if len(urlParts) > 4 {
+		return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+	}
+	return ""
 }
 
 func GenAssetFolderID() string {

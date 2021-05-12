@@ -56,19 +56,26 @@ type AssetContractResponse struct {
 }
 
 type AssetResponse struct {
-	ID           int64                  `json:"id"`
-	TokenID      *string                `json:"token_id"`
-	Name         *string                `json:"name"`
-	Desc         *string                `json:"description"`
-	ContentType  string                 `json:"content_type"`
-	Status       model.AssetStatus      `json:"status"`
-	ThumbnailURL *string                `json:"thumbnail_url"`
-	PreviewURL   *string                `json:"preview_url"`
-	EncryptedURL *string                `json:"encrypted_url"`
-	YTVideoID    *string                `json:"yt_video_id"`
-	Creator      *AccountResponse       `json:"owner"`
-	Contract     *AssetContractResponse `json:"asset_contract"`
-	DRMKey       *string                `json:"drm_key"`
+	ID          int64             `json:"id"`
+	TokenID     *string           `json:"token_id"`
+	Name        *string           `json:"name"`
+	Desc        *string           `json:"description"`
+	ContentType string            `json:"content_type"`
+	Status      model.AssetStatus `json:"status"`
+
+	URL          string  `json:"url"`
+	ThumbnailURL *string `json:"thumbnail_url"`
+	PreviewURL   *string `json:"preview_url"`
+	EncryptedURL *string `json:"encrypted_url"`
+
+	IPFSURL          string  `json:"ipfs_url"`
+	IPFSThumbnailURL *string `json:"ipfs_thumbnail_url"`
+	IPFSEncryptedURL *string `json:"ipfs_encrypted_url"`
+
+	YTVideoID *string                `json:"yt_video_id"`
+	Creator   *AccountResponse       `json:"owner"`
+	Contract  *AssetContractResponse `json:"asset_contract"`
+	DRMKey    *string                `json:"drm_key"`
 }
 
 type AssetsResponse struct {
@@ -144,6 +151,8 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			SellerFeeBasisPoints:        250,
 			OpenSeaSellerFeeBasisPoints: 250,
 		},
+		URL:     asset.GetURL(),
+		IPFSURL: asset.GetIPFSURL(),
 	}
 
 	if asset.DRMKey != "" {
@@ -166,10 +175,12 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 
 	if asset.ThumbnailURL.Valid {
 		resp.ThumbnailURL = pointer.ToString(asset.ThumbnailURL.String)
+		resp.IPFSThumbnailURL = pointer.ToString(asset.GetIPFSThumbnailURL())
 	}
 
 	if asset.EncryptedURL.Valid {
 		resp.EncryptedURL = pointer.ToString(asset.EncryptedURL.String)
+		resp.IPFSEncryptedURL = pointer.ToString(asset.GetIPFSEncryptedURL())
 	}
 
 	if asset.Account != nil {
