@@ -6,7 +6,9 @@ type SortOption struct {
 }
 
 type AssetsFilter struct {
+	Status      *string
 	CreatedByID *int64
+	CANotNull   *bool
 	Sort        *SortOption
 }
 

@@ -463,6 +463,12 @@ func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *L
 		if fltr.CreatedByID != nil {
 			selectStmt = selectStmt.Where("created_by_id = ?", *fltr.CreatedByID)
 		}
+		if fltr.Status != nil {
+			selectStmt = selectStmt.Where("status = ?", *fltr.Status)
+		}
+		if fltr.CANotNull != nil && *fltr.CANotNull {
+			selectStmt = selectStmt.Where("contract_address IS NOT NULL")
+		}
 		if fltr.Sort != nil && fltr.Sort.Field != "" {
 			selectStmt = selectStmt.OrderDir(fltr.Sort.Field, fltr.Sort.IsAsc)
 		}
@@ -507,6 +513,12 @@ func (ds *AssetDatastore) Count(ctx context.Context, fltr *AssetsFilter) (int64,
 	if fltr != nil {
 		if fltr.CreatedByID != nil {
 			selectStmt = selectStmt.Where("created_by_id = ?", *fltr.CreatedByID)
+		}
+		if fltr.Status != nil {
+			selectStmt = selectStmt.Where("status = ?", *fltr.Status)
+		}
+		if fltr.CANotNull != nil && *fltr.CANotNull {
+			selectStmt = selectStmt.Where("contract_address IS NOT NULL")
 		}
 	}
 

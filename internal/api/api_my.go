@@ -19,6 +19,8 @@ func (s *Server) getMyAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
+		Status:      pointer.ToString(string(model.AssetStatusReady)),
+		CANotNull:   pointer.ToBool(true),
 		CreatedByID: pointer.ToInt64(account.ID),
 		Sort: &datastore.SortOption{
 			Field: "created_at",

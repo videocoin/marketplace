@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"github.com/AlekSi/pointer"
 	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/model"
 	"net/http"
 	"strconv"
 )
@@ -14,6 +16,8 @@ func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
+		Status:    pointer.ToString(string(model.AssetStatusReady)),
+		CANotNull: pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "id",
 			IsAsc: true,
@@ -43,6 +47,8 @@ func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
+		Status:    pointer.ToString(string(model.AssetStatusReady)),
+		CANotNull: pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "name",
 			IsAsc: false,
