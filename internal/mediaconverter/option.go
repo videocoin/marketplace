@@ -35,3 +35,10 @@ func WithStorage(s *storage.Storage) Option {
 		return nil
 	}
 }
+
+func WithTranscoding() Option {
+	return func(mc *MediaConverter) error {
+		mc.enableTranscoding = true
+		return nil
+	}
+}

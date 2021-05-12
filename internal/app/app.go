@@ -40,18 +40,23 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	mc, err := mediaconverter.NewMediaConverter(
-		ctx,
+	mcOpts := []mediaconverter.Option{
 		mediaconverter.WithLogger(logger.WithField("system", "mediaconverter")),
 		mediaconverter.WithDatastore(ds),
 		mediaconverter.WithStorage(storageCli),
-		mediaconverter.WithGCPConfig(&mediaconverter.GCPConfig{
+	}
+	if cfg.EnableTranscoding {
+		mcOpts = append(mcOpts, mediaconverter.WithGCPConfig(&mediaconverter.GCPConfig{
 			Bucket:             cfg.GCPBucket,
 			Project:            cfg.GCPProject,
 			Region:             cfg.GCPRegion,
 			PubSubTopic:        cfg.GCPPubSubTopic,
 			PubSubSubscription: cfg.GCPPubSubSubscription,
-		}),
+		}), mediaconverter.WithTranscoding())
+	}
+	mc, err := mediaconverter.NewMediaConverter(
+		ctx,
+		mcOpts...,
 	)
 	if err != nil {
 		return nil, err

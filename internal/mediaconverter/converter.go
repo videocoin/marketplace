@@ -23,16 +23,17 @@ import (
 )
 
 type MediaConverter struct {
-	JobCh      chan model.MediaConverterJob
-	logger     *logrus.Entry
-	ds         *datastore.Datastore
-	gcpConfig  *GCPConfig
-	transcoder *transcoder.Client
-	pubsub     *pubsub.Client
-	sub        *pubsub.Subscription
-	yt         *youtube.Client
-	storage    *storage.Storage
-	gcpStorage *gcpstorage.Client
+	JobCh             chan model.MediaConverterJob
+	logger            *logrus.Entry
+	ds                *datastore.Datastore
+	gcpConfig         *GCPConfig
+	enableTranscoding bool
+	transcoder        *transcoder.Client
+	pubsub            *pubsub.Client
+	sub               *pubsub.Subscription
+	yt                *youtube.Client
+	storage           *storage.Storage
+	gcpStorage        *gcpstorage.Client
 }
 
 func NewMediaConverter(ctx context.Context, opts ...Option) (*MediaConverter, error) {
@@ -43,27 +44,29 @@ func NewMediaConverter(ctx context.Context, opts ...Option) (*MediaConverter, er
 		}
 	}
 
-	trans, err := transcoder.NewClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-	mc.JobCh = make(chan model.MediaConverterJob, 1)
-	mc.transcoder = trans
-
-	mc.pubsub, err = pubsub.NewClient(ctx, mc.gcpConfig.Project)
-	if err != nil {
-		return nil, err
-	}
-
-	mc.sub = mc.pubsub.Subscription(mc.gcpConfig.PubSubSubscription)
-	mc.sub.ReceiveSettings.Synchronous = false
-	mc.sub.ReceiveSettings.NumGoroutines = runtime.NumCPU()
-
 	mc.yt = &youtube.Client{}
+	mc.JobCh = make(chan model.MediaConverterJob, 1)
 
-	mc.gcpStorage, err = gcpstorage.NewClient(context.Background())
-	if err != nil {
-		return nil, err
+	if mc.enableTranscoding {
+		trans, err := transcoder.NewClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+		mc.transcoder = trans
+
+		mc.pubsub, err = pubsub.NewClient(ctx, mc.gcpConfig.Project)
+		if err != nil {
+			return nil, err
+		}
+
+		mc.sub = mc.pubsub.Subscription(mc.gcpConfig.PubSubSubscription)
+		mc.sub.ReceiveSettings.Synchronous = false
+		mc.sub.ReceiveSettings.NumGoroutines = runtime.NumCPU()
+
+		mc.gcpStorage, err = gcpstorage.NewClient(context.Background())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return mc, nil
@@ -76,7 +79,10 @@ func (mc *MediaConverter) Start(errCh chan error) {
 
 func (m *MediaConverter) Stop() error {
 	m.logger.Info("stopping media converter")
-	m.transcoder.Close()
+	if m.enableTranscoding {
+		m.transcoder.Close()
+	}
+
 	return nil
 }
 
@@ -84,7 +90,9 @@ func (mc *MediaConverter) dispatch() error {
 	errCh := make(chan error, 1)
 
 	go mc.dispatchJobs()
-	go mc.dispatchSub()
+	if mc.enableTranscoding {
+		go mc.dispatchSub()
+	}
 
 	select {
 	case err := <-errCh:
@@ -546,8 +554,10 @@ func (mc *MediaConverter) runGeneralPipeline(job model.MediaConverterJob) {
 
 	wg := &sync.WaitGroup{}
 
-	wg.Add(1)
-	go mc.runConvertJob(wg, job)
+	if mc.enableTranscoding {
+		wg.Add(1)
+		go mc.runConvertJob(wg, job)
+	}
 
 	wg.Add(1)
 	go mc.runEncryptJob(wg, job)

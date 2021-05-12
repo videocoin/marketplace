@@ -138,7 +138,7 @@ func (a *Asset) GetEncryptedURL() string {
 }
 
 func (a *Asset) GetPreviewURL() string {
-	if a.Status == AssetStatusReady {
+	if a.Status == AssetStatusReady && a.PreviewURL.Valid {
 		return a.PreviewURL.String
 	}
 
