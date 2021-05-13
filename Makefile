@@ -17,6 +17,12 @@ build:
 			-ldflags="-w -s -X main.Version=${VERSION}" \
 			-o bin/${NAME} \
 			./cmd/${NAME}/main.go
+	GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=0 \
+		go build \
+			-mod vendor \
+			-ldflags="-w -s -X main.Version=${VERSION}" \
+			-o bin/mpek \
+			./cmd/mp-ek/main.go
 
 .PHONY: vendor
 vendor:
