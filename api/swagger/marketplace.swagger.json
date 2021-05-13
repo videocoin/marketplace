@@ -235,15 +235,15 @@
             "name": "offset",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "responses": {
@@ -416,8 +416,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "int64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "tags": [
@@ -515,15 +515,15 @@
             "name": "offset",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "tags": [
@@ -566,22 +566,22 @@
             "name": "creator_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "int64"
+            "type": "number",
+            "format": "integer"
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "tags": [
@@ -624,8 +624,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "int64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "tags": [
@@ -642,15 +642,15 @@
             "name": "offset",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "responses": {
@@ -794,15 +794,15 @@
             "name": "offset",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "number",
+            "format": "integer"
           }
         ],
         "tags": [
@@ -846,8 +846,8 @@
           "type": "string"
         },
         "asset_id": {
-          "type": "string",
-          "format": "int64"
+          "type": "number",
+          "format": "integer"
         },
         "desc": {
           "type": "string"
@@ -944,12 +944,12 @@
           }
         },
         "total_count": {
-          "type": "string",
-          "format": "int64"
+          "type": "number",
+          "format": "integer"
         },
         "count": {
-          "type": "string",
-          "format": "int64"
+          "type": "number",
+          "format": "integer"
         },
         "prev": {
           "type": "boolean",
@@ -1006,8 +1006,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "int64"
+          "type": "number",
+          "format": "integer"
         },
         "token_id": {
           "type": "string"
@@ -1069,12 +1069,12 @@
           }
         },
         "total_count": {
-          "type": "string",
-          "format": "int64"
+          "type": "number",
+          "format": "integer"
         },
         "count": {
-          "type": "string",
-          "format": "int64"
+          "type": "number",
+          "format": "integer"
         },
         "prev": {
           "type": "boolean",
