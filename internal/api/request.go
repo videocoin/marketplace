@@ -20,8 +20,11 @@ type YTUploadRequest struct {
 }
 
 type CreateAssetRequest struct {
-	Name        string  `json:"name"`
-	AssetID     int64   `json:"asset_id"`
-	Desc        *string `json:"desc"`
-	YTVideoLink *string `json:"yt_video_link"`
+	Name             string  `json:"name"`
+	AssetID          int64   `json:"asset_id"`
+	Desc             *string `json:"desc"`
+	YTVideoLink      *string `json:"yt_video_link"`
+	Royalty          uint    `json:"royalty"`
+	OnSale           bool    `json:"on_sale"`
+	InstantSalePrice float64 `json:"instant_sale_price"`
 }

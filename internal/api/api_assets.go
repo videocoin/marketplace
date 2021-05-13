@@ -96,12 +96,7 @@ func (s *Server) upload(c echo.Context) error {
 		}
 	}()
 
-	resp := &AssetResponse{
-		ID:          asset.ID,
-		Status:      asset.Status,
-		ContentType: asset.ContentType,
-	}
-
+	resp := toAssetResponse(asset)
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -339,7 +334,10 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	updatedFields := &datastore.AssetUpdatedFields{
-		ContractAddress: pointer.ToString(s.minter.ContractAddress().Hex()),
+		ContractAddress:  pointer.ToString(s.minter.ContractAddress().Hex()),
+		OnSale:           req.OnSale,
+		Royalty:          req.Royalty,
+		InstantSalePrice: req.InstantSalePrice,
 	}
 
 	mintTx, err := s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(asset.ID))

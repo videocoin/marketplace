@@ -96,18 +96,22 @@ type Asset struct {
 	CreatedByID int64      `db:"created_by_id"`
 	ContentType string     `db:"content_type"`
 
-	Key          string `db:"key"`
-	PreviewKey   string `db:"preview_key"`
-	ThumbnailKey string `db:"thumbnail_key"`
-	EncryptedKey string `db:"encrypted_key"`
-
 	Name            dbr.NullString `db:"name"`
 	Desc            dbr.NullString `db:"description"`
 	ContractAddress dbr.NullString `db:"contract_address"`
 	MintTxID        dbr.NullString `db:"mint_tx_id"`
 
+	OnSale           bool    `db:"on_sale"`
+	InstantSalePrice float64 `db:"instant_sale_price"`
+	Royalty          uint    `db:"royalty"`
+
 	YTVideoLink dbr.NullString `db:"yt_video_link"`
 	YTVideoID   dbr.NullString `db:"yt_video_id"`
+
+	Key          string `db:"key"`
+	PreviewKey   string `db:"preview_key"`
+	ThumbnailKey string `db:"thumbnail_key"`
+	EncryptedKey string `db:"encrypted_key"`
 
 	URL          dbr.NullString `db:"url"`
 	PreviewURL   dbr.NullString `db:"preview_url"`

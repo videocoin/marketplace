@@ -15,11 +15,14 @@ var (
 )
 
 type AssetUpdatedFields struct {
-	Name            *string
-	Desc            *string
-	YTVideoLink     *string
-	ContractAddress *string
-	MintTxID        *string
+	Name             *string
+	Desc             *string
+	YTVideoLink      *string
+	ContractAddress  *string
+	MintTxID         *string
+	OnSale           bool
+	InstantSalePrice float64
+	Royalty          uint
 }
 
 type AssetDatastore struct {
@@ -209,6 +212,10 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		stmt.Set("mint_tx_id", dbr.NewNullString(*fields.MintTxID))
 		asset.MintTxID = dbr.NewNullString(*fields.MintTxID)
 	}
+
+	stmt.Set("on_sale", fields.OnSale)
+	stmt.Set("royalty", fields.Royalty)
+	stmt.Set("instant_sale_price", fields.InstantSalePrice)
 
 	_, err = stmt.Where("id = ?", asset.ID).ExecContext(ctx)
 	if err != nil {
