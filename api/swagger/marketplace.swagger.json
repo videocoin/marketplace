@@ -854,6 +854,17 @@
         },
         "yt_video_link": {
           "type": "string"
+        },
+        "on_sale": {
+          "type": "boolean"
+        },
+        "royalty": {
+          "type": "number",
+          "format": "integer"
+        },
+        "instance_sale_price": {
+          "type": "number",
+          "format": "float"
         }
       }
     },
@@ -1013,6 +1024,9 @@
         "status": {
           "type": "string"
         },
+        "url": {
+          "type": "string"
+        },
         "thumbnail_url": {
           "type": "string"
         },
@@ -1022,7 +1036,19 @@
         "encrypted_url": {
           "type": "string"
         },
+        "ipfs_url": {
+          "type": "string"
+        },
+        "ipfs_thumbnail_url": {
+          "type": "string"
+        },
+        "ipfs_encrypted_url": {
+          "type": "string"
+        },
         "yt_video_id": {
+          "type": "string"
+        },
+        "drm_key": {
           "type": "string"
         },
         "owner": {
