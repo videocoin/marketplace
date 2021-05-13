@@ -20,7 +20,7 @@ func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 		CANotNull: pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "id",
-			IsAsc: true,
+			IsAsc: false,
 		},
 	}
 
@@ -51,7 +51,7 @@ func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 		CANotNull: pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "name",
-			IsAsc: false,
+			IsAsc: true,
 		},
 	}
 
