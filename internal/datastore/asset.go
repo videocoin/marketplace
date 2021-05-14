@@ -194,7 +194,7 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	}
 
 	if fields.Desc != nil {
-		stmt.Set("desc", dbr.NewNullString(*fields.Desc))
+		stmt.Set("description", dbr.NewNullString(*fields.Desc))
 		asset.Desc = dbr.NewNullString(*fields.Desc)
 	}
 

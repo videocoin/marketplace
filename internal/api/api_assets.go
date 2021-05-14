@@ -362,7 +362,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		}
 	}
 
-	if req.YTVideoLink != nil {
+	if req.YTVideoLink != nil && *req.YTVideoLink != "" {
 		ytLink, err := pkgyt.ValidateVideoURL(*req.YTVideoLink)
 		if err != nil {
 			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "wrong youtube link"})
