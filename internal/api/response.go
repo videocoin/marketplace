@@ -168,7 +168,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 	}
 
 	if asset.Desc.Valid {
-		resp.Name = pointer.ToString(asset.Desc.String)
+		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
 
 	resp.PreviewURL = pointer.ToString(asset.GetPreviewURL())
