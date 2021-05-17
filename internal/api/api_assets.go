@@ -3,6 +3,14 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/AlekSi/pointer"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/gocraft/dbr/v2"
+	"github.com/labstack/echo/v4"
+	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/model"
+	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 	"io"
 	"math/big"
 	"mime/multipart"
@@ -11,17 +19,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
-
-	"github.com/AlekSi/pointer"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/gocraft/dbr/v2"
-	"github.com/hashicorp/go-multierror"
-	"github.com/labstack/echo/v4"
-	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
-	"github.com/videocoin/marketplace/internal/model"
-	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 )
 
 func (s *Server) upload(c echo.Context) error {
@@ -71,6 +68,8 @@ func (s *Server) upload(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": ErrInvalidVideo.Error()})
 	}
 
+	logger.WithField("asset_id", asset.ID)
+
 	err = s.handleUploadFile(ctx, file, asset, meta)
 	if err != nil {
 		logger.WithError(err).Error("failed to upload file")
@@ -90,6 +89,46 @@ func (s *Server) upload(c echo.Context) error {
 	}
 
 	go func() {
+		logger = logger.
+			WithField("from", meta.LocalDest).
+			WithField("to", meta.DestKey)
+
+		logger.Info("uploading source video to storage")
+
+		f, err := os.Open(meta.LocalDest)
+		if err != nil {
+			logger.WithError(err).Error("failed to open source video")
+			return
+		}
+		defer f.Close()
+
+		link, err := s.storage.PushPath(meta.DestKey, f)
+		if err != nil {
+			logger.WithError(err).Error("failed to push source video to storage")
+			return
+		}
+
+		logger = logger.WithField("link", link)
+		logger.Info("source video has been uploaded to storage")
+
+		err = s.ds.Assets.UpdateURL(ctx, asset, link)
+		if err != nil {
+			logger.WithError(err).Error("failed to update asset original url")
+			return
+		}
+
+		logger.Info("generating thumbnail")
+
+		err = s.generateThumbnail(ctx, asset, meta)
+		if err != nil {
+			logger.WithError(err).Error("failed to generate asset thumbnail")
+			return
+		}
+
+		logger.Info("thumbnail has been generated successfully")
+	}()
+
+	go func() {
 		s.mc.JobCh <- model.MediaConverterJob{
 			Asset: asset,
 			Meta:  meta,
@@ -107,80 +146,13 @@ func (s *Server) handleUploadFile(ctx context.Context, file *multipart.FileHeade
 	}
 	defer src.Close()
 
-	pr, pw := io.Pipe()
-	tr := io.TeeReader(src, pw)
-
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-
-	uploadErrCh := make(chan error, 1)
-	go func() {
-		defer pw.Close()
-
-		link, err := s.storage.PushPath(meta.DestKey, tr)
-		if err != nil {
-			uploadErrCh <- err
-			return
-		}
-
-		err = s.ds.Assets.UpdateURL(ctx, asset, link)
-		if err != nil {
-			uploadErrCh <- err
-			return
-		}
-
-		close(uploadErrCh)
-	}()
-
-	downloadErrCh := make(chan error, 1)
-	go func() {
-		dst, err := os.Create(meta.LocalDest)
-		if err != nil {
-			downloadErrCh <- err
-			return
-		}
-		defer dst.Close()
-
-		if _, err = io.Copy(dst, pr); err != nil {
-			downloadErrCh <- err
-			return
-		}
-
-		close(downloadErrCh)
-	}()
-
-	var udErr error
-
-	go func() {
-		select {
-		case uploadErr := <-uploadErrCh:
-			wg.Done()
-			if uploadErr != nil {
-				multierror.Append(udErr, uploadErr)
-				break
-			}
-		}
-	}()
-
-	go func() {
-		select {
-		case downloadErr := <-downloadErrCh:
-			wg.Done()
-			if downloadErr != nil {
-				multierror.Append(udErr, downloadErr)
-				break
-			}
-		}
-	}()
-
-	wg.Wait()
-
-	if udErr != nil {
-		return udErr
-	}
-
-	err = s.generateThumbnail(ctx, asset, meta)
+	dst, err := os.Create(meta.LocalDest)
 	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
 		return err
 	}
 
