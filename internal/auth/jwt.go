@@ -18,7 +18,7 @@ func CreateAuthToken(ctx context.Context, secret string, account *model.Account)
 	claims := Claims{
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.FormatInt(account.ID, 10),
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(),
 		},
 		IsActive: account.IsActive,
 		Address: account.Address,
