@@ -126,9 +126,7 @@ func (s *Server) upload(c echo.Context) error {
 		}
 
 		logger.Info("thumbnail has been generated successfully")
-	}()
 
-	go func() {
 		s.mc.JobCh <- model.MediaConverterJob{
 			Asset: asset,
 			Meta:  meta,
@@ -177,9 +175,9 @@ func (s *Server) generateThumbnail(ctx context.Context, asset *model.Asset, meta
 	if err != nil {
 		return err
 	}
-	//defer func() {
-	//	_ = os.Remove(meta.LocalThumbDest)
-	//}()
+	defer func() {
+		_ = os.Remove(meta.LocalThumbDest)
+	}()
 
 	link, err := s.storage.PushPath(meta.DestThumbKey, f)
 	if err != nil {
