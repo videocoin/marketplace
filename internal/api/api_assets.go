@@ -177,9 +177,9 @@ func (s *Server) generateThumbnail(ctx context.Context, asset *model.Asset, meta
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = os.Remove(meta.LocalThumbDest)
-	}()
+	//defer func() {
+	//	_ = os.Remove(meta.LocalThumbDest)
+	//}()
 
 	link, err := s.storage.PushPath(meta.DestThumbKey, f)
 	if err != nil {

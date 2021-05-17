@@ -385,9 +385,9 @@ func (mc *MediaConverter) runEncryptJob(wg *sync.WaitGroup, job model.MediaConve
 		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
 		return
 	}
-	defer func() {
-		_ = os.Remove(meta.LocalEncDest)
-	}()
+	//defer func() {
+	//	_ = os.Remove(meta.LocalEncDest)
+	//}()
 
 	link, err := mc.storage.PushPath(meta.DestEncKey, f)
 	if err != nil {
@@ -548,9 +548,9 @@ func (mc *MediaConverter) runUploadYTThumbnailJob(
 }
 
 func (mc *MediaConverter) runGeneralPipeline(job model.MediaConverterJob) {
-	defer func() {
-		_ = os.Remove(job.Meta.LocalDest)
-	}()
+	//defer func() {
+	//	_ = os.Remove(job.Meta.LocalDest)
+	//}()
 
 	wg := &sync.WaitGroup{}
 
@@ -577,10 +577,10 @@ func (mc *MediaConverter) runGeneralPipeline(job model.MediaConverterJob) {
 }
 
 func (mc *MediaConverter) runYTPipeline(job model.MediaConverterJob) {
-	defer func() {
-		_ = os.Remove(job.Meta.LocalPreviewDest)
-		_ = os.Remove(job.Meta.LocalDest)
-	}()
+	//defer func() {
+	//	_ = os.Remove(job.Meta.LocalPreviewDest)
+	//	_ = os.Remove(job.Meta.LocalDest)
+	//}()
 
 	logger := mc.logger.
 		WithField("yt_id", job.Meta.YTVideo.ID).
