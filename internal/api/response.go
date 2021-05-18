@@ -55,6 +55,20 @@ type AssetContractResponse struct {
 	DevSellerFeeBasisPoints     int64  `json:"dev_seller_fee_basis_points"`
 }
 
+type AssetLiteResponse struct {
+	ID               int64   `json:"id"`
+	Name             *string `json:"name"`
+	Desc             *string `json:"description"`
+	URL              string  `json:"url"`
+	ThumbnailURL     *string `json:"thumbnail_url"`
+	PreviewURL       *string `json:"preview_url"`
+	EncryptedURL     *string `json:"encrypted_url"`
+	IPFSURL          string  `json:"ipfs_url"`
+	IPFSThumbnailURL *string `json:"ipfs_thumbnail_url"`
+	IPFSEncryptedURL *string `json:"ipfs_encrypted_url"`
+	DRMKey           *string `json:"drm_key"`
+}
+
 type AssetResponse struct {
 	ID          int64             `json:"id"`
 	TokenID     *string           `json:"token_id"`
@@ -135,6 +149,40 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 
 	if account.ImageURL.Valid {
 		resp.ImageUrl = pointer.ToString(account.ImageURL.String)
+	}
+
+	return resp
+}
+
+func toAssetLiteResponse(asset *model.Asset) *AssetLiteResponse {
+	resp := &AssetLiteResponse{
+		ID:          asset.ID,
+		URL:     asset.GetURL(),
+		IPFSURL: asset.GetIPFSURL(),
+	}
+
+	if asset.DRMKey != "" {
+		resp.DRMKey = pointer.ToString(asset.DRMKey)
+	}
+
+	if asset.Name.Valid {
+		resp.Name = pointer.ToString(asset.Name.String)
+	}
+
+	if asset.Desc.Valid {
+		resp.Desc = pointer.ToString(asset.Desc.String)
+	}
+
+	resp.PreviewURL = pointer.ToString(asset.GetPreviewURL())
+
+	if asset.ThumbnailURL.Valid {
+		resp.ThumbnailURL = pointer.ToString(asset.ThumbnailURL.String)
+		resp.IPFSThumbnailURL = pointer.ToString(asset.GetIPFSThumbnailURL())
+	}
+
+	if asset.EncryptedURL.Valid {
+		resp.EncryptedURL = pointer.ToString(asset.EncryptedURL.String)
+		resp.IPFSEncryptedURL = pointer.ToString(asset.GetIPFSEncryptedURL())
 	}
 
 	return resp

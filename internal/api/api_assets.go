@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/AlekSi/pointer"
 	"github.com/ethereum/go-ethereum/common"
@@ -344,6 +346,15 @@ func (s *Server) createAsset(c echo.Context) error {
 	err = s.ds.Assets.Update(ctx, asset, *updatedFields)
 	if err != nil {
 		return err
+	}
+
+	assetLite := toAssetLiteResponse(asset)
+	assetLiteBytes, _ := json.Marshal(assetLite)
+	_, err = s.storage.PushPath(
+		fmt.Sprintf("%d.json", asset.ID),
+		bytes.NewBuffer(assetLiteBytes))
+	if err != nil {
+		s.logger.WithError(err).Error("failed to upload token json to storage")
 	}
 
 	resp := toAssetResponse(asset)
