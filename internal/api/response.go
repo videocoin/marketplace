@@ -2,7 +2,9 @@ package api
 
 import (
 	"github.com/AlekSi/pointer"
+	"github.com/jinzhu/copier"
 	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/wyvern"
 	"strconv"
 )
 
@@ -111,6 +113,11 @@ type TokenResponse struct {
 	USDPrice *float64 `json:"usd_price"`
 }
 
+type OrdersResponse struct {
+	Orders []*wyvern.Order `json:"orders"`
+	Count  int64           `json:"count"`
+}
+
 type ItemsCountResponse struct {
 	TotalCount int64
 	Count      int64
@@ -156,7 +163,7 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 
 func toAssetLiteResponse(asset *model.Asset) *AssetLiteResponse {
 	resp := &AssetLiteResponse{
-		ID:          asset.ID,
+		ID:      asset.ID,
 		URL:     asset.GetURL(),
 		IPFSURL: asset.GetIPFSURL(),
 	}
@@ -305,6 +312,24 @@ func toTokensResponse(tokens []*model.Token) []*TokenResponse {
 
 	for _, token := range tokens {
 		resp = append(resp, toTokenResponse(token))
+	}
+
+	return resp
+}
+
+func toOrdersResponse(orders []*model.Order, count *ItemsCountResponse) *OrdersResponse {
+	resp := &OrdersResponse{
+		Orders: make([]*wyvern.Order, 0),
+		Count:  0,
+	}
+	for _, order := range orders {
+		item := new(wyvern.Order)
+		_ = copier.Copy(item, order.WyvernOrder)
+		resp.Orders = append(resp.Orders, item)
+	}
+
+	if count != nil {
+		resp.Count = count.TotalCount
 	}
 
 	return resp

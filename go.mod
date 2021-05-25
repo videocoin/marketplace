@@ -26,7 +26,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/ipfs/go-ipfs-api v0.2.0 // indirect
-	github.com/jinzhu/copier v0.2.8 // indirect
+	github.com/jinzhu/copier v0.2.8
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kkdai/youtube/v2 v2.6.1
 	github.com/labstack/echo v3.3.10+incompatible // indirect

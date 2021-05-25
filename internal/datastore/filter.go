@@ -21,3 +21,14 @@ type TokensFilter struct {
 	Symbol *string
 	Sort   *SortOption
 }
+
+type OrderFilter struct {
+	Side                 *int
+	SaleKind             *int
+	PaymentTokenAddress  *string
+	AssetContractAddress *string
+	TokenID              *int64
+	MakerID              *int64
+	TakerID              *int64
+	Sort                 *SortOption
+}

@@ -82,6 +82,8 @@ func (s *Server) route() {
 
 	v1.GET("/asset/:contract_address/:token_id", s.getAssetByContractAddressAndTokenID)
 	v1.GET("/tokens", s.getTokens)
+	s.e.POST("/wyvern/v1/orders/post", s.postOrder)
+	s.e.GET("/wyvern/v1/orders", s.getOrders)
 
 	myGroup := v1.Group("/my/assets")
 	myGroup.Use(auth.JWTAuth(s.logger, s.ds, s.authSecret))

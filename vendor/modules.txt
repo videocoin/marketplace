@@ -219,6 +219,7 @@ github.com/ipfs/interface-go-ipfs-core/path
 github.com/jackpal/go-nat-pmp
 # github.com/jinzhu/copier v0.2.8
 ## explicit
+github.com/jinzhu/copier
 # github.com/jstemmer/go-junit-report v0.9.1
 github.com/jstemmer/go-junit-report
 github.com/jstemmer/go-junit-report/formatter
