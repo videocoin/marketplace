@@ -52,6 +52,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) (*Server, error) {
 func (s *Server) route() {
 	logger.EchoLogger = s.logger
 
+	s.e.Pre(middleware.RemoveTrailingSlash())
 	s.e.Use(middleware.CORS())
 	s.e.Use(logger.NewEchoLogrus())
 
