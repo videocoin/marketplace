@@ -73,7 +73,9 @@ type AssetLiteResponse struct {
 }
 
 type AssetCollectionResponse struct {
-	CreatedDate *time.Time `json:"created_date"`
+	CreatedDate                 *time.Time `json:"created_date"`
+	OpenSeaBuyerFeeBasisPoints  string     `json:"opensea_buyer_fee_basis_points"`
+	OpenSeaSellerFeeBasisPoints string     `json:"opensea_seller_fee_basis_points"`
 }
 
 type AssetResponse struct {
@@ -212,10 +214,12 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			SellerFeeBasisPoints:        250,
 			OpenSeaSellerFeeBasisPoints: 250,
 		},
-		URL:        asset.GetURL(),
-		IPFSURL:    asset.GetIPFSURL(),
+		URL:     asset.GetURL(),
+		IPFSURL: asset.GetIPFSURL(),
 		Collection: &AssetCollectionResponse{
-			CreatedDate: asset.CreatedAt,
+			CreatedDate:                 asset.CreatedAt,
+			OpenSeaBuyerFeeBasisPoints:  "0",
+			OpenSeaSellerFeeBasisPoints: "0",
 		},
 	}
 
