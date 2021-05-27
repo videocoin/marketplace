@@ -219,7 +219,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		Collection: &AssetCollectionResponse{
 			CreatedDate:                 asset.CreatedAt,
 			OpenSeaBuyerFeeBasisPoints:  "0",
-			OpenSeaSellerFeeBasisPoints: "0",
+			OpenSeaSellerFeeBasisPoints: "250",
 		},
 	}
 
