@@ -76,6 +76,8 @@ type AssetCollectionResponse struct {
 	CreatedDate                 *time.Time `json:"created_date"`
 	OpenSeaBuyerFeeBasisPoints  string     `json:"opensea_buyer_fee_basis_points"`
 	OpenSeaSellerFeeBasisPoints string     `json:"opensea_seller_fee_basis_points"`
+	DevBuyerFeeBasisPoints      string     `json:"dev_buyer_fee_basis_points"`
+	DevSellerFeeBasisPoints     string     `json:"dev_seller_fee_basis_points"`
 }
 
 type AssetResponse struct {
@@ -220,6 +222,8 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			CreatedDate:                 asset.CreatedAt,
 			OpenSeaBuyerFeeBasisPoints:  "0",
 			OpenSeaSellerFeeBasisPoints: "250",
+			DevBuyerFeeBasisPoints:      "0",
+			DevSellerFeeBasisPoints:     "0",
 		},
 	}
 
