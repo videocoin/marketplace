@@ -6,6 +6,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/wyvern"
 	"strconv"
+	"time"
 )
 
 type NonceResponse struct {
@@ -71,6 +72,10 @@ type AssetLiteResponse struct {
 	DRMKey           *string `json:"drm_key"`
 }
 
+type AssetCollectionResponse struct {
+	CreatedDate *time.Time `json:"created_date"`
+}
+
 type AssetResponse struct {
 	ID          int64             `json:"id"`
 	TokenID     *string           `json:"token_id"`
@@ -88,10 +93,11 @@ type AssetResponse struct {
 	IPFSThumbnailURL *string `json:"ipfs_thumbnail_url"`
 	IPFSEncryptedURL *string `json:"ipfs_encrypted_url"`
 
-	YTVideoID *string                `json:"yt_video_id"`
-	Creator   *AccountResponse       `json:"owner"`
-	Contract  *AssetContractResponse `json:"asset_contract"`
-	DRMKey    *string                `json:"drm_key"`
+	YTVideoID  *string                  `json:"yt_video_id"`
+	Creator    *AccountResponse         `json:"owner"`
+	Contract   *AssetContractResponse   `json:"asset_contract"`
+	DRMKey     *string                  `json:"drm_key"`
+	Collection *AssetCollectionResponse `json:"collection"`
 }
 
 type AssetsResponse struct {
@@ -206,8 +212,11 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			SellerFeeBasisPoints:        250,
 			OpenSeaSellerFeeBasisPoints: 250,
 		},
-		URL:     asset.GetURL(),
-		IPFSURL: asset.GetIPFSURL(),
+		URL:        asset.GetURL(),
+		IPFSURL:    asset.GetIPFSURL(),
+		Collection: &AssetCollectionResponse{
+			CreatedDate: asset.CreatedAt,
+		},
 	}
 
 	if asset.DRMKey != "" {
