@@ -28,6 +28,14 @@ func (s *Server) postOrder(c echo.Context) error {
 		return err
 	}
 
+	order.WyvernOrder.Maker = &wyvern.Account{
+		Address: req.Maker,
+	}
+
+	order.WyvernOrder.Taker = &wyvern.Account{
+		Address: req.Taker,
+	}
+
 	if order.WyvernOrder == nil {
 		return echo.NewHTTPError(http.StatusPreconditionFailed, "invalid request")
 	}
@@ -42,11 +50,11 @@ func (s *Server) postOrder(c echo.Context) error {
 	s.logger.Debugf("%+v\n", order.WyvernOrder.Metadata)
 	s.logger.Debugf("%+v\n", order.WyvernOrder.Metadata.Asset)
 
-	if order.WyvernOrder.Maker == nil || !ethcommon.IsHexAddress(order.WyvernOrder.Maker.Address) {
+	if !ethcommon.IsHexAddress(order.WyvernOrder.Maker.Address) {
 		return echo.NewHTTPError(http.StatusPreconditionFailed, "invalid maker address")
 	}
 
-	if order.WyvernOrder.Taker == nil || !ethcommon.IsHexAddress(order.WyvernOrder.Taker.Address) {
+	if !ethcommon.IsHexAddress(order.WyvernOrder.Taker.Address) {
 		return echo.NewHTTPError(http.StatusPreconditionFailed, "invalid taker address")
 	}
 
@@ -59,20 +67,31 @@ func (s *Server) postOrder(c echo.Context) error {
 		return err
 	}
 
-	maker, err := s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Maker.Address)
-	if err != nil {
-		if err == datastore.ErrAccountNotFound {
-			return echo.NewHTTPError(http.StatusPreconditionFailed, "maker not found")
-		}
-		return err
+	maker := &model.Account{
+		Address: wyvern.NullAddress,
+	}
+	taker := &model.Account{
+		Address: wyvern.NullAddress,
 	}
 
-	taker, err := s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Taker.Address)
-	if err != nil {
-		if err == datastore.ErrAccountNotFound {
-			return echo.NewHTTPError(http.StatusPreconditionFailed, "taker not found")
+	if order.WyvernOrder.Maker.Address != wyvern.NullAddress {
+		maker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Maker.Address)
+		if err != nil {
+			if err == datastore.ErrAccountNotFound {
+				return echo.NewHTTPError(http.StatusPreconditionFailed, "maker not found")
+			}
+			return err
 		}
-		return err
+	}
+
+	if order.WyvernOrder.Taker.Address != wyvern.NullAddress {
+		taker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Taker.Address)
+		if err != nil {
+			if err == datastore.ErrAccountNotFound {
+				return echo.NewHTTPError(http.StatusPreconditionFailed, "taker not found")
+			}
+			return err
+		}
 	}
 
 	feeRecipient, err := s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.FeeRecipient.Address)
@@ -83,8 +102,14 @@ func (s *Server) postOrder(c echo.Context) error {
 		return err
 	}
 
-	order.MakerID = maker.ID
-	order.TakerID = taker.ID
+	if maker.ID != 0 {
+		order.MakerID = pointer.ToInt64(maker.ID)
+	}
+
+	if taker.ID != 0 {
+		order.TakerID = pointer.ToInt64(taker.ID)
+	}
+
 	order.OwnerID = asset.CreatedByID
 	_ = copier.Copy(order.WyvernOrder.Maker, maker)
 	_ = copier.Copy(order.WyvernOrder.Taker, taker)

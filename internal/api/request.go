@@ -47,7 +47,7 @@ type PostOrderRequest struct {
 	Hash                       string                   `json:"hash"`
 	HowToCall                  wyvern.HowToCall         `json:"how_to_call"`
 	ListingTime                int64                    `json:"listing_time"`
-	Maker                      *AccountResponse         `json:"maker"`
+	Maker                      string                   `json:"maker"`
 	MakerProtocolFee           string                   `json:"maker_protocol_fee"`
 	MakerReferrerFee           string                   `json:"maker_referrer_fee"`
 	MakerRelayerFee            string                   `json:"maker_relayer_fee"`
@@ -60,7 +60,7 @@ type PostOrderRequest struct {
 	Side                       wyvern.OrderSide         `json:"side"`
 	StaticExtradata            string                   `json:"static_extradata"`
 	StaticTarget               string                   `json:"static_target"`
-	Taker                      *AccountResponse         `json:"taker"`
+	Taker                      string                   `json:"taker"`
 	TakerProtocolFee           string                   `json:"taker_protocol_fee"`
 	TakerRelayerFee            string                   `json:"taker_relayer_fee"`
 	Target                     string                   `json:"target"`

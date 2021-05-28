@@ -19,6 +19,8 @@ const (
 	DelegateCall HowToCall = 1
 	StaticCall   HowToCall = 2
 	Create       HowToCall = 3
+
+	NullAddress = "0x0000000000000000000000000000000000000000"
 )
 
 type WyvernNFTAsset struct {

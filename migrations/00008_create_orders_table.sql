@@ -3,8 +3,8 @@
 CREATE TABLE IF NOT EXISTS orders (
   id           SERIAL PRIMARY KEY,
   created_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  maker_id     INT NULL,
-  taker_id     INT NULL,
+  maker_id     INT DEFAULT NULL,
+  taker_id     INT DEFAULT NULL,
   owner_id     INT NULL,
   side         INT NOT NULL,
   sale_kind    INT NOT NULL,
