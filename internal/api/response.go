@@ -206,18 +206,20 @@ func toAssetLiteResponse(asset *model.Asset) *AssetLiteResponse {
 }
 
 func toAssetResponse(asset *model.Asset) *AssetResponse {
+	contract := &AssetContractResponse{
+		SchemaName:                  model.ContractSchemaTypeERC1155.String(),
+		SellerFeeBasisPoints:        250,
+		OpenSeaSellerFeeBasisPoints: 250,
+	}
+
 	resp := &AssetResponse{
 		ID:          asset.ID,
 		TokenID:     pointer.ToString(strconv.FormatInt(asset.ID, 10)),
 		ContentType: asset.ContentType,
 		Status:      asset.Status,
-		Contract: &AssetContractResponse{
-			SchemaName:                  model.ContractSchemaTypeERC1155.String(),
-			SellerFeeBasisPoints:        250,
-			OpenSeaSellerFeeBasisPoints: 250,
-		},
-		URL:     asset.GetURL(),
-		IPFSURL: asset.GetIPFSURL(),
+		Contract:    contract,
+		URL:         asset.GetURL(),
+		IPFSURL:     asset.GetIPFSURL(),
 		Collection: &AssetCollectionResponse{
 			CreatedDate:                 asset.CreatedAt,
 			OpenSeaBuyerFeeBasisPoints:  "0",
@@ -257,6 +259,14 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 
 	if asset.Account != nil {
 		resp.Creator = toAccountResponse(asset.Account)
+	}
+
+	if asset.ID == 197 {
+		resp.TokenID = pointer.ToString("0")
+		resp.Contract.SchemaName = model.ContractSchemaTypeERC20.String()
+		resp.Contract.ContractType = "fungible"
+		resp.Contract.Name = "Dai Stablecoin"
+		resp.Contract.Address = "0x5ca6ba24df599d26b0c30b620233f0a11f7556fa"
 	}
 
 	return resp
