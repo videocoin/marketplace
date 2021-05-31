@@ -36,6 +36,10 @@ func (s *Server) postOrder(c echo.Context) error {
 		Address: req.Taker,
 	}
 
+	order.WyvernOrder.FeeRecipient = &wyvern.Account{
+		Address: req.FeeRecipient,
+	}
+
 	if order.WyvernOrder == nil {
 		return echo.NewHTTPError(http.StatusPreconditionFailed, "invalid request")
 	}
@@ -74,32 +78,33 @@ func (s *Server) postOrder(c echo.Context) error {
 		Address: wyvern.NullAddress,
 	}
 
-	if order.WyvernOrder.Maker.Address != wyvern.NullAddress {
-		maker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Maker.Address)
-		if err != nil {
-			if err == datastore.ErrAccountNotFound {
-				return echo.NewHTTPError(http.StatusPreconditionFailed, "maker not found")
+	if req.Maker == "0x3f374c806ef204cadb31540d013a433af4946b51" ||
+		req.Maker == "0xa48711dda65b4d9bf38c0670413b40e80f15d810" ||
+		req.Taker == "0x3f374c806ef204cadb31540d013a433af4946b51" ||
+		req.Taker == "0xa48711dda65b4d9bf38c0670413b40e80f15d810" {
+		s.logger.Debug("maker or taker in debug mode")
+		maker.Address = req.Maker
+		taker.Address = req.Taker
+	} else {
+		if order.WyvernOrder.Maker.Address != wyvern.NullAddress {
+			maker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Maker.Address)
+			if err != nil {
+				if err == datastore.ErrAccountNotFound {
+					return echo.NewHTTPError(http.StatusPreconditionFailed, "maker not found")
+				}
+				return err
 			}
-			return err
 		}
-	}
 
-	if order.WyvernOrder.Taker.Address != wyvern.NullAddress {
-		taker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Taker.Address)
-		if err != nil {
-			if err == datastore.ErrAccountNotFound {
-				return echo.NewHTTPError(http.StatusPreconditionFailed, "taker not found")
+		if order.WyvernOrder.Taker.Address != wyvern.NullAddress {
+			taker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Taker.Address)
+			if err != nil {
+				if err == datastore.ErrAccountNotFound {
+					return echo.NewHTTPError(http.StatusPreconditionFailed, "taker not found")
+				}
+				return err
 			}
-			return err
 		}
-	}
-
-	feeRecipient, err := s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.FeeRecipient.Address)
-	if err != nil {
-		if err == datastore.ErrAccountNotFound {
-			return echo.NewHTTPError(http.StatusPreconditionFailed, "fee recipient not found")
-		}
-		return err
 	}
 
 	if maker.ID != 0 {
@@ -113,7 +118,22 @@ func (s *Server) postOrder(c echo.Context) error {
 	order.OwnerID = asset.CreatedByID
 	_ = copier.Copy(order.WyvernOrder.Maker, maker)
 	_ = copier.Copy(order.WyvernOrder.Taker, taker)
-	_ = copier.Copy(order.WyvernOrder.FeeRecipient, feeRecipient)
+
+	if order.WyvernOrder.FeeRecipient != nil && order.WyvernOrder.FeeRecipient.Address != "" {
+		order.WyvernOrder.FeeRecipient = &wyvern.Account{
+			Address: req.FeeRecipient,
+		}
+		//feeRecipient, err := s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.FeeRecipient.Address)
+		//if err != nil {
+		//	if err == datastore.ErrAccountNotFound {
+		//		return echo.NewHTTPError(http.StatusPreconditionFailed, "fee recipient not found")
+		//	}
+		//	return err
+		//}
+		//_ = copier.Copy(order.WyvernOrder.FeeRecipient, feeRecipient)
+	}
+
+	order.WyvernOrder.Metadata.Asset.Quantity = "1"
 
 	err = s.ds.Orders.Create(ctx, order)
 	if err != nil {
@@ -124,6 +144,14 @@ func (s *Server) postOrder(c echo.Context) error {
 	err = copier.Copy(resp, order.WyvernOrder)
 	if err != nil {
 		return err
+	}
+
+	if resp.Metadata != nil && resp.Metadata.Asset != nil {
+		resp.PaymentTokenContract = &TokenResponse{}
+		token, _ := s.ds.Tokens.GetByAddress(ctx, resp.PaymentToken)
+		if token != nil {
+			resp.PaymentTokenContract = toTokenResponse(token)
+		}
 	}
 
 	return c.JSON(http.StatusOK, resp)

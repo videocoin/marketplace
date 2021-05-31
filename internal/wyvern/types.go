@@ -24,8 +24,9 @@ const (
 )
 
 type WyvernNFTAsset struct {
-	ID      string `json:"id"`
-	Address string `json:"address"`
+	ID       string `json:"id"`
+	Address  string `json:"address"`
+	Quantity string `json:"quantity"`
 }
 
 type ExchangeMetadata struct {

@@ -13,13 +13,13 @@ type Order struct {
 	CreatedDate                *time.Time        `json:"createdDate"`
 	EnglishAuctionReservePrice string            `json:"englishAuctionReservePrice"`
 	Exchange                   string            `json:"exchange"`
-	ExpirationTime             int64             `json:"expirationTime"`
+	ExpirationTime             string            `json:"expirationTime"`
 	Extra                      string            `json:"extra"`
 	FeeMethod                  FeeMethod         `json:"feeMethod"`
 	FeeRecipient               *Account          `json:"feeRecipient"`
 	Hash                       string            `json:"hash"`
 	HowToCall                  HowToCall         `json:"howToCall"`
-	ListingTime                int64             `json:"listingTime"`
+	ListingTime                string            `json:"listingTime"`
 	Maker                      *Account          `json:"maker"`
 	MakerProtocolFee           string            `json:"makerProtocolFee"`
 	MakerReferrerFee           string            `json:"makerReferrerFee"`
@@ -37,6 +37,9 @@ type Order struct {
 	TakerProtocolFee           string            `json:"takerProtocolFee"`
 	TakerRelayerFee            string            `json:"takerRelayerFee"`
 	Target                     string            `json:"target"`
+	V                          int               `json:"v"`
+	R                          string            `json:"r"`
+	S                          string            `json:"s"`
 }
 
 func (o Order) Value() (driver.Value, error) {
@@ -52,4 +55,3 @@ func (o *Order) Scan(value interface{}) error {
 
 	return json.Unmarshal(b, &o)
 }
-

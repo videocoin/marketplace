@@ -98,3 +98,35 @@ func (ds *TokenDatastore) Count(ctx context.Context, fltr *TokensFilter) (int64,
 
 	return count, nil
 }
+
+func (ds *TokenDatastore) GetByAddress(ctx context.Context, address string) (*model.Token, error) {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	token := new(model.Token)
+	err = tx.
+		Select("*").
+		From(ds.table).
+		Where("address = ?", address).
+		LoadOneContext(ctx, token)
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return nil, ErrTokenNotFound
+		}
+		return nil, err
+	}
+
+	return token, nil
+}
