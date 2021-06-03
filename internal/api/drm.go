@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	eciesgo "github.com/ecies/go"
+	eciesgo "github.com/ecies/go/v2"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/random"
 	"io"

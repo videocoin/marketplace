@@ -45,7 +45,9 @@ github.com/deckarep/golang-set
 github.com/dgrijalva/jwt-go
 # github.com/ecies/go v1.0.1
 ## explicit
-github.com/ecies/go
+# github.com/ecies/go/v2 v2.0.2
+## explicit
+github.com/ecies/go/v2
 # github.com/edsrzf/mmap-go v1.0.0
 github.com/edsrzf/mmap-go
 # github.com/ethereum/go-ethereum v1.10.1
@@ -188,11 +190,8 @@ github.com/grpc-ecosystem/go-grpc-middleware/util/metautils
 ## explicit
 # github.com/grpc-ecosystem/grpc-gateway v1.16.0
 ## explicit
-# github.com/hashicorp/errwrap v1.0.0
-github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.1.0
 ## explicit
-github.com/hashicorp/go-multierror
 # github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
@@ -404,13 +403,14 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 ## explicit
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blake2s
 golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/box

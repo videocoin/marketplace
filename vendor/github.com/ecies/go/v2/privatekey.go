@@ -1,14 +1,15 @@
 package eciesgo
 
 import (
+	"bytes"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
-	"github.com/fomichev/secp256k1"
-	"github.com/pkg/errors"
+	"fmt"
 	"math/big"
+
+	"github.com/fomichev/secp256k1"
 )
 
 // PrivateKey is an instance of secp256k1 private key with nested public key
@@ -23,7 +24,7 @@ func GenerateKey() (*PrivateKey, error) {
 
 	p, x, y, err := elliptic.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot generate key pair")
+		return nil, fmt.Errorf("cannot generate key pair: %w", err)
 	}
 
 	return &PrivateKey{
@@ -40,7 +41,7 @@ func GenerateKey() (*PrivateKey, error) {
 func NewPrivateKeyFromHex(s string) (*PrivateKey, error) {
 	b, err := hex.DecodeString(s)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot decode hex string")
+		return nil, fmt.Errorf("cannot decode hex string: %w", err)
 	}
 
 	return NewPrivateKeyFromBytes(b), nil
@@ -71,38 +72,32 @@ func (k *PrivateKey) Hex() string {
 	return hex.EncodeToString(k.Bytes())
 }
 
-// ECDH derives shared secret with pre-applied KDF, can be used safely as encryption key
-func (k *PrivateKey) ECDH(pub *PublicKey) ([]byte, error) {
+// Encapsulate encapsulates key by using Key Encapsulation Mechanism and returns symmetric key;
+// can be safely used as encryption key
+func (k *PrivateKey) Encapsulate(pub *PublicKey) ([]byte, error) {
 	if pub == nil {
-		return nil, errors.New("public key is empty")
+		return nil, fmt.Errorf("public key is empty")
 	}
+
+	var secret bytes.Buffer
+	secret.Write(k.PublicKey.Bytes(false))
 
 	sx, sy := pub.Curve.ScalarMult(pub.X, pub.Y, k.D.Bytes())
+	secret.Write([]byte{0x04})
 
-	// SHA-256 KDF
-	h := sha256.New()
-
-	if sy.Bit(0) != 0 { // If odd
-		h.Write([]byte{0x03})
-	} else { // If even
-		h.Write([]byte{0x02})
-	}
-
-	// Sometimes shared secret is less than 32 bytes; Big Endian
+	// Sometimes shared secret coordinates are less than 32 bytes; Big Endian
 	l := len(pub.Curve.Params().P.Bytes())
-	for i := 0; i < l-len(sx.Bytes()); i++ {
-		h.Write([]byte{0x00})
-	}
+	secret.Write(zeroPad(sx.Bytes(), l))
+	secret.Write(zeroPad(sy.Bytes(), l))
 
-	h.Write(sx.Bytes())
-	return h.Sum(nil), nil
+	return kdf(secret.Bytes())
 }
 
-// UnsafeECDH derives shared secret;
+// ECDH derives shared secret;
 // Must not be used as encryption key, it increases chances to perform successful key restoration attack
-func (k *PrivateKey) UnsafeECDH(pub *PublicKey) ([]byte, error) {
+func (k *PrivateKey) ECDH(pub *PublicKey) ([]byte, error) {
 	if pub == nil {
-		return nil, errors.New("public key is empty")
+		return nil, fmt.Errorf("public key is empty")
 	}
 
 	// Shared secret generation

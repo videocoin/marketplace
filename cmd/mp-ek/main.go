@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	eciesgo "github.com/ecies/go"
+	eciesgo "github.com/ecies/go/v2"
 	"os"
 )
 

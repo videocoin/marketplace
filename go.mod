@@ -10,7 +10,8 @@ require (
 	github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054 // indirect
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/ecies/go v1.0.1
+	github.com/ecies/go v1.0.1 // indirect
+	github.com/ecies/go/v2 v2.0.2
 	github.com/ethereum/go-ethereum v1.10.1
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/getsentry/raven-go v0.2.0 // indirect
@@ -23,7 +24,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/ipfs/go-ipfs-api v0.2.0 // indirect
 	github.com/jinzhu/copier v0.2.8 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -45,7 +46,7 @@ require (
 	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac
 	github.com/textileio/textile/v2 v2.6.8
 	github.com/videocoin/common v0.0.0-20200510014350-b8f6b3848d06 // indirect
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/net v0.0.0-20210330142815-c8897c278d10 // indirect
 	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558 // indirect
 	golang.org/x/sys v0.0.0-20210326220804-49726bf1d181 // indirect
