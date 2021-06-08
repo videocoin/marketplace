@@ -890,13 +890,22 @@
     "UpdateAccountRequest": {
       "type": "object",
       "properties": {
-        "username": {
-          "type": "string"
-        },
         "name": {
           "type": "string"
         },
+        "bio": {
+          "type": "string"
+        },
+        "custom_url": {
+          "type": "string"
+        },
+        "yt_username": {
+          "type": "string"
+        },
         "image_data": {
+          "type": "string"
+        },
+        "cover_data": {
           "type": "string"
         }
       }
@@ -917,6 +926,18 @@
         },
         "name": {
           "type": "string"
+        },
+        "cover_url": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "custom_url": {
+          "type": "string"
+        },
+        "yt_username": {
+          "type": "string"
         }
       }
     },
@@ -926,11 +947,14 @@
         "address": {
           "type": "string"
         },
+        "profile_img_url": {
+          "type": "string"
+        },
+        "is_verified": {
+          "type": "boolean"
+        },
         "user": {
           "$ref": "#/definitions/UserResponse"
-        },
-        "image_url": {
-          "type": "string"
         }
       }
     },
