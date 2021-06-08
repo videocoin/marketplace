@@ -78,32 +78,23 @@ func (s *Server) postOrder(c echo.Context) error {
 		Address: wyvern.NullAddress,
 	}
 
-	if req.Maker == "0x3f374c806ef204cadb31540d013a433af4946b51" ||
-		req.Maker == "0xa48711dda65b4d9bf38c0670413b40e80f15d810" ||
-		req.Taker == "0x3f374c806ef204cadb31540d013a433af4946b51" ||
-		req.Taker == "0xa48711dda65b4d9bf38c0670413b40e80f15d810" {
-		s.logger.Debug("maker or taker in debug mode")
-		maker.Address = req.Maker
-		taker.Address = req.Taker
-	} else {
-		if order.WyvernOrder.Maker.Address != wyvern.NullAddress {
-			maker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Maker.Address)
-			if err != nil {
-				if err == datastore.ErrAccountNotFound {
-					return echo.NewHTTPError(http.StatusPreconditionFailed, "maker not found")
-				}
-				return err
+	if order.WyvernOrder.Maker.Address != wyvern.NullAddress {
+		maker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Maker.Address)
+		if err != nil {
+			if err == datastore.ErrAccountNotFound {
+				return echo.NewHTTPError(http.StatusPreconditionFailed, "maker not found")
 			}
+			return err
 		}
+	}
 
-		if order.WyvernOrder.Taker.Address != wyvern.NullAddress {
-			taker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Taker.Address)
-			if err != nil {
-				if err == datastore.ErrAccountNotFound {
-					return echo.NewHTTPError(http.StatusPreconditionFailed, "taker not found")
-				}
-				return err
+	if order.WyvernOrder.Taker.Address != wyvern.NullAddress {
+		taker, err = s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.Taker.Address)
+		if err != nil {
+			if err == datastore.ErrAccountNotFound {
+				return echo.NewHTTPError(http.StatusPreconditionFailed, "taker not found")
 			}
+			return err
 		}
 	}
 
@@ -215,7 +206,7 @@ func (s *Server) getOrders(c echo.Context) error {
 	}
 
 	reqMaker := c.FormValue("maker")
-	if reqMaker != "" && ethcommon.IsHexAddress(reqMaker){
+	if reqMaker != "" && ethcommon.IsHexAddress(reqMaker) {
 		maker, _ := s.ds.Accounts.GetByAddress(ctx, reqMaker)
 		if maker == nil {
 			return returnEmptyOrders(c)
@@ -225,7 +216,7 @@ func (s *Server) getOrders(c echo.Context) error {
 	}
 
 	reqTaker := c.FormValue("taker")
-	if reqTaker != "" && ethcommon.IsHexAddress(reqTaker){
+	if reqTaker != "" && ethcommon.IsHexAddress(reqTaker) {
 		taker, _ := s.ds.Accounts.GetByAddress(ctx, reqTaker)
 		if taker == nil {
 			return returnEmptyOrders(c)

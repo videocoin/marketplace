@@ -460,14 +460,9 @@ func (s *Server) getAssetByContractAddressAndTokenID(c echo.Context) error {
 
 	ca := c.Param("contract_address")
 
-	tokenID := int64(0)
-	if ca != "0x5ca6ba24df599d26b0c30b620233f0a11f7556fa" {
-		tokenID, _ = strconv.ParseInt(c.Param("token_id"), 10, 64)
-		if tokenID == 0 {
-			return echo.ErrNotFound
-		}
-	} else {
-		tokenID = 197
+	tokenID, _ := strconv.ParseInt(c.Param("token_id"), 10, 64)
+	if tokenID == 0 {
+		return echo.ErrNotFound
 	}
 
 	asset, err := s.ds.Assets.GetByTokenID(ctx, tokenID)
@@ -478,10 +473,8 @@ func (s *Server) getAssetByContractAddressAndTokenID(c echo.Context) error {
 		return err
 	}
 
-	if ca != "0x5ca6ba24df599d26b0c30b620233f0a11f7556fa" {
-		if ca != asset.ContractAddress.String {
-			return echo.ErrNotFound
-		}
+	if ca != asset.ContractAddress.String {
+		return echo.ErrNotFound
 	}
 
 	account, err := s.ds.Accounts.GetByID(ctx, asset.CreatedByID)
