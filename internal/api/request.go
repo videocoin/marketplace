@@ -15,9 +15,13 @@ type AuthRequest struct {
 }
 
 type UpdateAccountRequest struct {
-	Username  *string `json:"username"`
-	Name      *string `json:"name"`
-	ImageData *string `json:"image_data"`
+	Username   *string `json:"username"`
+	Name       *string `json:"name"`
+	ImageData  *string `json:"image_data"`
+	CoverData  *string `json:"cover_data"`
+	CustomURL  *string `json:"custom_url"`
+	Bio        *string `json:"bio"`
+	YTUsername *string `json:"yt_username"`
 }
 
 type YTUploadRequest struct {

@@ -16,13 +16,24 @@ var (
 )
 
 type UpdateAccountFields struct {
-	Username *string
-	Name     *string
-	ImageURL *string
+	Username   *string
+	Name       *string
+	Bio        *string
+	CustomURL  *string
+	YTUsername *string
+	ImageURL   *string
+	CoverURL   *string
 }
 
 func (f *UpdateAccountFields) IsEmpty() bool {
-	return f != nil && f.Username == nil && f.Name == nil && f.ImageURL == nil
+	return f != nil &&
+		f.Username == nil &&
+		f.Name == nil &&
+		f.ImageURL == nil &&
+		f.CoverURL == nil &&
+		f.Bio == nil &&
+		f.CustomURL == nil &&
+		f.YTUsername == nil
 }
 
 type AccountDatastore struct {
@@ -336,6 +347,7 @@ func (ds *AccountDatastore) Update(ctx context.Context, account *model.Account, 
 	}
 
 	stmt := tx.Update(ds.table)
+
 	if fields.Username != nil {
 		stmt.Set("username", dbr.NewNullString(*fields.Username))
 		account.Username = dbr.NewNullString(*fields.Username)
@@ -346,9 +358,29 @@ func (ds *AccountDatastore) Update(ctx context.Context, account *model.Account, 
 		account.Name = dbr.NewNullString(*fields.Name)
 	}
 
+	if fields.Bio != nil {
+		stmt.Set("bio", dbr.NewNullString(*fields.Bio))
+		account.Bio = dbr.NewNullString(*fields.Bio)
+	}
+
+	if fields.CustomURL != nil {
+		stmt.Set("custom_url", dbr.NewNullString(*fields.CustomURL))
+		account.CustomURL = dbr.NewNullString(*fields.CustomURL)
+	}
+
+	if fields.YTUsername != nil {
+		stmt.Set("yt_username", dbr.NewNullString(*fields.YTUsername))
+		account.YTUsername = dbr.NewNullString(*fields.YTUsername)
+	}
+
 	if fields.ImageURL != nil {
 		stmt.Set("image_url", dbr.NewNullString(*fields.ImageURL))
 		account.ImageURL = dbr.NewNullString(*fields.ImageURL)
+	}
+
+	if fields.CoverURL != nil {
+		stmt.Set("cover_url", dbr.NewNullString(*fields.CoverURL))
+		account.CoverURL = dbr.NewNullString(*fields.CoverURL)
 	}
 
 	_, err = stmt.Where("id = ?", account.ID).ExecContext(ctx)

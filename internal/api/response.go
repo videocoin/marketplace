@@ -23,8 +23,12 @@ type AuthResponse struct {
 }
 
 type UserResponse struct {
-	Username *string `json:"username"`
-	Name     *string `json:"name"`
+	Username   *string `json:"username"`
+	Name       *string `json:"name"`
+	CoverURL   *string `json:"cover_url"`
+	Bio        *string `json:"bio"`
+	CustomURL  *string `json:"custom_url"`
+	YTUsername *string `json:"yt_username"`
 }
 
 type AccountResponse struct {
@@ -164,8 +168,24 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 		resp.User.Name = pointer.ToString(account.Name.String)
 	}
 
+	if account.Bio.Valid {
+		resp.User.Bio = pointer.ToString(account.Bio.String)
+	}
+
+	if account.CustomURL.Valid {
+		resp.User.CustomURL = pointer.ToString(account.CustomURL.String)
+	}
+
+	if account.YTUsername.Valid {
+		resp.User.YTUsername = pointer.ToString(account.YTUsername.String)
+	}
+
 	if account.ImageURL.Valid {
 		resp.ImageUrl = pointer.ToString(account.ImageURL.String)
+	}
+
+	if account.CoverURL.Valid {
+		resp.User.CoverURL = pointer.ToString(account.CoverURL.String)
 	}
 
 	return resp

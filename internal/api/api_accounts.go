@@ -152,8 +152,20 @@ func (s *Server) updateAccount(c echo.Context) error {
 		}
 	}
 
-	if req.Name != nil && len(*req.Name) > 0 {
+	if req.Name != nil {
 		updateFields.Name = pointer.ToString(*req.Name)
+	}
+
+	if req.Bio != nil {
+		updateFields.Bio = pointer.ToString(*req.Bio)
+	}
+
+	if req.CustomURL != nil {
+		updateFields.CustomURL = pointer.ToString(*req.CustomURL)
+	}
+
+	if req.YTUsername != nil {
+		updateFields.YTUsername = pointer.ToString(*req.YTUsername)
 	}
 
 	if req.ImageData != nil {
@@ -166,6 +178,18 @@ func (s *Server) updateAccount(c echo.Context) error {
 		}
 
 		updateFields.ImageURL = pointer.ToString(link)
+	}
+
+	if req.CoverData != nil {
+		link, err := s.handleCoverData(*req.CoverData, account.ID)
+		if err != nil {
+			if err == ErrInvalidImageData {
+				return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": err.Error()})
+			}
+			return err
+		}
+
+		updateFields.CoverURL = pointer.ToString(link)
 	}
 
 	if !updateFields.IsEmpty() {
@@ -249,6 +273,83 @@ func (s *Server) handleImageData(data string, accountID int64) (string, error) {
 		_, err = s.storage.PushPath(k, originalImageJpeg)
 		if err != nil {
 			logger.WithError(err).Error("failed to push account image to storage")
+			return
+		}
+	}()
+
+	return link, nil
+}
+
+func (s *Server) handleCoverData(data string, accountID int64) (string, error) {
+	var (
+		imageData    image.Image
+		strImageData string
+		isPng        bool
+	)
+
+	if strings.HasPrefix(data, "data:image/jpeg;base64,") {
+		strImageData = strings.TrimPrefix(data, "data:image/jpeg;base64,")
+	} else if strings.HasPrefix(data, "data:image/png;base64,") {
+		strImageData = strings.TrimPrefix(data, "data:image/png;base64,")
+		isPng = true
+	} else {
+		return "", ErrInvalidImageData
+	}
+
+	srcImageData, err := base64.StdEncoding.DecodeString(strImageData)
+	if err != nil {
+		return "", ErrInvalidImageData
+	}
+
+	imageReader := bytes.NewReader(srcImageData)
+	if isPng {
+		imageData, err = png.Decode(imageReader)
+		if err != nil {
+			return "", ErrInvalidImageData
+		}
+	} else {
+		imageData, err = jpeg.Decode(imageReader)
+		if err != nil {
+			return "", ErrInvalidImageData
+		}
+	}
+
+	resizedImage := resize.Resize(1680, 0, imageData, resize.Lanczos2)
+	croppedImage, err := cutter.Crop(resizedImage, cutter.Config{
+		Width:  1680,
+		Height: 340,
+		Mode:   cutter.Centered,
+	})
+
+	rcImageJpeg := new(bytes.Buffer)
+	err = jpeg.Encode(rcImageJpeg, croppedImage, nil)
+	if err != nil {
+		return "", err
+	}
+
+	imageID := random.RandomString(5)
+
+	k := fmt.Sprintf("u/%d/r_cover_%s.jpg", accountID, imageID)
+	link, err := s.storage.PushPath(k, rcImageJpeg)
+	if err != nil {
+		return "", err
+	}
+
+	go func() {
+		logger := s.logger.
+			WithField("account_id", accountID).
+			WithField("image_id", imageID)
+		originalImageJpeg := new(bytes.Buffer)
+		err = jpeg.Encode(originalImageJpeg, imageData, nil)
+		if err != nil {
+			logger.WithError(err).Error("failed to encode account cvoer image")
+			return
+		}
+
+		k = fmt.Sprintf("u/%d/o_cover_%s.jpg", accountID, imageID)
+		_, err = s.storage.PushPath(k, originalImageJpeg)
+		if err != nil {
+			logger.WithError(err).Error("failed to push account cover image to storage")
 			return
 		}
 	}()
