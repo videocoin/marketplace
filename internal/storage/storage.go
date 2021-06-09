@@ -14,11 +14,19 @@ import (
 	"time"
 )
 
+const (
+	Textile    = "textile"
+	NftStorage = "nftstorage"
+)
+
 type Storage struct {
-	config  *TextileConfig
-	authCtx context.Context
-	cli     *bucketsd.Client
-	root    *bucketspb.RootResponse
+	backend          string
+	textileConfig    *TextileConfig
+	nftStorageConfig *NftStorageConfig
+	authCtx          context.Context
+	ttCli            *bucketsd.Client
+	ttRoot           *bucketspb.RootResponse
+	nsCli            *NftStorageClient
 }
 
 func NewStorage(opts ...Option) (*Storage, error) {
@@ -29,50 +37,63 @@ func NewStorage(opts ...Option) (*Storage, error) {
 		}
 	}
 
-	dialOpts := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
-		grpc.WithPerRPCCredentials(common.Credentials{}),
-	}
-	cli, err := bucketsd.NewClient("api.hub.textile.io:443", dialOpts...)
-	if err != nil {
-		return nil, err
-	}
-	s.cli = cli
-
-	authCtx, err := common.CreateAPISigContext(
-		common.NewAPIKeyContext(context.Background(), s.config.AuthKey),
-		time.Now().Add(time.Minute),
-		s.config.AuthSecret,
-	)
-	if err != nil {
-		return nil, err
+	if s.nftStorageConfig != nil {
+		s.backend = NftStorage
+		s.nsCli = NewNftStorageClient(s.nftStorageConfig.ApiKey)
 	}
 
-	tid, err := thread.Decode(s.config.ThreadID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid textile thread id: %s", err)
+	if s.textileConfig != nil {
+		s.backend = Textile
+
+		dialOpts := []grpc.DialOption{
+			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
+			grpc.WithPerRPCCredentials(common.Credentials{}),
+		}
+		cli, err := bucketsd.NewClient("api.hub.textile.io:443", dialOpts...)
+		if err != nil {
+			return nil, err
+		}
+		s.ttCli = cli
+
+		authCtx, err := common.CreateAPISigContext(
+			common.NewAPIKeyContext(context.Background(), s.textileConfig.AuthKey),
+			time.Now().Add(time.Minute),
+			s.textileConfig.AuthSecret,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tid, err := thread.Decode(s.textileConfig.ThreadID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid textile thread id: %s", err)
+		}
+		authCtx = common.NewThreadIDContext(authCtx, tid)
+
+		s.authCtx = authCtx
+
+		root, err := s.ttCli.Root(s.authCtx, s.textileConfig.BucketRootKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get bucket root: %s", err)
+		}
+
+		s.ttRoot = root
 	}
-	authCtx = common.NewThreadIDContext(authCtx, tid)
-
-	s.authCtx = authCtx
-
-	root, err := s.cli.Root(s.authCtx, s.config.BucketRootKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get bucket root: %s", err)
-	}
-
-	s.root = root
 
 	return s, nil
 }
 
 func (s *Storage) PushPath(path string, src io.Reader) (string, error) {
-	_, _, err := s.cli.PushPath(s.authCtx, s.root.Root.Key, path, src)
+	if s.backend == NftStorage {
+		return s.nsCli.Upload(path, src)
+	}
+
+	_, _, err := s.ttCli.PushPath(s.authCtx, s.ttRoot.Root.Key, path, src)
 	if err != nil {
 		return "", err
 	}
 
-	links, err := s.cli.Links(s.authCtx, s.root.Root.Key, path)
+	links, err := s.ttCli.Links(s.authCtx, s.ttRoot.Root.Key, path)
 	if err != nil {
 		return "", err
 	}

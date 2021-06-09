@@ -15,10 +15,14 @@ type Config struct {
 	GCPPubSubTopic        string `envconfig:"GCP_PUBSUB_TOPIC" required:"false"`
 	GCPPubSubSubscription string `envconfig:"GCP_PUBSUB_SUB" required:"false"`
 
-	TextileAuthKey       string `envconfig:"TEXTILE_AUTH_KEY"`
-	TextileAuthSecret    string `envconfig:"TEXTILE_AUTH_SECRET"`
-	TextileThreadID      string `envconfig:"TEXTILE_THREAD_ID"`
-	TextileBucketRootKey string `envconfig:"TEXTILE_BUCKET_ROOT_KEY"`
+	StorageBackend string `envconfig:"STORAGE_BACKEND" required:"true" default:"textile"`
+
+	TextileAuthKey       string `envconfig:"TEXTILE_AUTH_KEY" required:"false"`
+	TextileAuthSecret    string `envconfig:"TEXTILE_AUTH_SECRET" required:"false"`
+	TextileThreadID      string `envconfig:"TEXTILE_THREAD_ID" required:"false"`
+	TextileBucketRootKey string `envconfig:"TEXTILE_BUCKET_ROOT_KEY" required:"false"`
+
+	NftStorageApiKey string `envconfig:"NFTSTORAGE_API_KEY" required:"false"`
 
 	BlockchainURL          string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
 	ERC1155ContractAddress string `envconfig:"ERC1155_CONTRACT_ADDRESS"`

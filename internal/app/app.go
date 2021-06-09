@@ -30,12 +30,22 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	storageCli, err := storage.NewStorage(storage.WithConfig(&storage.TextileConfig{
-		AuthKey:       cfg.TextileAuthKey,
-		AuthSecret:    cfg.TextileAuthSecret,
-		ThreadID:      cfg.TextileThreadID,
-		BucketRootKey: cfg.TextileBucketRootKey,
-	}))
+	storageOpts := make([]storage.Option, 0)
+	if cfg.StorageBackend == storage.NftStorage {
+		storageOpts = append(storageOpts, storage.WithNftStorage(&storage.NftStorageConfig{
+			ApiKey: cfg.NftStorageApiKey,
+		}))
+		logger.WithField("storage", "nftstorage").Info("initializing storage backend")
+	} else {
+		storageOpts = append(storageOpts, storage.WithTextile(&storage.TextileConfig{
+			AuthKey:       cfg.TextileAuthKey,
+			AuthSecret:    cfg.TextileAuthSecret,
+			ThreadID:      cfg.TextileThreadID,
+			BucketRootKey: cfg.TextileBucketRootKey,
+		}))
+		logger.WithField("storage", "textile").Info("initializing storage backend")
+	}
+	storageCli, err := storage.NewStorage(storageOpts...)
 	if err != nil {
 		return nil, err
 	}

@@ -6,3 +6,7 @@ type TextileConfig struct {
 	ThreadID      string
 	BucketRootKey string
 }
+
+type NftStorageConfig struct {
+	ApiKey string
+}
