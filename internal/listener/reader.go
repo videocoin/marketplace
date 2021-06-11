@@ -18,12 +18,7 @@ type EventReader struct {
 	pa  *Parser
 }
 
-func NewEventReader(url string, contractAddress string) (*EventReader, error) {
-	cli, err := ethclient.Dial(url)
-	if err != nil {
-		return nil, err
-	}
-
+func NewEventReader(cli *ethclient.Client, contractAddress string) (*EventReader, error) {
 	ca := common.HexToAddress(contractAddress)
 
 	pa := NewParser()
