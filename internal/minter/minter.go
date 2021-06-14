@@ -3,14 +3,15 @@ package minter
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"sync"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/videocoin/marketplace/internal/contracts/dev/nft"
-	"math/big"
-	"sync"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 type Minter struct {
 	ca       common.Address
 	cli      *ethclient.Client
-	contract *nft.Nft1155
+	contract *nft.NFT1155
 	opts     bind.TransactOpts
 	mtx      sync.Mutex
 }
@@ -32,7 +33,7 @@ func NewMinter(url string, contractAddress string, contractKey string, contractK
 	}
 
 	ca := common.HexToAddress(contractAddress)
-	contract, err := nft.NewNft1155(ca, cli)
+	contract, err := nft.NewNFT1155(ca, cli)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (m *Minter) Mint(ctx context.Context, to common.Address, id *big.Int) (*typ
 	}
 
 	txOpts := m.getTxOpts(ctx)
-	tx, err := m.contract.Mint0(txOpts, to, id)
+	tx, err := m.contract.Mint(txOpts, to, id)
 	if err != nil {
 		return nil, err
 	}

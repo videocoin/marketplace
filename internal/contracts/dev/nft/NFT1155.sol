@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: MIT AND UNLICENSED
-// File: openzeppelin-solidity/contracts/introspection/IERC165.sol
+// SPDX-License-Identifier: MIT
+// File: @openzeppelin/contracts/introspection/IERC165.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -25,10 +25,10 @@ interface IERC165 {
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC1155/IERC1155.sol
+// File: @openzeppelin/contracts/token/ERC1155/IERC1155.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.2 <0.8.0;
 
 
 /**
@@ -129,10 +129,10 @@ interface IERC1155 is IERC165 {
     function safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC1155/IERC1155MetadataURI.sol
+// File: @openzeppelin/contracts/token/ERC1155/IERC1155MetadataURI.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.2 <0.8.0;
 
 
 /**
@@ -151,10 +151,10 @@ interface IERC1155MetadataURI is IERC1155 {
     function uri(uint256 id) external view returns (string memory);
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC1155/IERC1155Receiver.sol
+// File: @openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 
 /**
@@ -209,7 +209,7 @@ interface IERC1155Receiver is IERC165 {
         returns(bytes4);
 }
 
-// File: openzeppelin-solidity/contracts/utils/Context.sol
+// File: @openzeppelin/contracts/utils/Context.sol
 
 
 pragma solidity >=0.6.0 <0.8.0;
@@ -235,10 +235,10 @@ abstract contract Context {
     }
 }
 
-// File: openzeppelin-solidity/contracts/introspection/ERC165.sol
+// File: @openzeppelin/contracts/introspection/ERC165.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 
 /**
@@ -258,7 +258,7 @@ abstract contract ERC165 is IERC165 {
      */
     mapping(bytes4 => bool) private _supportedInterfaces;
 
-    constructor () {
+    constructor () internal {
         // Derived contracts need only register support for their own interfaces,
         // we register support for ERC165 itself here
         _registerInterface(_INTERFACE_ID_ERC165);
@@ -290,10 +290,10 @@ abstract contract ERC165 is IERC165 {
     }
 }
 
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+// File: @openzeppelin/contracts/math/SafeMath.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -506,10 +506,10 @@ library SafeMath {
     }
 }
 
-// File: openzeppelin-solidity/contracts/utils/Address.sol
+// File: @openzeppelin/contracts/utils/Address.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.2 <0.8.0;
 
 /**
  * @dev Collection of functions related to the address type
@@ -697,10 +697,10 @@ library Address {
     }
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC1155/ERC1155.sol
+// File: @openzeppelin/contracts/token/ERC1155/ERC1155.sol
 
 
-pragma solidity ^0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 
 
@@ -751,7 +751,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
     /**
      * @dev See {_setURI}.
      */
-    constructor (string memory uri_) {
+    constructor (string memory uri_) public {
         _setURI(uri_);
 
         // register the supported interfaces to conform to ERC1155 via ERC165
@@ -1114,23 +1114,31 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
 
 // File: contracts/NFT1155.sol
 
-pragma solidity ^0.7.0;
+pragma solidity 0.7.6;
 
 
+/**
+ *
+ * @dev Implementation of the NFT standard token (ERC1155).
+ * Operated by VideoCoin market place.
+ */
 contract NFT1155 is ERC1155 {
 
 	/**
+     *
+     * @dev `uri_` tokens base URI pattern.
+     * 
+     * 
+     * See {_setURI} for more information.
 	 */
 	constructor (string memory uri_) ERC1155(uri_) {
 	}
 
-	function mint(address to, uint256 tokenId) public returns (bool) {
+    /**
+     *
+     * @dev Mint token using external token ID.
+     */
+	function mint(address to, uint256 tokenId) public {
 		_mint(to, tokenId, 1, "");
-		return true;
-	}
-
-	function mint(address to, uint256 tokenId, uint256 amount) public returns (bool) {
-		_mint(to, tokenId, amount, "");
-		return true;
 	}
 }
