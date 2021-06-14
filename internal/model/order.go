@@ -7,6 +7,7 @@ import (
 
 type Order struct {
 	ID                   int64            `db:"id"`
+	CreatedBy            int64            `db:"created_by"`
 	Hash                 string           `db:"hash"`
 	AssetContractAddress string           `db:"asset_contract_address"`
 	TokenID              int64            `db:"token_id"`

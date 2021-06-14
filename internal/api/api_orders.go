@@ -14,6 +14,9 @@ import (
 )
 
 func (s *Server) postOrder(c echo.Context) error {
+	ctxAccount := c.Get("account")
+	account := ctxAccount.(*model.Account)
+
 	ctx := context.Background()
 	req := new(PostOrderRequest)
 	err := c.Bind(req)
@@ -24,6 +27,7 @@ func (s *Server) postOrder(c echo.Context) error {
 	s.logger.Debugf("post order request %+v\n", req)
 
 	order := new(model.Order)
+	order.CreatedBy = account.ID
 	order.WyvernOrder = new(wyvern.Order)
 	err = copier.Copy(order.WyvernOrder, req)
 	if err != nil {
