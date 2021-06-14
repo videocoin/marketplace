@@ -49,8 +49,8 @@ func (ds *OrderDatastore) Create(ctx context.Context, order *model.Order) error 
 	order.CreatedDate = order.WyvernOrder.CreatedDate
 
 	cols := []string{
-		"hash", "asset_contract_address", "token_id", "side", "sale_kind", "payment_token_address",
-		"maker_id", "taker_id", "owner_id", "created_date", "wyvern_order",
+		"created_by_id", "hash", "asset_contract_address", "token_id", "side", "sale_kind", "payment_token_address",
+		"maker_id", "taker_id", "created_date", "wyvern_order",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -164,6 +164,52 @@ func (ds *OrderDatastore) GetByHash(ctx context.Context, hash string) (*model.Or
 	}
 
 	return order, nil
+}
+
+func (ds *OrderDatastore) MarkStatusAs(ctx context.Context, order *model.Order, status model.OrderStatus) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("status", status).
+		Where("id = ?", order.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	order.Status = status
+
+	return nil
+}
+
+func (ds *OrderDatastore) MarkStatusAsProcessing(ctx context.Context, order *model.Order) error {
+	return ds.MarkStatusAs(ctx, order, model.OrderStatusProcessing)
+}
+
+func (ds *OrderDatastore) MarkStatusAsApproved(ctx context.Context, order *model.Order) error {
+	return ds.MarkStatusAs(ctx, order, model.OrderStatusApproved)
+}
+
+func (ds *OrderDatastore) MarkStatusAsCanceled(ctx context.Context, order *model.Order) error {
+	return ds.MarkStatusAs(ctx, order, model.OrderStatusCanceled)
+}
+
+func (ds *OrderDatastore) MarkStatusAsProcessed(ctx context.Context, order *model.Order) error {
+	return ds.MarkStatusAs(ctx, order, model.OrderStatusProcessed)
 }
 
 func applyOrderFilters(stmt *dbr.SelectStmt, fltr *OrderFilter, applySort bool) {

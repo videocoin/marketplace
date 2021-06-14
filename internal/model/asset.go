@@ -84,16 +84,18 @@ func (p *AssetProbe) Scan(value interface{}) error {
 type AssetStatus string
 
 const (
-	AssetStatusUnknown    AssetStatus = "UNKNOWN"
-	AssetStatusProcessing AssetStatus = "PROCESSING"
-	AssetStatusReady      AssetStatus = "READY"
-	AssetStatusFailed     AssetStatus = "FAILED"
+	AssetStatusUnknown      AssetStatus = "UNKNOWN"
+	AssetStatusProcessing   AssetStatus = "PROCESSING"
+	AssetStatusTransferring AssetStatus = "TRANSFERRING"
+	AssetStatusReady        AssetStatus = "READY"
+	AssetStatusFailed       AssetStatus = "FAILED"
 )
 
 type Asset struct {
 	ID          int64      `db:"id"`
 	CreatedAt   *time.Time `db:"created_at"`
 	CreatedByID int64      `db:"created_by_id"`
+	OwnerID     *int64     `db:"owner_id"`
 	ContentType string     `db:"content_type"`
 
 	Name            dbr.NullString `db:"name"`
@@ -127,7 +129,8 @@ type Asset struct {
 	JobID     dbr.NullString `db:"job_id"`
 	JobStatus dbr.NullString `db:"job_status"`
 
-	Account *Account `db:"-"`
+	CreatedBy *Account `db:"-"`
+	Owner     *Account `db:"-"`
 }
 
 func (a *Asset) StatusIsFailed() bool {

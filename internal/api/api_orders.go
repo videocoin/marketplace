@@ -27,7 +27,7 @@ func (s *Server) postOrder(c echo.Context) error {
 	s.logger.Debugf("post order request %+v\n", req)
 
 	order := new(model.Order)
-	order.CreatedBy = account.ID
+	order.CreatedByID = account.ID
 	order.WyvernOrder = new(wyvern.Order)
 	err = copier.Copy(order.WyvernOrder, req)
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *Server) postOrder(c echo.Context) error {
 	}
 
 	tokenID, _ := strconv.ParseInt(order.WyvernOrder.Metadata.Asset.ID, 10, 64)
-	asset, err := s.ds.Assets.GetByTokenID(ctx, tokenID)
+	_, err = s.ds.Assets.GetByTokenID(ctx, tokenID)
 	if err != nil {
 		if err == datastore.ErrAssetNotFound {
 			return echo.NewHTTPError(http.StatusPreconditionFailed, "asset not found")
@@ -106,7 +106,6 @@ func (s *Server) postOrder(c echo.Context) error {
 		order.TakerID = pointer.ToInt64(taker.ID)
 	}
 
-	order.OwnerID = asset.CreatedByID
 	_ = copier.Copy(order.WyvernOrder.Maker, maker)
 	_ = copier.Copy(order.WyvernOrder.Taker, taker)
 

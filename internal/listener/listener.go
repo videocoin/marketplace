@@ -4,26 +4,27 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/orderbook"
 	"time"
 )
 
 type ExchangeListener struct {
-	logger   *logrus.Entry
-	ds       *datastore.Datastore
-	url      string
-	ca       string
-	logStep  uint64
-	scanFrom uint64
-	cli      *ethclient.Client
-	re       *EventReader
-	chainID  string
-	t        *time.Ticker
+	logger    *logrus.Entry
+	ds        *datastore.Datastore
+	orderbook *orderbook.OrderBook
+	url       string
+	ca        string
+	logStep   uint64
+	scanFrom  uint64
+	cli       *ethclient.Client
+	re        *EventReader
+	chainID   string
+	t         *time.Ticker
 }
 
 func NewExchangeListener(ctx context.Context, opts ...ExchangeListenerOption) (*ExchangeListener, error) {
@@ -76,7 +77,7 @@ func (listener *ExchangeListener) headNumber(ctx context.Context) (uint64, error
 	return header.Number.Uint64(), nil
 }
 
-func (listener *ExchangeListener) waitEvents(ctx context.Context, handler func([]*OrderEvent) error) error {
+func (listener *ExchangeListener) waitEvents(ctx context.Context) error {
 	knownHeight, err := listener.ds.ChainMeta.GetLastHeight(ctx, listener.chainID)
 	if err != nil {
 		return err
@@ -113,7 +114,7 @@ func (listener *ExchangeListener) waitEvents(ctx context.Context, handler func([
 		return err
 	}
 
-	err = handler(events)
+	err = listener.processEvents(events)
 	if err != nil {
 		return err
 	}
@@ -126,10 +127,20 @@ func (listener *ExchangeListener) waitEvents(ctx context.Context, handler func([
 	return nil
 }
 
-func (listener *ExchangeListener) handleEvents(events []*OrderEvent) error {
+func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 	listener.logger.Debugf("%+v\n", events)
 
+	if listener.orderbook == nil {
+		return nil
+	}
+
 	for _, event := range events {
+		ctx := context.Background()
+		order, err := listener.orderbook.Get(ctx, event.Hash.String())
+		if err != nil {
+			return err
+		}
+
 		switch event.Type {
 		case OrderApproved:
 			{
@@ -137,6 +148,7 @@ func (listener *ExchangeListener) handleEvents(events []*OrderEvent) error {
 					WithField("hash", event.Hash.String()).
 					WithField("event", "OrderApproved").
 					Info("event received")
+				return listener.orderbook.Approve(ctx, order)
 			}
 		case OrderCancelled:
 			{
@@ -144,6 +156,7 @@ func (listener *ExchangeListener) handleEvents(events []*OrderEvent) error {
 					WithField("hash", event.Hash.String()).
 					WithField("event", "OrderCancelled").
 					Info("event received")
+				return listener.orderbook.Cancel(ctx, order)
 			}
 		case OrdersMatched:
 			{
@@ -151,7 +164,8 @@ func (listener *ExchangeListener) handleEvents(events []*OrderEvent) error {
 					WithField("hash", event.Hash.String()).
 					WithField("event", "OrdersMatched").
 					Info("event received")
-				return listener.handleOrdersMatchedEvent(event)
+
+				return listener.orderbook.Process(ctx, order)
 			}
 		}
 	}
@@ -159,35 +173,15 @@ func (listener *ExchangeListener) handleEvents(events []*OrderEvent) error {
 	return nil
 }
 
-func (listener *ExchangeListener) handleOrdersMatchedEvent(event *OrderEvent) error {
-	logger := listener.logger
-
-	ctx := context.Background()
-	order, err := listener.ds.Orders.GetByHash(ctx, event.Hash.String())
-	if err != nil {
-		return err
-	}
-
-	logger.WithFields(logrus.Fields{
-		"hash":                   order.Hash,
-		"token_id":               order.TokenID,
-		"side":                   order.Side,
-		"sale_kind":              order.SaleKind,
-		"payment_token_address":  order.PaymentTokenAddress,
-		"asset_contract_address": order.AssetContractAddress,
-	}).Info("order info")
-
-	return errors.New("order not processed")
-}
-
 func (listener *ExchangeListener) Start(errCh chan error) {
 	listener.logger.Info("starting exchange listener")
 
 	for range listener.t.C {
 		listener.logger.Info("getting chain events")
-		err := listener.waitEvents(context.Background(), listener.handleEvents)
+
+		err := listener.waitEvents(context.Background())
 		if err != nil {
-			listener.logger.WithError(err).Error("failed to get chain events")
+			listener.logger.WithError(err).Error("failed to process events")
 			continue
 		}
 	}

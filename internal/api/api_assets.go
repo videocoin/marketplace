@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
@@ -21,6 +20,7 @@ import (
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 )
 
@@ -42,8 +42,8 @@ func (s *Server) upload(c echo.Context) error {
 	ctx := context.Background()
 	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID, s.gcpBucket)
 
-	ek := GenerateEncryptionKey()
-	drmKey, err := GenerateDRMKey(account.PublicKey.String, ek)
+	ek := token.GenerateEncryptionKey()
+	drmKey, err := token.GenerateDRMKey(account.PublicKey.String, ek)
 	if err != nil {
 		logger.WithError(err).Error("failed to generate drm key")
 		return echo.ErrInternalServerError
@@ -56,13 +56,14 @@ func (s *Server) upload(c echo.Context) error {
 
 	asset := &model.Asset{
 		CreatedByID:  account.ID,
+		OwnerID:      pointer.ToInt64(account.ID),
 		ContentType:  meta.ContentType,
 		Key:          meta.DestKey,
 		PreviewKey:   meta.DestPreviewKey,
 		ThumbnailKey: meta.DestThumbKey,
 		EncryptedKey: meta.DestEncKey,
 		DRMKey:       drmKey,
-		DRMKeyID:     GenerateDRMKeyID(account),
+		DRMKeyID:     token.GenerateDRMKeyID(account),
 		EK:           ek,
 	}
 	err = s.ds.Assets.Create(ctx, asset)
@@ -235,8 +236,8 @@ func (s *Server) ytUpload(c echo.Context) error {
 	meta := model.NewAssetMeta(fmt.Sprintf("%s.mp4", ytVideo.ID), "video/mp4", account.ID, s.gcpBucket)
 	meta.YTVideo = ytVideo
 
-	ek := GenerateEncryptionKey()
-	drmKey, err := GenerateDRMKey(account.PublicKey.String, ek)
+	ek := token.GenerateEncryptionKey()
+	drmKey, err := token.GenerateDRMKey(account.PublicKey.String, ek)
 	if err != nil {
 		logger.WithError(err).Error("failed to generate drm key")
 		return echo.ErrInternalServerError
@@ -252,7 +253,7 @@ func (s *Server) ytUpload(c echo.Context) error {
 		EncryptedKey: meta.DestEncKey,
 		YTVideoID:    dbr.NewNullString(ytVideoID),
 		DRMKey:       drmKey,
-		DRMKeyID:     GenerateDRMKeyID(account),
+		DRMKeyID:     token.GenerateDRMKeyID(account),
 		EK:           ek,
 	}
 	err = s.ds.Assets.Create(ctx, asset)
@@ -308,9 +309,9 @@ func (s *Server) createAsset(c echo.Context) error {
 
 	updatedFields := &datastore.AssetUpdatedFields{
 		ContractAddress:  pointer.ToString(s.minter.ContractAddress().Hex()),
-		OnSale:           req.OnSale,
-		Royalty:          req.Royalty,
-		InstantSalePrice: req.InstantSalePrice,
+		OnSale:           pointer.ToBool(req.OnSale),
+		Royalty:          pointer.ToUint(req.Royalty),
+		InstantSalePrice: pointer.ToFloat64(req.InstantSalePrice),
 	}
 
 	// TODO: add URI here
@@ -350,11 +351,10 @@ func (s *Server) createAsset(c echo.Context) error {
 		return err
 	}
 
-	assetLite := toAssetLiteResponse(asset)
-	assetLiteBytes, _ := json.Marshal(assetLite)
+	tokenJSON, _ := token.ToTokenJSON(asset)
 	_, err = s.storage.PushPath(
 		fmt.Sprintf("%d.json", asset.ID),
-		bytes.NewBuffer(assetLiteBytes))
+		bytes.NewBuffer(tokenJSON))
 	if err != nil {
 		s.logger.WithError(err).Error("failed to upload token json to storage")
 	}
@@ -451,7 +451,17 @@ func (s *Server) getAsset(c echo.Context) error {
 		return err
 	}
 
-	asset.Account = account
+	asset.CreatedBy = account
+
+	if asset.OwnerID == nil {
+		asset.Owner = asset.CreatedBy
+	} else {
+		owner, err := s.ds.Accounts.GetByID(ctx, *asset.OwnerID)
+		if err != nil {
+			return err
+		}
+		asset.Owner = owner
+	}
 
 	resp := toAssetResponse(asset)
 	return c.JSON(http.StatusOK, resp)
@@ -484,7 +494,17 @@ func (s *Server) getAssetByContractAddressAndTokenID(c echo.Context) error {
 		return err
 	}
 
-	asset.Account = account
+	asset.CreatedBy = account
+
+	if asset.OwnerID == nil {
+		asset.Owner = asset.CreatedBy
+	} else {
+		owner, err := s.ds.Accounts.GetByID(ctx, *asset.OwnerID)
+		if err != nil {
+			return err
+		}
+		asset.Owner = owner
+	}
 
 	resp := toAssetResponse(asset)
 	return c.JSON(http.StatusOK, resp)

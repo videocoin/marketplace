@@ -20,9 +20,14 @@ type AssetUpdatedFields struct {
 	YTVideoLink      *string
 	ContractAddress  *string
 	MintTxID         *string
-	OnSale           bool
-	InstantSalePrice float64
-	Royalty          uint
+	OnSale           *bool
+	InstantSalePrice *float64
+	Royalty          *uint
+
+	DRMKey   *string
+	DRMKeyID *string
+	EK       *string
+	OwnerID  *int64
 }
 
 type AssetDatastore struct {
@@ -58,7 +63,7 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	}
 
 	cols := []string{
-		"created_at", "created_by_id", "content_type", "yt_video_id", "status",
+		"created_at", "created_by_id", "owner_id", "content_type", "yt_video_id", "status",
 		"key", "preview_key", "encrypted_key", "thumbnail_key",
 		"drm_key_id", "drm_key", "ek",
 	}
@@ -213,9 +218,40 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		asset.MintTxID = dbr.NewNullString(*fields.MintTxID)
 	}
 
-	stmt.Set("on_sale", fields.OnSale)
-	stmt.Set("royalty", fields.Royalty)
-	stmt.Set("instant_sale_price", fields.InstantSalePrice)
+	if fields.OnSale != nil {
+		stmt.Set("on_sale", *fields.OnSale)
+		asset.OnSale = *fields.OnSale
+	}
+
+	if fields.Royalty != nil {
+		stmt.Set("royalty", *fields.Royalty)
+		asset.Royalty = *fields.Royalty
+	}
+
+	if fields.InstantSalePrice != nil {
+		stmt.Set("instant_sale_price", *fields.InstantSalePrice)
+		asset.InstantSalePrice = *fields.InstantSalePrice
+	}
+
+	if fields.DRMKeyID != nil {
+		stmt.Set("drm_key_id", *fields.DRMKeyID)
+		asset.DRMKeyID = *fields.DRMKeyID
+	}
+
+	if fields.DRMKey != nil {
+		stmt.Set("drm_key", *fields.DRMKey)
+		asset.DRMKey = *fields.DRMKey
+	}
+
+	if fields.EK != nil {
+		stmt.Set("ek", *fields.EK)
+		asset.EK = *fields.EK
+	}
+
+	if fields.OwnerID != nil {
+		stmt.Set("owner_id", *fields.OwnerID)
+		asset.OwnerID = fields.OwnerID
+	}
 
 	_, err = stmt.Where("id = ?", asset.ID).ExecContext(ctx)
 	if err != nil {
@@ -437,6 +473,10 @@ func (ds *AssetDatastore) MarkStatusAs(ctx context.Context, asset *model.Asset, 
 
 func (ds *AssetDatastore) MarkStatusAsProcessing(ctx context.Context, asset *model.Asset) error {
 	return ds.MarkStatusAs(ctx, asset, model.AssetStatusProcessing)
+}
+
+func (ds *AssetDatastore) MarkStatusAsTransferring(ctx context.Context, asset *model.Asset) error {
+	return ds.MarkStatusAs(ctx, asset, model.AssetStatusTransferring)
 }
 
 func (ds *AssetDatastore) MarkStatusAsReady(ctx context.Context, asset *model.Asset) error {

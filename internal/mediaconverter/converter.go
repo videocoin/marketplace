@@ -350,7 +350,7 @@ func (mc *MediaConverter) runConvertJob(wg *sync.WaitGroup, job model.MediaConve
 	}
 }
 
-func (mc *MediaConverter) runEncryptJob(wg *sync.WaitGroup, job model.MediaConverterJob) {
+func (mc *MediaConverter) RunEncryptJob(wg *sync.WaitGroup, job model.MediaConverterJob) {
 	defer wg.Done()
 
 	meta := job.Meta
@@ -560,7 +560,7 @@ func (mc *MediaConverter) runGeneralPipeline(job model.MediaConverterJob) {
 	}
 
 	wg.Add(1)
-	go mc.runEncryptJob(wg, job)
+	go mc.RunEncryptJob(wg, job)
 
 	wg.Wait()
 
@@ -624,7 +624,7 @@ func (mc *MediaConverter) runYTPipeline(job model.MediaConverterJob) {
 	close(errCh)
 
 	wg.Add(1)
-	go mc.runEncryptJob(wg, job)
+	go mc.RunEncryptJob(wg, job)
 	wg.Wait()
 
 	logger.Info("marking asset status as ready")

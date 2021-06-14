@@ -105,6 +105,11 @@ func JoinAccountsToAsset(ctx context.Context, assets []*model.Asset, accounts []
 		byID[item.ID] = item
 	}
 	for _, asset := range assets {
-		asset.Account = byID[asset.CreatedByID]
+		asset.CreatedBy = byID[asset.CreatedByID]
+		if asset.OwnerID != nil {
+			asset.Owner = byID[*asset.OwnerID]
+		} else {
+			asset.Owner = asset.CreatedBy
+		}
 	}
 }

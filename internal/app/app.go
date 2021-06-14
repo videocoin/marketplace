@@ -2,14 +2,14 @@ package app
 
 import (
 	"context"
-	"github.com/videocoin/marketplace/internal/listener"
-
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/api"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/listener"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	minter "github.com/videocoin/marketplace/internal/minter"
+	orderbook "github.com/videocoin/marketplace/internal/orderbook"
 	"github.com/videocoin/marketplace/internal/storage"
 )
 
@@ -99,11 +99,22 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	ob, err := orderbook.NewOderBook(
+		ctx,
+		orderbook.WithDatastore(ds),
+		orderbook.WithMediaConverter(mc),
+		orderbook.WithStorage(storageCli),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	el, err := listener.NewExchangeListener(
 		ctx,
 		listener.WithBlockchainURL(cfg.BlockchainURL),
 		listener.WithContractAddress(cfg.ERC1155ContractAddress),
 		listener.WithDatastore(ds),
+		listener.WithOrderbook(ob),
 	)
 	if err != nil {
 		return nil, err

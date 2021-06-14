@@ -3,6 +3,7 @@ package listener
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/orderbook"
 )
 
 type ExchangeListenerOption func(l *ExchangeListener) error
@@ -17,6 +18,13 @@ func WithLogger(logger *logrus.Entry) ExchangeListenerOption {
 func WithDatastore(ds *datastore.Datastore) ExchangeListenerOption {
 	return func(l *ExchangeListener) error {
 		l.ds = ds
+		return nil
+	}
+}
+
+func WithOrderbook(book *orderbook.OrderBook) ExchangeListenerOption {
+	return func(l *ExchangeListener) error {
+		l.orderbook = book
 		return nil
 	}
 }
