@@ -2,40 +2,86 @@ package listener
 
 import (
 	"context"
-
+	"crypto/md5"
+	"encoding/hex"
+	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
+	"github.com/sirupsen/logrus"
+	"github.com/videocoin/marketplace/internal/datastore"
+	"time"
 )
 
 type ExchangeListener struct {
+	logger   *logrus.Entry
+	ds       *datastore.Datastore
+	url      string
+	ca       string
 	logStep  uint64
 	scanFrom uint64
 	cli      *ethclient.Client
 	re       *EventReader
+	chainID  string
+	t        *time.Ticker
 }
 
-func NewExchangeListener(logStep, scanFrom uint64, url string, contractAddress string) (*ExchangeListener, error) {
-	cli, err := ethclient.Dial(url)
+func NewExchangeListener(ctx context.Context, opts ...ExchangeListenerOption) (*ExchangeListener, error) {
+	l := &ExchangeListener{
+		logger:   ctxlogrus.Extract(ctx).WithField("system", "exchange-listener"),
+		logStep:  1000,
+		scanFrom: 0,
+		t:        time.NewTicker(time.Second * 5),
+	}
+
+	for _, o := range opts {
+		if err := o(l); err != nil {
+			return nil, err
+		}
+	}
+
+	chainIDHash := md5.Sum([]byte(fmt.Sprintf("%s#%s", l.url, l.ca)))
+	l.chainID = hex.EncodeToString(chainIDHash[:])
+
+	cli, err := ethclient.Dial(l.url)
 	if err != nil {
 		return nil, err
 	}
 
-	re, err := NewEventReader(cli, contractAddress)
+	l.cli = cli
+
+	re, err := NewEventReader(cli, l.ca)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ExchangeListener{
-		logStep:  logStep,
-		scanFrom: scanFrom,
-		cli:      cli,
-		re:       re,
-	}, nil
+	l.re = re
+
+	_, err = l.ds.ChainMeta.GetLastHeight(ctx, l.chainID)
+	if err == datastore.ErrChainMetaNotFound {
+		initErr := l.ds.ChainMeta.Init(ctx, l.chainID)
+		if initErr != nil {
+			return nil, err
+		}
+	}
+
+	return l, nil
 }
 
-func (listener *ExchangeListener) Run(ctx context.Context, handler func([]*OrderEvent) error) error {
-	// TODO: READ FROM DB
-	// knownHeight should be a recovery point in case of service's crash
-	knownHeight := uint64(0)
+func (listener *ExchangeListener) headNumber(ctx context.Context) (uint64, error) {
+	header, err := listener.cli.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	return header.Number.Uint64(), nil
+}
+
+func (listener *ExchangeListener) waitEvents(ctx context.Context, handler func([]*OrderEvent) error) error {
+	knownHeight, err := listener.ds.ChainMeta.GetLastHeight(ctx, listener.chainID)
+	if err != nil {
+		return err
+	}
+
 	number, err := listener.headNumber(ctx)
 	if err != nil {
 		return err
@@ -57,6 +103,11 @@ func (listener *ExchangeListener) Run(ctx context.Context, handler func([]*Order
 		end = number
 	}
 
+	listener.logger.
+		WithField("block_start", start).
+		WithField("block_end", end).
+		Info("scanning blocks")
+
 	events, err := listener.re.GetEvents(ctx, start, end)
 	if err != nil {
 		return err
@@ -67,15 +118,83 @@ func (listener *ExchangeListener) Run(ctx context.Context, handler func([]*Order
 		return err
 	}
 
-	// TODO: WRITE TO DB
-	knownHeight = end
+	err = listener.ds.ChainMeta.SaveLastHeight(ctx, listener.chainID, end)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (listener *ExchangeListener) headNumber(ctx context.Context) (uint64, error) {
-	header, err := listener.cli.HeaderByNumber(ctx, nil)
-	if err != nil {
-		return 0, err
+func (listener *ExchangeListener) handleEvents(events []*OrderEvent) error {
+	listener.logger.Debugf("%+v\n", events)
+
+	for _, event := range events {
+		switch event.Type {
+		case OrderApproved:
+			{
+				listener.logger.
+					WithField("hash", event.Hash.String()).
+					WithField("event", "OrderApproved").
+					Info("event received")
+			}
+		case OrderCancelled:
+			{
+				listener.logger.
+					WithField("hash", event.Hash.String()).
+					WithField("event", "OrderCancelled").
+					Info("event received")
+			}
+		case OrdersMatched:
+			{
+				listener.logger.
+					WithField("hash", event.Hash.String()).
+					WithField("event", "OrdersMatched").
+					Info("event received")
+				return listener.handleOrdersMatchedEvent(event)
+			}
+		}
 	}
-	return header.Number.Uint64(), nil
+
+	return nil
+}
+
+func (listener *ExchangeListener) handleOrdersMatchedEvent(event *OrderEvent) error {
+	logger := listener.logger
+
+	ctx := context.Background()
+	order, err := listener.ds.Orders.GetByHash(ctx, event.Hash.String())
+	if err != nil {
+		return err
+	}
+
+	logger.WithFields(logrus.Fields{
+		"hash":                   order.Hash,
+		"token_id":               order.TokenID,
+		"side":                   order.Side,
+		"sale_kind":              order.SaleKind,
+		"payment_token_address":  order.PaymentTokenAddress,
+		"asset_contract_address": order.AssetContractAddress,
+	}).Info("order info")
+
+	return errors.New("order not processed")
+}
+
+func (listener *ExchangeListener) Start(errCh chan error) {
+	listener.logger.Info("starting exchange listener")
+
+	for range listener.t.C {
+		listener.logger.Info("getting chain events")
+		err := listener.waitEvents(context.Background(), listener.handleEvents)
+		if err != nil {
+			listener.logger.WithError(err).Error("failed to get chain events")
+			continue
+		}
+	}
+}
+
+func (listener *ExchangeListener) Stop() error {
+	listener.logger.Info("stopping exchange listener")
+	listener.t.Stop()
+	return nil
 }

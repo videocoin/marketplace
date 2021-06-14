@@ -7,6 +7,7 @@ import (
 
 type Order struct {
 	ID                   int64            `db:"id"`
+	Hash                 string           `db:"hash"`
 	AssetContractAddress string           `db:"asset_contract_address"`
 	TokenID              int64            `db:"token_id"`
 	Side                 wyvern.OrderSide `db:"side"`

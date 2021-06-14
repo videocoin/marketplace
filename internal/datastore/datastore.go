@@ -12,10 +12,11 @@ import (
 type Datastore struct {
 	conn *dbr.Connection
 
-	Accounts *AccountDatastore
-	Assets   *AssetDatastore
-	Tokens   *TokenDatastore
-	Orders   *OrderDatastore
+	Accounts  *AccountDatastore
+	Assets    *AssetDatastore
+	Tokens    *TokenDatastore
+	Orders    *OrderDatastore
+	ChainMeta *ChainMetaDatastore
 }
 
 func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
@@ -62,6 +63,13 @@ func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
 	}
 
 	ds.Orders = ordersDs
+
+	chainMetaDs, err := NewChainMetaDatastore(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	ds.ChainMeta = chainMetaDs
 
 	return ds, nil
 }

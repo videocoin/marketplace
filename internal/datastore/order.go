@@ -2,10 +2,15 @@ package datastore
 
 import (
 	"context"
+	"errors"
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 	"strconv"
+)
+
+var (
+	ErrOrderNotFound = errors.New("order not found")
 )
 
 type OrderDatastore struct {
@@ -44,7 +49,7 @@ func (ds *OrderDatastore) Create(ctx context.Context, order *model.Order) error 
 	order.CreatedDate = order.WyvernOrder.CreatedDate
 
 	cols := []string{
-		"asset_contract_address", "token_id", "side", "sale_kind", "payment_token_address",
+		"hash", "asset_contract_address", "token_id", "side", "sale_kind", "payment_token_address",
 		"maker_id", "taker_id", "owner_id", "created_date", "wyvern_order",
 	}
 	err = tx.
@@ -127,6 +132,38 @@ func (ds *OrderDatastore) Count(ctx context.Context, fltr *OrderFilter) (int64, 
 	}
 
 	return count, nil
+}
+
+func (ds *OrderDatastore) GetByHash(ctx context.Context, hash string) (*model.Order, error) {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	order := new(model.Order)
+	err = tx.
+		Select("*").
+		From(ds.table).
+		Where("hash = ?", hash).
+		LoadOneContext(ctx, order)
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return nil, ErrOrderNotFound
+		}
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func applyOrderFilters(stmt *dbr.SelectStmt, fltr *OrderFilter, applySort bool) {

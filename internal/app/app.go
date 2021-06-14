@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/videocoin/marketplace/internal/listener"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
@@ -19,6 +20,7 @@ type App struct {
 	ds     *datastore.Datastore
 	mc     *mediaconverter.MediaConverter
 	api    *api.Server
+	el     *listener.ExchangeListener
 }
 
 func NewApp(ctx context.Context, cfg *Config) (*App, error) {
@@ -97,6 +99,16 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	el, err := listener.NewExchangeListener(
+		ctx,
+		listener.WithBlockchainURL(cfg.BlockchainURL),
+		listener.WithContractAddress(cfg.ERC1155ContractAddress),
+		listener.WithDatastore(ds),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &App{
 		cfg:    cfg,
 		logger: ctxlogrus.Extract(ctx),
@@ -104,6 +116,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		ds:     ds,
 		mc:     mc,
 		api:    apiSrv,
+		el:     el,
 	}, nil
 }
 
@@ -114,6 +127,10 @@ func (s *App) Start(errCh chan error) {
 
 	go func() {
 		s.mc.Start(errCh)
+	}()
+
+	go func() {
+		s.el.Start(errCh)
 	}()
 
 	select {
@@ -133,6 +150,11 @@ func (s *App) Stop() error {
 	err = s.mc.Stop()
 	if err != nil {
 		s.logger.WithError(err).Error("failed to stop media converter")
+	}
+
+	err = s.el.Stop()
+	if err != nil {
+		s.logger.WithError(err).Error("failed to stop exchange listener")
 	}
 
 	s.stop <- true

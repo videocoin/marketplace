@@ -21,6 +21,8 @@ func (s *Server) postOrder(c echo.Context) error {
 		return err
 	}
 
+	s.logger.Debugf("post order request %+v\n", req)
+
 	order := new(model.Order)
 	order.WyvernOrder = new(wyvern.Order)
 	err = copier.Copy(order.WyvernOrder, req)
@@ -47,12 +49,6 @@ func (s *Server) postOrder(c echo.Context) error {
 	if order.WyvernOrder.Metadata == nil || order.WyvernOrder.Metadata.Asset == nil {
 		return echo.NewHTTPError(http.StatusPreconditionFailed, "missing asset")
 	}
-
-	s.logger.Debugf("%+v\n", order.WyvernOrder)
-	s.logger.Debugf("%+v\n", order.WyvernOrder.Maker)
-	s.logger.Debugf("%+v\n", order.WyvernOrder.Taker)
-	s.logger.Debugf("%+v\n", order.WyvernOrder.Metadata)
-	s.logger.Debugf("%+v\n", order.WyvernOrder.Metadata.Asset)
 
 	if !ethcommon.IsHexAddress(order.WyvernOrder.Maker.Address) {
 		return echo.NewHTTPError(http.StatusPreconditionFailed, "invalid maker address")
@@ -125,6 +121,7 @@ func (s *Server) postOrder(c echo.Context) error {
 	}
 
 	order.WyvernOrder.Metadata.Asset.Quantity = "1"
+	order.Hash = order.WyvernOrder.Hash
 
 	err = s.ds.Orders.Create(ctx, order)
 	if err != nil {
