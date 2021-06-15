@@ -180,7 +180,7 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 
 func toAssetResponse(asset *model.Asset) *AssetResponse {
 	contract := &AssetContractResponse{
-		SchemaName:                  model.ContractSchemaTypeERC1155.String(),
+		SchemaName:                  model.ContractSchemaTypeERC721.String(),
 		SellerFeeBasisPoints:        250,
 		OpenSeaSellerFeeBasisPoints: 250,
 	}

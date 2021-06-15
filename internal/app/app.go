@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/api"
@@ -76,9 +77,9 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 
 	m, err := minter.NewMinter(
 		cfg.BlockchainURL,
-		cfg.ERC1155ContractAddress,
-		cfg.ERC1155ContractKeyFile,
-		cfg.ERC1155ContractKeyPass,
+		cfg.ERC721ContractAddress,
+		cfg.ERC721ContractKeyFile,
+		cfg.ERC721ContractKeyPass,
 	)
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 	el, err := listener.NewExchangeListener(
 		ctx,
 		listener.WithBlockchainURL(cfg.BlockchainURL),
-		listener.WithContractAddress(cfg.ERC1155ContractAddress),
+		listener.WithContractAddress(cfg.ERC721ContractAddress),
 		listener.WithDatastore(ds),
 		listener.WithOrderbook(ob),
 	)

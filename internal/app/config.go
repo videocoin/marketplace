@@ -24,8 +24,8 @@ type Config struct {
 
 	NftStorageApiKey string `envconfig:"NFTSTORAGE_API_KEY" required:"false"`
 
-	BlockchainURL          string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
-	ERC1155ContractAddress string `envconfig:"ERC1155_CONTRACT_ADDRESS"`
-	ERC1155ContractKeyFile string `envconfig:"ERC1155_CONTRACT_KEY"`
-	ERC1155ContractKeyPass string `envconfig:"ERC1155_CONTRACT_KEY_PASS"`
+	BlockchainURL         string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
+	ERC721ContractAddress string `envconfig:"ERC721_CONTRACT_ADDRESS"`
+	ERC721ContractKeyFile string `envconfig:"ERC721_CONTRACT_KEY"`
+	ERC721ContractKeyPass string `envconfig:"ERC721_CONTRACT_KEY_PASS"`
 }

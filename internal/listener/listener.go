@@ -5,12 +5,13 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"time"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/orderbook"
-	"time"
 )
 
 type ExchangeListener struct {
@@ -30,7 +31,7 @@ type ExchangeListener struct {
 func NewExchangeListener(ctx context.Context, opts ...ExchangeListenerOption) (*ExchangeListener, error) {
 	l := &ExchangeListener{
 		logger:   ctxlogrus.Extract(ctx).WithField("system", "exchange-listener"),
-		logStep:  1000,
+		logStep:  100000,
 		scanFrom: 0,
 		t:        time.NewTicker(time.Second * 5),
 	}
