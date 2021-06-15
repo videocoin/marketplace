@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"math/big"
 	"mime/multipart"
@@ -14,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/AlekSi/pointer"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/datastore"
@@ -314,16 +314,6 @@ func (s *Server) createAsset(c echo.Context) error {
 		InstantSalePrice: pointer.ToFloat64(req.InstantSalePrice),
 	}
 
-	// TODO: add URI here
-	mintTx, err := s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(asset.ID), "")
-	if err != nil {
-		return err
-	}
-
-	if mintTx != nil {
-		updatedFields.MintTxID = pointer.ToString(mintTx.Hash().Hex())
-	}
-
 	assetName := strings.TrimSpace(req.Name)
 	if assetName == "" {
 		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "missing name"})
@@ -352,11 +342,32 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	tokenJSON, _ := token.ToTokenJSON(asset)
-	_, err = s.storage.PushPath(
-		fmt.Sprintf("%d.json", asset.ID),
-		bytes.NewBuffer(tokenJSON))
+	tokenURI, err := s.storage.PushPath(fmt.Sprintf("%d.json", asset.ID), bytes.NewBuffer(tokenJSON))
 	if err != nil {
 		s.logger.WithError(err).Error("failed to upload token json to storage")
+		return err
+	}
+
+	logger := s.logger.WithField("token_uri", tokenURI)
+	logger.Info("minting")
+
+	mintTx, err := s.minter.Mint(
+		ctx,
+		common.HexToAddress(account.Address),
+		big.NewInt(asset.ID),
+		tokenURI,
+	)
+	if err != nil {
+		return err
+	}
+
+	if mintTx != nil {
+		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+			MintTxID: pointer.ToString(mintTx.Hash().Hex()),
+		})
+		if err != nil {
+			logger.WithError(err).Error("failed to update mint tx id")
+		}
 	}
 
 	resp := toAssetResponse(asset)

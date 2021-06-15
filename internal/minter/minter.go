@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	MintingGasLimit uint64 = 200000
+	MintingGasLimit uint64 = 300000
 	ZeroAddress     string = "0000000000000000000000000000000000000000"
 )
 
@@ -83,12 +83,12 @@ func (m *Minter) UpdateTokenURI(ctx context.Context, id *big.Int, uri string) (*
 	defer m.mtx.Unlock()
 
 	opts := m.getCallOpts(ctx)
-	owner, err := m.contract.OwnerOf(opts, id)
-	if err != nil {
-		return nil, err
+	_, err := m.contract.OwnerOf(opts, id)
+	if err == nil {
+		return nil, fmt.Errorf("token with ID %s already exists", id.String())
 	}
-	if owner.String() == ZeroAddress {
-		return nil, fmt.Errorf("token with ID %s doesnt exist", id.String())
+	if err.Error() != "execution reverted: ERC721: owner query for nonexistent token" {
+		return nil, err
 	}
 
 	txOpts := m.getTxOpts(ctx)
