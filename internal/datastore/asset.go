@@ -21,7 +21,7 @@ type AssetUpdatedFields struct {
 	ContractAddress  *string
 	MintTxID         *string
 	OnSale           *bool
-	InstantSalePrice *float64
+	InstantSalePrice *string
 	Royalty          *uint
 
 	DRMKey   *string

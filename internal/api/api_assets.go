@@ -311,7 +311,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		ContractAddress:  pointer.ToString(s.minter.ContractAddress().Hex()),
 		OnSale:           pointer.ToBool(req.OnSale),
 		Royalty:          pointer.ToUint(req.Royalty),
-		InstantSalePrice: pointer.ToFloat64(req.InstantSalePrice),
+		InstantSalePrice: pointer.ToString(req.InstantSalePrice),
 	}
 
 	assetName := strings.TrimSpace(req.Name)

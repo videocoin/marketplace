@@ -35,7 +35,7 @@ type CreateAssetRequest struct {
 	YTVideoLink      *string `json:"yt_video_link"`
 	Royalty          uint    `json:"royalty"`
 	OnSale           bool    `json:"on_sale"`
-	InstantSalePrice float64 `json:"instant_sale_price"`
+	InstantSalePrice string  `json:"instant_sale_price"`
 }
 
 type PostOrderRequest struct {

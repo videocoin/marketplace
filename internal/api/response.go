@@ -94,8 +94,8 @@ type AssetResponse struct {
 	DRMKey     *string                  `json:"drm_key"`
 	Collection *AssetCollectionResponse `json:"collection"`
 
-	OnSale           bool    `json:"on_sale"`
-	InstantSalePrice float64 `json:"instant_sale_price"`
+	OnSale           bool   `json:"on_sale"`
+	InstantSalePrice string `json:"instant_sale_price"`
 }
 
 type AssetsResponse struct {

@@ -1,7 +1,7 @@
 -- +goose Up
 -- SQL in this section is executed when the migration is applied.
 ALTER TABLE assets ADD COLUMN on_sale BOOL DEFAULT FALSE;
-ALTER TABLE assets ADD COLUMN instant_sale_price NUMERIC DEFAULT 0;
+ALTER TABLE assets ADD COLUMN instant_sale_price VARCHAR(100) DEFAULT '0';
 ALTER TABLE assets ADD COLUMN royalty INT DEFAULT 0;
 
 -- +goose Down
