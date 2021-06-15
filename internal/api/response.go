@@ -93,6 +93,9 @@ type AssetResponse struct {
 	Contract   *AssetContractResponse   `json:"asset_contract"`
 	DRMKey     *string                  `json:"drm_key"`
 	Collection *AssetCollectionResponse `json:"collection"`
+
+	OnSale           bool    `json:"on_sale"`
+	InstantSalePrice float64 `json:"instant_sale_price"`
 }
 
 type AssetsResponse struct {
@@ -200,6 +203,8 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			DevBuyerFeeBasisPoints:      "0",
 			DevSellerFeeBasisPoints:     "0",
 		},
+		OnSale:           asset.OnSale,
+		InstantSalePrice: asset.InstantSalePrice,
 	}
 
 	if asset.DRMKey != "" {
@@ -238,14 +243,6 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		resp.Owner = toAccountResponse(asset.Owner)
 	} else {
 		resp.Owner = resp.Creator
-	}
-
-	if asset.ID == 197 {
-		resp.TokenID = pointer.ToString("0")
-		resp.Contract.SchemaName = model.ContractSchemaTypeERC20.String()
-		resp.Contract.ContractType = "fungible"
-		resp.Contract.Name = "Dai Stablecoin"
-		resp.Contract.Address = "0x5ca6ba24df599d26b0c30b620233f0a11f7556fa"
 	}
 
 	return resp

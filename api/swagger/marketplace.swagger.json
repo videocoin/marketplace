@@ -862,7 +862,7 @@
           "type": "number",
           "format": "integer"
         },
-        "instance_sale_price": {
+        "instant_sale_price": {
           "type": "number",
           "format": "float"
         }
@@ -1074,6 +1074,13 @@
         },
         "drm_key": {
           "type": "string"
+        },
+        "on_sale": {
+          "type": "boolean"
+        },
+        "instant_sale_price": {
+          "type": "number",
+          "format": "float"
         },
         "owner": {
           "$ref": "#/definitions/AccountResponse"
