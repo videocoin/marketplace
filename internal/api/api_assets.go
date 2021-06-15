@@ -5,14 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/AlekSi/pointer"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/gocraft/dbr/v2"
-	"github.com/labstack/echo/v4"
-	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
-	"github.com/videocoin/marketplace/internal/model"
-	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 	"io"
 	"math/big"
 	"mime/multipart"
@@ -21,6 +13,15 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/AlekSi/pointer"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/gocraft/dbr/v2"
+	"github.com/labstack/echo/v4"
+	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/model"
+	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 )
 
 func (s *Server) upload(c echo.Context) error {
@@ -312,7 +313,8 @@ func (s *Server) createAsset(c echo.Context) error {
 		InstantSalePrice: req.InstantSalePrice,
 	}
 
-	mintTx, err := s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(asset.ID))
+	// TODO: add URI here
+	mintTx, err := s.minter.Mint(ctx, common.HexToAddress(account.Address), big.NewInt(asset.ID), "")
 	if err != nil {
 		return err
 	}

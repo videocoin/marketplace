@@ -16,12 +16,13 @@ import (
 
 const (
 	MintingGasLimit uint64 = 100000
+	ZeroAddress     string = "0000000000000000000000000000000000000000"
 )
 
 type Minter struct {
 	ca       common.Address
 	cli      *ethclient.Client
-	contract *nft.NFT1155
+	contract *nft.NFT721
 	opts     bind.TransactOpts
 	mtx      sync.Mutex
 }
@@ -33,7 +34,7 @@ func NewMinter(url string, contractAddress string, contractKey string, contractK
 	}
 
 	ca := common.HexToAddress(contractAddress)
-	contract, err := nft.NewNFT1155(ca, cli)
+	contract, err := nft.NewNFT721(ca, cli)
 	if err != nil {
 		return nil, err
 	}
@@ -55,21 +56,43 @@ func (m *Minter) ContractAddress() common.Address {
 	return m.ca
 }
 
-func (m *Minter) Mint(ctx context.Context, to common.Address, id *big.Int) (*types.Transaction, error) {
+func (m *Minter) Mint(ctx context.Context, to common.Address, id *big.Int, uri string) (*types.Transaction, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
 	opts := m.getCallOpts(ctx)
-	balance, err := m.contract.BalanceOf(opts, to, id)
+	owner, err := m.contract.OwnerOf(opts, id)
 	if err != nil {
 		return nil, err
 	}
-	if balance.Cmp(big.NewInt(0)) != 0 {
+	if owner.String() != ZeroAddress {
 		return nil, fmt.Errorf("token with ID %s already exists", id.String())
 	}
 
 	txOpts := m.getTxOpts(ctx)
-	tx, err := m.contract.Mint(txOpts, to, id)
+	tx, err := m.contract.Mint(txOpts, to, id, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, m.waitMined(ctx, tx)
+}
+
+func (m *Minter) UpdateTokenURI(ctx context.Context, id *big.Int, uri string) (*types.Transaction, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	opts := m.getCallOpts(ctx)
+	owner, err := m.contract.OwnerOf(opts, id)
+	if err != nil {
+		return nil, err
+	}
+	if owner.String() == ZeroAddress {
+		return nil, fmt.Errorf("token with ID %s doesnt exist", id.String())
+	}
+
+	txOpts := m.getTxOpts(ctx)
+	tx, err := m.contract.UpdateTokenURI(txOpts, id, uri)
 	if err != nil {
 		return nil, err
 	}
