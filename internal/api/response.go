@@ -4,7 +4,6 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/jinzhu/copier"
 	"github.com/videocoin/marketplace/internal/model"
-	"github.com/videocoin/marketplace/internal/wyvern"
 	"strconv"
 	"time"
 )
@@ -315,12 +314,23 @@ func toTokensResponse(tokens []*model.Token) []*TokenResponse {
 	return resp
 }
 
-func toOrdersResponse(orders []*model.Order) []*wyvern.Order {
-	resp := make([]*wyvern.Order, 0)
+func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token) []*OrderResponse {
+	resp := make([]*OrderResponse, 0)
 
 	for _, order := range orders {
-		item := new(wyvern.Order)
+		item := new(OrderResponse)
 		_ = copier.Copy(item, order.WyvernOrder)
+
+		if item.Metadata != nil && item.Metadata.Asset != nil {
+			if tokens != nil {
+				token := tokens[item.PaymentToken]
+				if token != nil {
+					item.PaymentTokenContract = &TokenResponse{}
+					item.PaymentTokenContract = toTokenResponse(token)
+				}
+			}
+		}
+
 		resp = append(resp, item)
 	}
 
