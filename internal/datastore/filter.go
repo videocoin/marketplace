@@ -18,8 +18,9 @@ type AccountsFilter struct {
 }
 
 type TokensFilter struct {
-	Symbol *string
-	Sort   *SortOption
+	Symbol  *string
+	Address *string
+	Sort    *SortOption
 }
 
 type OrderFilter struct {

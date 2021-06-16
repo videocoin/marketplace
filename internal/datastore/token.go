@@ -47,6 +47,9 @@ func (ds *TokenDatastore) List(ctx context.Context, fltr *TokensFilter, limit *L
 		if fltr.Symbol != nil {
 			selectStmt = selectStmt.Where("symbol = ?", *fltr.Symbol)
 		}
+		if fltr.Address != nil {
+			selectStmt = selectStmt.Where("address = ?", *fltr.Address)
+		}
 	}
 
 	if limit != nil {
