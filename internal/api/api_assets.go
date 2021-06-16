@@ -308,7 +308,7 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	updatedFields := &datastore.AssetUpdatedFields{
-		ContractAddress:  pointer.ToString(s.minter.ContractAddress().Hex()),
+		ContractAddress:  pointer.ToString(strings.ToLower(s.minter.ContractAddress().Hex())),
 		OnSale:           pointer.ToBool(req.OnSale),
 		Royalty:          pointer.ToUint(req.Royalty),
 		InstantSalePrice: pointer.ToString(req.InstantSalePrice),

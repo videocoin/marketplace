@@ -11,6 +11,7 @@ import (
 	"github.com/videocoin/marketplace/internal/wyvern"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (s *Server) postOrder(c echo.Context) error {
@@ -35,15 +36,15 @@ func (s *Server) postOrder(c echo.Context) error {
 	}
 
 	order.WyvernOrder.Maker = &wyvern.Account{
-		Address: req.Maker,
+		Address: strings.ToLower(req.Maker),
 	}
 
 	order.WyvernOrder.Taker = &wyvern.Account{
-		Address: req.Taker,
+		Address: strings.ToLower(req.Taker),
 	}
 
 	order.WyvernOrder.FeeRecipient = &wyvern.Account{
-		Address: req.FeeRecipient,
+		Address: strings.ToLower(req.FeeRecipient),
 	}
 
 	if order.WyvernOrder == nil {
@@ -111,7 +112,7 @@ func (s *Server) postOrder(c echo.Context) error {
 
 	if order.WyvernOrder.FeeRecipient != nil && order.WyvernOrder.FeeRecipient.Address != "" {
 		order.WyvernOrder.FeeRecipient = &wyvern.Account{
-			Address: req.FeeRecipient,
+			Address: strings.ToLower(req.FeeRecipient),
 		}
 		//feeRecipient, err := s.ds.Accounts.GetByAddress(ctx, order.WyvernOrder.FeeRecipient.Address)
 		//if err != nil {
@@ -124,7 +125,7 @@ func (s *Server) postOrder(c echo.Context) error {
 	}
 
 	order.WyvernOrder.Metadata.Asset.Quantity = "1"
-	order.Hash = order.WyvernOrder.Hash
+	order.Hash = strings.ToLower(order.WyvernOrder.Hash)
 
 	err = s.ds.Orders.Create(ctx, order)
 	if err != nil {
@@ -182,7 +183,7 @@ func (s *Server) getOrders(c echo.Context) error {
 		fltr.SaleKind = pointer.ToInt(saleKind)
 	}
 
-	reqAssetContractAddress := c.FormValue("asset_contract_address")
+	reqAssetContractAddress := strings.ToLower(c.FormValue("asset_contract_address"))
 	if reqAssetContractAddress != "" {
 		fltr.AssetContractAddress = pointer.ToString(reqAssetContractAddress)
 	}
@@ -200,12 +201,12 @@ func (s *Server) getOrders(c echo.Context) error {
 		}
 	}
 
-	reqPaymentTokenAddress := c.FormValue("payment_token_address")
+	reqPaymentTokenAddress := strings.ToLower(c.FormValue("payment_token_address"))
 	if reqPaymentTokenAddress != "" {
 		fltr.PaymentTokenAddress = pointer.ToString(reqPaymentTokenAddress)
 	}
 
-	reqMaker := c.FormValue("maker")
+	reqMaker := strings.ToLower(c.FormValue("maker"))
 	if reqMaker != "" && ethcommon.IsHexAddress(reqMaker) {
 		maker, _ := s.ds.Accounts.GetByAddress(ctx, reqMaker)
 		if maker == nil {
@@ -215,7 +216,7 @@ func (s *Server) getOrders(c echo.Context) error {
 		fltr.MakerID = pointer.ToInt64(maker.ID)
 	}
 
-	reqTaker := c.FormValue("taker")
+	reqTaker := strings.ToLower(c.FormValue("taker"))
 	if reqTaker != "" && ethcommon.IsHexAddress(reqTaker) {
 		taker, _ := s.ds.Accounts.GetByAddress(ctx, reqTaker)
 		if taker == nil {

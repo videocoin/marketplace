@@ -7,6 +7,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -42,10 +43,10 @@ func (ds *OrderDatastore) Create(ctx context.Context, order *model.Order) error 
 	}
 
 	order.TokenID, _ = strconv.ParseInt(order.WyvernOrder.Metadata.Asset.ID, 10, 64)
-	order.AssetContractAddress = order.WyvernOrder.Metadata.Asset.Address
+	order.AssetContractAddress = strings.ToLower(order.WyvernOrder.Metadata.Asset.Address)
 	order.Side = order.WyvernOrder.Side
 	order.SaleKind = order.WyvernOrder.SaleKind
-	order.PaymentTokenAddress = order.WyvernOrder.PaymentToken
+	order.PaymentTokenAddress = strings.ToLower(order.WyvernOrder.PaymentToken)
 	order.CreatedDate = order.WyvernOrder.CreatedDate
 
 	cols := []string{
