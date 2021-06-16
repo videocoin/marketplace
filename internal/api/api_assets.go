@@ -22,6 +22,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 func (s *Server) upload(c echo.Context) error {
@@ -116,6 +117,27 @@ func (s *Server) upload(c echo.Context) error {
 		logger.Info("source video has been uploaded to storage")
 
 		err = s.ds.Assets.UpdateURL(ctx, asset, link)
+		if err != nil {
+			logger.WithError(err).Error("failed to update asset original url")
+			return
+		}
+
+		logger.Info("generating qr code")
+		png, err := qrcode.Encode(asset.DRMKey, qrcode.Medium, 340)
+		if err != nil {
+			logger.WithError(err).Error("failed to generate qr code")
+			return
+		}
+
+		logger.Info("qr code has been generated")
+
+		qrLink, err := s.storage.PushPath(meta.QRKey, bytes.NewReader(png))
+		if err != nil {
+			logger.WithError(err).Error("failed to push qr code to storage")
+			return
+		}
+		logger = logger.WithField("qr_link", qrLink)
+		err = s.ds.Assets.UpdateQrURL(ctx, asset, qrLink)
 		if err != nil {
 			logger.WithError(err).Error("failed to update asset original url")
 			return

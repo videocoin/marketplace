@@ -8,6 +8,7 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
+	"github.com/skip2/go-qrcode"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
@@ -129,7 +130,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 
 		job := model.MediaConverterJob{
 			Asset: asset,
-			Meta: meta,
+			Meta:  meta,
 		}
 
 		wg := &sync.WaitGroup{}
@@ -138,6 +139,27 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 			book.mc.RunEncryptJob(wg, job)
 		}(wg)
 		wg.Wait()
+
+		logger.Info("generating qr code")
+		png, err := qrcode.Encode(drmKey, qrcode.Medium, 340)
+		if err != nil {
+			logger.WithError(err).Error("failed to generate qr code")
+			return nil
+		}
+
+		logger.Info("qr code has been generated")
+
+		qrLink, err := book.storage.PushPath(meta.QRKey, bytes.NewReader(png))
+		if err != nil {
+			logger.WithError(err).Error("failed to push qr code to storage")
+			return nil
+		}
+		logger = logger.WithField("qr_link", qrLink)
+		err = book.ds.Assets.UpdateQrURL(ctx, asset, qrLink)
+		if err != nil {
+			logger.WithError(err).Error("failed to update asset original url")
+			return nil
+		}
 
 		logger = logger.
 			WithField("new_drm_key", drmKey).
@@ -148,6 +170,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 			DRMKeyID: pointer.ToString(drmKeyID),
 			EK:       pointer.ToString(ek),
 			OwnerID:  pointer.ToInt64(newOwner.ID),
+			QrURL:    pointer.ToString(qrLink),
 		}
 		err = book.ds.Assets.Update(ctx, asset, assetFields)
 		if err != nil {

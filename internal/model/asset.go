@@ -31,6 +31,7 @@ type AssetMeta struct {
 	DestPreviewKey   string
 	DestThumbKey     string
 	DestEncKey       string
+	QRKey            string
 	YTVideo          *youtube.Video
 	GCPBucket        string
 }
@@ -46,6 +47,7 @@ func NewAssetMeta(name, contentType string, userID int64, gcpBucket string) *Ass
 	destPreviewKey := fmt.Sprintf("%s/%s", folder, previewFilename)
 	destEncKey := fmt.Sprintf("%s/%s", folder, encFilename)
 	destThumbKey := fmt.Sprintf("%s/thumb.jpg", folder)
+	destQrKey := fmt.Sprintf("%s/qr.png", folder)
 
 	return &AssetMeta{
 		Name:             filename,
@@ -55,6 +57,7 @@ func NewAssetMeta(name, contentType string, userID int64, gcpBucket string) *Ass
 		DestPreviewKey:   destPreviewKey,
 		DestThumbKey:     destThumbKey,
 		DestEncKey:       destEncKey,
+		QRKey:            destQrKey,
 		LocalDest:        path.Join("/tmp", tmpFilename+filepath.Ext(filename)),
 		LocalPreviewDest: path.Join("/tmp", tmpFilename+"_preview"+filepath.Ext(filename)),
 		LocalEncDest:     path.Join("/tmp", tmpFilename+"_encrypted"+filepath.Ext(filename)),
@@ -119,6 +122,7 @@ type Asset struct {
 	PreviewURL   dbr.NullString `db:"preview_url"`
 	ThumbnailURL dbr.NullString `db:"thumbnail_url"`
 	EncryptedURL dbr.NullString `db:"encrypted_url"`
+	QrURL        dbr.NullString `db:"qr_url"`
 
 	DRMKey   string `db:"drm_key"`
 	DRMKeyID string `db:"drm_key_id"`

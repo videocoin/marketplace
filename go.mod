@@ -43,6 +43,7 @@ require (
 	github.com/plutov/echo-logrus v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac
 	github.com/textileio/textile/v2 v2.6.8
 	github.com/videocoin/common v0.0.0-20200510014350-b8f6b3848d06 // indirect

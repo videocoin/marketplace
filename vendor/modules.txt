@@ -342,6 +342,11 @@ github.com/shirou/gopsutil/internal/common
 # github.com/sirupsen/logrus v1.8.1
 ## explicit
 github.com/sirupsen/logrus
+# github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
+## explicit
+github.com/skip2/go-qrcode
+github.com/skip2/go-qrcode/bitset
+github.com/skip2/go-qrcode/reedsolomon
 # github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572
 github.com/spacemonkeygo/spacelog
 # github.com/spaolacci/murmur3 v1.1.0

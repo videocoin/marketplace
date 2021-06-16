@@ -28,6 +28,7 @@ type AssetUpdatedFields struct {
 	DRMKeyID *string
 	EK       *string
 	OwnerID  *int64
+	QrURL    *string
 }
 
 type AssetDatastore struct {
@@ -253,6 +254,11 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		asset.OwnerID = fields.OwnerID
 	}
 
+	if fields.QrURL != nil {
+		stmt.Set("qr_url", *fields.QrURL)
+		asset.QrURL = dbr.NewNullString(fields.QrURL)
+	}
+
 	_, err = stmt.Where("id = ?", asset.ID).ExecContext(ctx)
 	if err != nil {
 		return err
@@ -317,6 +323,36 @@ func (ds *AssetDatastore) UpdateURL(ctx context.Context, asset *model.Asset, url
 	}
 
 	asset.URL = dbr.NewNullString(url)
+
+	return nil
+}
+
+func (ds *AssetDatastore) UpdateQrURL(ctx context.Context, asset *model.Asset, url string) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("qr_url", url).
+		Where("id = ?", asset.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	asset.QrURL = dbr.NewNullString(url)
 
 	return nil
 }

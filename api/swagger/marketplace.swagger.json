@@ -1060,6 +1060,9 @@
         "encrypted_url": {
           "type": "string"
         },
+        "qr_url": {
+          "type": "string"
+        },
         "ipfs_url": {
           "type": "string"
         },
