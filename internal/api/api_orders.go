@@ -231,18 +231,25 @@ func (s *Server) getOrders(c echo.Context) error {
 		return err
 	}
 
+	tc, _ := s.ds.Orders.Count(ctx, fltr)
+	countResp := &ItemsCountResponse{
+		TotalCount: tc,
+		Offset:     *limitOpts.Offset,
+		Limit:      *limitOpts.Limit,
+	}
+
 	tokens, _ := s.ds.Tokens.List(ctx, nil, nil)
 	tokensByID := map[string]*model.Token{}
 	for _, token := range tokens {
 		tokensByID[token.Address] = token
 	}
 
-	resp := toOrdersResponse(orders, tokensByID)
+	resp := toOrdersResponse(orders, tokensByID, countResp)
 
 	return c.JSON(http.StatusOK, resp)
 }
 
 func returnEmptyOrders(c echo.Context) error {
 	orders := make([]*model.Order, 0)
-	return c.JSON(http.StatusOK, toOrdersResponse(orders, nil))
+	return c.JSON(http.StatusOK, toOrdersResponse(orders, nil, nil))
 }
