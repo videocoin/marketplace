@@ -231,19 +231,19 @@ func (s *Server) getOrders(c echo.Context) error {
 		return err
 	}
 
-	tc, _ := s.ds.Orders.Count(ctx, fltr)
-	countResp := &ItemsCountResponse{
-		TotalCount: tc,
-		Offset:     *limitOpts.Offset,
-		Limit:      *limitOpts.Limit,
-	}
+	//tc, _ := s.ds.Orders.Count(ctx, fltr)
+	//countResp := &ItemsCountResponse{
+	//	TotalCount: tc,
+	//	Offset:     *limitOpts.Offset,
+	//	Limit:      *limitOpts.Limit,
+	//}
 
-	resp := toOrdersResponse(orders, countResp)
+	resp := toOrdersResponse(orders)
 
 	return c.JSON(http.StatusOK, resp)
 }
 
 func returnEmptyOrders(c echo.Context) error {
 	orders := make([]*model.Order, 0)
-	return c.JSON(http.StatusOK, toOrdersResponse(orders, nil))
+	return c.JSON(http.StatusOK, toOrdersResponse(orders))
 }

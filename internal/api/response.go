@@ -117,11 +117,6 @@ type TokenResponse struct {
 	USDPrice *float64 `json:"usd_price"`
 }
 
-type OrdersResponse struct {
-	Orders []*wyvern.Order `json:"orders"`
-	Count  int64           `json:"count"`
-}
-
 type ItemsCountResponse struct {
 	TotalCount int64
 	Count      int64
@@ -320,19 +315,13 @@ func toTokensResponse(tokens []*model.Token) []*TokenResponse {
 	return resp
 }
 
-func toOrdersResponse(orders []*model.Order, count *ItemsCountResponse) *OrdersResponse {
-	resp := &OrdersResponse{
-		Orders: make([]*wyvern.Order, 0),
-		Count:  0,
-	}
+func toOrdersResponse(orders []*model.Order) []*wyvern.Order {
+	resp := make([]*wyvern.Order, 0)
+
 	for _, order := range orders {
 		item := new(wyvern.Order)
 		_ = copier.Copy(item, order.WyvernOrder)
-		resp.Orders = append(resp.Orders, item)
-	}
-
-	if count != nil {
-		resp.Count = count.TotalCount
+		resp = append(resp, item)
 	}
 
 	return resp
