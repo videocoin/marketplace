@@ -31,7 +31,7 @@ type ExchangeListener struct {
 func NewExchangeListener(ctx context.Context, opts ...ExchangeListenerOption) (*ExchangeListener, error) {
 	l := &ExchangeListener{
 		logger:   ctxlogrus.Extract(ctx).WithField("system", "exchange-listener"),
-		logStep:  100000,
+		logStep:  1000,
 		scanFrom: 0,
 		t:        time.NewTicker(time.Second * 5),
 	}

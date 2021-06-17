@@ -98,12 +98,9 @@ func (reader *EventReader) toOrdersMatchedEvent(log *types.Log) (*OrderEvent, er
 	if err := reader.pa.Unpack(&event, log); err != nil {
 		return nil, err
 	}
-	if event.BuyHash != event.SellHash {
-		return nil, fmt.Errorf("buy order hash and sell order hash doesn't match; buy=%s; sell=%s", event.BuyHash.Hex(), event.SellHash.Hex())
-	}
 	return &OrderEvent{
 		Type: OrdersMatched,
-		Hash: event.BuyHash,
+		Hash: event.SellHash,
 	}, nil
 }
 

@@ -113,7 +113,8 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 	el, err := listener.NewExchangeListener(
 		ctx,
 		listener.WithBlockchainURL(cfg.BlockchainURL),
-		listener.WithContractAddress(cfg.ERC721ContractAddress),
+		listener.WithScanFrom(cfg.BlockchainScanFrom),
+		listener.WithContractAddress(cfg.ERC721AuctionContractAddress),
 		listener.WithDatastore(ds),
 		listener.WithOrderbook(ob),
 	)
