@@ -2,7 +2,6 @@ package datastore
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
@@ -46,7 +45,7 @@ func (ds *OrderDatastore) Create(ctx context.Context, order *model.Order) error 
 	}
 
 	hashBytes := common.HexToHash(order.Hash).Bytes()
-	order.SignHash = strings.ToLower(hex.EncodeToString(ethutil.SignHash(hashBytes)))
+	order.SignHash = strings.ToLower(common.BytesToHash(ethutil.SignHash(hashBytes)).String())
 	order.TokenID, _ = strconv.ParseInt(order.WyvernOrder.Metadata.Asset.ID, 10, 64)
 	order.AssetContractAddress = strings.ToLower(order.WyvernOrder.Metadata.Asset.Address)
 	order.Side = order.WyvernOrder.Side

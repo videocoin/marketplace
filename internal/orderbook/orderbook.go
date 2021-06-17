@@ -51,7 +51,7 @@ func (book *OrderBook) Cancel(ctx context.Context, order *model.Order) error {
 	return book.ds.Orders.MarkStatusAsCanceled(ctx, order)
 }
 
-func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
+func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner *model.Account) error {
 	logger := book.logger
 	logger = logger.WithFields(logrus.Fields{
 		"hash":                   order.Hash,
@@ -80,12 +80,6 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 		return nil
 	}
 
-	logger.Info("marking order as processing")
-	err := book.ds.Orders.MarkStatusAsProcessing(ctx, order)
-	if err != nil {
-		return err
-	}
-
 	if order.Side == wyvern.Sell && order.SaleKind == wyvern.FixedPrice {
 		asset, err := book.ds.Assets.GetByTokenID(ctx, order.TokenID)
 		if err != nil {
@@ -99,16 +93,17 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 			return nil
 		}
 
+		logger.Info("marking order as processing")
+		err = book.ds.Orders.MarkStatusAsProcessing(ctx, order)
+		if err != nil {
+			return err
+		}
+
 		logger.Info("transferring asset")
 
 		err = book.ds.Assets.MarkStatusAsTransferring(ctx, asset)
 		if err != nil {
 			return fmt.Errorf("failed to mark asset as transferring: %s", err)
-		}
-
-		newOwner, err := book.ds.Accounts.GetByID(ctx, order.CreatedByID)
-		if err != nil {
-			return fmt.Errorf("failed to get new owner: %s", err)
 		}
 
 		ek := token.GenerateEncryptionKey()

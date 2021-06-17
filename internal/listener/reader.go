@@ -99,8 +99,10 @@ func (reader *EventReader) toOrdersMatchedEvent(log *types.Log) (*OrderEvent, er
 		return nil, err
 	}
 	return &OrderEvent{
-		Type: OrdersMatched,
-		Hash: event.SellHash,
+		Type:  OrdersMatched,
+		Hash:  event.SellHash,
+		Maker: event.Maker,
+		Taker: event.Taker,
 	}, nil
 }
 

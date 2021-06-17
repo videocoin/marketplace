@@ -138,6 +138,7 @@ func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 
 	for _, event := range events {
 		ctx := context.Background()
+
 		order, err := listener.orderbook.GetBySignHash(ctx, event.Hash.String())
 		if err != nil {
 			listener.logger.
@@ -166,12 +167,21 @@ func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 			}
 		case OrdersMatched:
 			{
-				listener.logger.
+				logger := listener.logger.
 					WithField("hash", event.Hash.String()).
-					WithField("event", "OrdersMatched").
-					Info("event received")
+					WithField("maker", event.Maker.String()).
+					WithField("taker", event.Taker.String()).
+					WithField("event", "OrdersMatched")
 
-				return listener.orderbook.Process(ctx, order)
+				logger.Info("event received")
+
+				taker, err := listener.ds.Accounts.GetByAddress(ctx, event.Taker.String())
+				if err != nil {
+					logger.WithError(err).Error("failed to get taker")
+					return err
+				}
+
+				return listener.orderbook.Process(ctx, order, taker)
 			}
 		}
 	}

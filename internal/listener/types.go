@@ -21,8 +21,10 @@ const (
 )
 
 type OrderEvent struct {
-	Type int
-	Hash common.Hash
+	Type  int
+	Hash  common.Hash
+	Maker common.Address
+	Taker common.Address
 }
 
 type ordersMatchedEvent struct {
