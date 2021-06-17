@@ -119,7 +119,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			newOwner.ID,
 			"",
 		)
-		meta.LocalDest = asset.EncryptedURL.String
+		meta.LocalDest = asset.URL.String
 
 		logger.Infof("encrypting %s to %s", meta.LocalDest, meta.DestEncKey)
 
