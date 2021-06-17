@@ -515,6 +515,10 @@ func (ds *AssetDatastore) MarkStatusAsTransferring(ctx context.Context, asset *m
 	return ds.MarkStatusAs(ctx, asset, model.AssetStatusTransferring)
 }
 
+func (ds *AssetDatastore) MarkStatusAsTransfered(ctx context.Context, asset *model.Asset) error {
+	return ds.MarkStatusAs(ctx, asset, model.AssetStatusTransferred)
+}
+
 func (ds *AssetDatastore) MarkStatusAsReady(ctx context.Context, asset *model.Asset) error {
 	return ds.MarkStatusAs(ctx, asset, model.AssetStatusReady)
 }

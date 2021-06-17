@@ -86,7 +86,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 		return err
 	}
 
-	if order.Side == wyvern.Buy && order.SaleKind == wyvern.FixedPrice {
+	if order.Side == wyvern.Sell && order.SaleKind == wyvern.FixedPrice {
 		asset, err := book.ds.Assets.GetByTokenID(ctx, order.TokenID)
 		if err != nil {
 			return err
@@ -171,6 +171,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 			EK:       pointer.ToString(ek),
 			OwnerID:  pointer.ToInt64(newOwner.ID),
 			QrURL:    pointer.ToString(qrLink),
+			OnSale:   pointer.ToBool(false),
 		}
 		err = book.ds.Assets.Update(ctx, asset, assetFields)
 		if err != nil {
@@ -189,10 +190,12 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order) error {
 
 		logger.Info("marking asset as ready")
 
-		err = book.ds.Assets.MarkStatusAsReady(ctx, asset)
+		err = book.ds.Assets.MarkStatusAsTransfered(ctx, asset)
 		if err != nil {
-			return fmt.Errorf("failed to mark asset as ready: %s", err)
+			return fmt.Errorf("failed to mark asset as transferred: %s", err)
 		}
+
+		logger.Info("asset has been transferred")
 
 		logger.Info("marking order as processed")
 

@@ -90,6 +90,7 @@ const (
 	AssetStatusUnknown      AssetStatus = "UNKNOWN"
 	AssetStatusProcessing   AssetStatus = "PROCESSING"
 	AssetStatusTransferring AssetStatus = "TRANSFERRING"
+	AssetStatusTransferred  AssetStatus = "TRANSFERRED"
 	AssetStatusReady        AssetStatus = "READY"
 	AssetStatusFailed       AssetStatus = "FAILED"
 )

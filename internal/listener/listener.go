@@ -117,7 +117,8 @@ func (listener *ExchangeListener) waitEvents(ctx context.Context) error {
 
 	err = listener.processEvents(events)
 	if err != nil {
-		return err
+		listener.logger.WithError(err).Error("failed to process events")
+		//return err
 	}
 
 	err = listener.ds.ChainMeta.SaveLastHeight(ctx, listener.chainID, end)
@@ -139,7 +140,11 @@ func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 		ctx := context.Background()
 		order, err := listener.orderbook.Get(ctx, event.Hash.String())
 		if err != nil {
-			return err
+			listener.logger.
+				WithField("order_hash", event.Hash.String()).
+				WithError(err).
+				Error("failed to get order by hash")
+			continue
 		}
 
 		switch event.Type {
