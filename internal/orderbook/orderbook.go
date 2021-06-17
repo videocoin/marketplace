@@ -86,12 +86,12 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return err
 		}
 
-		logger = logger.WithField("on_sale", asset.OnSale)
+		//logger = logger.WithField("on_sale", asset.OnSale)
 
-		if !asset.OnSale {
-			logger.Warning("asset is not for sale")
-			return nil
-		}
+		//if !asset.OnSale {
+		//	logger.Warning("asset is not for sale")
+		//	return nil
+		//}
 
 		logger.Info("marking order as processing")
 		err = book.ds.Orders.MarkStatusAsProcessing(ctx, order)
