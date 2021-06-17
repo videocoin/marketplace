@@ -2,9 +2,9 @@ package api
 
 import (
 	"encoding/hex"
-	"fmt"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/videocoin/marketplace/pkg/ethutil"
 	"strings"
 )
 
@@ -20,7 +20,7 @@ func verifySignature(signature string, nonce string, address string) (string, er
 
 	decodedSig[64] -= 27
 
-	recoveredPublicKey, err := crypto.SigToPub(signHash([]byte(nonce)), decodedSig)
+	recoveredPublicKey, err := crypto.SigToPub(ethutil.SignHash([]byte(nonce)), decodedSig)
 	if err != nil {
 		return "", err
 	}
@@ -35,9 +35,4 @@ func verifySignature(signature string, nonce string, address string) (string, er
 	}
 
 	return pubKeyHex, nil
-}
-
-func signHash(data []byte) []byte {
-	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(data), data)
-	return crypto.Keccak256([]byte(msg))
 }

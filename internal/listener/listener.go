@@ -138,7 +138,7 @@ func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 
 	for _, event := range events {
 		ctx := context.Background()
-		order, err := listener.orderbook.Get(ctx, event.Hash.String())
+		order, err := listener.orderbook.GetBySignHash(ctx, event.Hash.String())
 		if err != nil {
 			listener.logger.
 				WithField("order_hash", event.Hash.String()).

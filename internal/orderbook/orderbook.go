@@ -39,8 +39,8 @@ func NewOderBook(ctx context.Context, opts ...Option) (*OrderBook, error) {
 	return book, nil
 }
 
-func (book *OrderBook) Get(ctx context.Context, hash string) (*model.Order, error) {
-	return book.ds.Orders.GetByHash(ctx, hash)
+func (book *OrderBook) GetBySignHash(ctx context.Context, hash string) (*model.Order, error) {
+	return book.ds.Orders.GetBySignHash(ctx, hash)
 }
 
 func (book *OrderBook) Approve(ctx context.Context, order *model.Order) error {

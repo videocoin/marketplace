@@ -2,10 +2,13 @@ package datastore
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
+	"github.com/videocoin/marketplace/pkg/ethutil"
 	"strconv"
 	"strings"
 )
@@ -42,6 +45,8 @@ func (ds *OrderDatastore) Create(ctx context.Context, order *model.Order) error 
 		}()
 	}
 
+	hashBytes := common.HexToHash(order.Hash).Bytes()
+	order.SignHash = strings.ToLower(hex.EncodeToString(ethutil.SignHash(hashBytes)))
 	order.TokenID, _ = strconv.ParseInt(order.WyvernOrder.Metadata.Asset.ID, 10, 64)
 	order.AssetContractAddress = strings.ToLower(order.WyvernOrder.Metadata.Asset.Address)
 	order.Side = order.WyvernOrder.Side
@@ -50,8 +55,8 @@ func (ds *OrderDatastore) Create(ctx context.Context, order *model.Order) error 
 	order.CreatedDate = order.WyvernOrder.CreatedDate
 
 	cols := []string{
-		"created_by_id", "hash", "asset_contract_address", "token_id", "side", "sale_kind", "payment_token_address",
-		"maker_id", "taker_id", "created_date", "wyvern_order",
+		"created_by_id", "hash", "sign_hash", "asset_contract_address", "token_id", "side", "sale_kind",
+		"payment_token_address", "maker_id", "taker_id", "created_date", "wyvern_order",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -155,7 +160,39 @@ func (ds *OrderDatastore) GetByHash(ctx context.Context, hash string) (*model.Or
 	err = tx.
 		Select("*").
 		From(ds.table).
-		Where("hash = ?", hash).
+		Where("hash = ?", strings.ToLower(hash)).
+		LoadOneContext(ctx, order)
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return nil, ErrOrderNotFound
+		}
+		return nil, err
+	}
+
+	return order, nil
+}
+
+func (ds *OrderDatastore) GetBySignHash(ctx context.Context, hash string) (*model.Order, error) {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	order := new(model.Order)
+	err = tx.
+		Select("*").
+		From(ds.table).
+		Where("sign_hash = ?", strings.ToLower(hash)).
 		LoadOneContext(ctx, order)
 	if err != nil {
 		if err == dbr.ErrNotFound {

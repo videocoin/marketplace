@@ -20,6 +20,7 @@ type Order struct {
 	CreatedByID          int64            `db:"created_by_id"`
 	Status               OrderStatus      `db:"status"`
 	Hash                 string           `db:"hash"`
+	SignHash             string           `db:"sign_hash"`
 	AssetContractAddress string           `db:"asset_contract_address"`
 	TokenID              int64            `db:"token_id"`
 	Side                 wyvern.OrderSide `db:"side"`
