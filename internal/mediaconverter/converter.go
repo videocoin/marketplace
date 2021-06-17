@@ -367,6 +367,8 @@ func (mc *MediaConverter) RunEncryptJob(wg *sync.WaitGroup, job model.MediaConve
 		meta.LocalEncDest,
 	}
 
+	logger.Debug("ffmpeg %s", strings.Join(cmdArgs, " "))
+
 	cmd := exec.CommandContext(ctx, "ffmpeg", cmdArgs...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
