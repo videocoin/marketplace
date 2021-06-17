@@ -111,8 +111,20 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		if err != nil {
 			return fmt.Errorf("failed to generate drm key: %s", err)
 		}
-
 		drmKeyID := token.GenerateDRMKeyID(newOwner)
+
+		assetFields := datastore.AssetUpdatedFields{
+			DRMKey:   pointer.ToString(drmKey),
+			DRMKeyID: pointer.ToString(drmKeyID),
+			EK:       pointer.ToString(ek),
+			OwnerID:  pointer.ToInt64(newOwner.ID),
+			OnSale:   pointer.ToBool(false),
+		}
+		err = book.ds.Assets.Update(ctx, asset, assetFields)
+		if err != nil {
+			return fmt.Errorf("failed to update asset: %s", err)
+		}
+
 		meta := model.NewAssetMeta(
 			fmt.Sprintf("%d.mp4", asset.ID),
 			"video/mp4",
@@ -160,17 +172,12 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			WithField("new_drm_key", drmKey).
 			WithField("new_drm_key_id", drmKeyID)
 
-		assetFields := datastore.AssetUpdatedFields{
-			DRMKey:   pointer.ToString(drmKey),
-			DRMKeyID: pointer.ToString(drmKeyID),
-			EK:       pointer.ToString(ek),
-			OwnerID:  pointer.ToInt64(newOwner.ID),
+		assetFields = datastore.AssetUpdatedFields{
 			QrURL:    pointer.ToString(qrLink),
-			OnSale:   pointer.ToBool(false),
 		}
 		err = book.ds.Assets.Update(ctx, asset, assetFields)
 		if err != nil {
-			return fmt.Errorf("failed to update asset: %s", err)
+			return fmt.Errorf("failed to update asset qr link: %s", err)
 		}
 
 		logger.Info("uploading new token json")
