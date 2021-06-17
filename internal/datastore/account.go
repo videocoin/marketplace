@@ -8,6 +8,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 	"github.com/videocoin/marketplace/pkg/random"
+	"strings"
 	"time"
 )
 
@@ -224,7 +225,7 @@ func (ds *AccountDatastore) GetByAddress(ctx context.Context, address string) (*
 	err = tx.
 		Select("*").
 		From(ds.table).
-		Where("address = ?", address).
+		Where("address = ?", strings.ToLower(address)).
 		LoadOneContext(ctx, account)
 	if err != nil {
 		if err == dbr.ErrNotFound {
