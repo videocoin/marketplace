@@ -96,6 +96,8 @@ type AssetResponse struct {
 
 	OnSale           bool   `json:"on_sale"`
 	InstantSalePrice string `json:"instant_sale_price"`
+
+	Sold bool `json:"sold"`
 }
 
 type AssetsResponse struct {
@@ -206,6 +208,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		},
 		OnSale:           asset.OnSale,
 		InstantSalePrice: asset.InstantSalePrice,
+		Sold:             !asset.OnSale && asset.StatusIsTransferred(),
 	}
 
 	if asset.DRMKey != "" {

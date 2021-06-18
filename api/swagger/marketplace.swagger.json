@@ -1081,6 +1081,9 @@
         "on_sale": {
           "type": "boolean"
         },
+        "sold": {
+          "type": "boolean"
+        },
         "instant_sale_price": {
           "type": "number",
           "format": "float"

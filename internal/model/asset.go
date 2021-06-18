@@ -142,6 +142,10 @@ func (a *Asset) StatusIsFailed() bool {
 	return a.Status == AssetStatusFailed
 }
 
+func (a *Asset) StatusIsTransferred() bool {
+	return a.Status == AssetStatusTransferred
+}
+
 func (a *Asset) GetURL() string {
 	return a.URL.String
 }
