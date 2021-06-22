@@ -13,8 +13,9 @@ type NonceResponse struct {
 }
 
 type RegisterResponse struct {
-	Address string `json:"address"`
-	Nonce   string `json:"nonce"`
+	Address  string `json:"address"`
+	Nonce    string `json:"nonce"`
+	Username string `json:"username"`
 }
 
 type AuthResponse struct {
@@ -139,8 +140,9 @@ func toNonceResponse(account *model.Account) *NonceResponse {
 
 func toRegisterResponse(account *model.Account) *RegisterResponse {
 	return &RegisterResponse{
-		Address: account.Address,
-		Nonce:   account.Nonce.String,
+		Address:  account.Address,
+		Nonce:    account.Nonce.String,
+		Username: account.Username.String,
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/AlekSi/pointer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/gocraft/dbr/v2"
+	"github.com/goombaio/namegenerator"
 	"github.com/labstack/echo/v4"
 	"github.com/nfnt/resize"
 	"github.com/oliamb/cutter"
@@ -19,6 +21,7 @@ import (
 	"image/png"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func (s *Server) getNonce(c echo.Context) error {
@@ -60,7 +63,29 @@ func (s *Server) register(c echo.Context) error {
 		return err
 	}
 
-	account := &model.Account{Address: address}
+	var username string
+
+	for {
+		seed := time.Now().UTC().UnixNano()
+		nameGen := namegenerator.NewNameGenerator(seed)
+		username = nameGen.Generate()
+
+		_, err = s.ds.Accounts.GetByUsername(context.Background(), username)
+		if err == datastore.ErrAccountNotFound {
+			break
+		}
+
+		if err != nil {
+			return err
+		}
+
+		time.Sleep(time.Millisecond*200)
+	}
+
+	account := &model.Account{
+		Address:  address,
+		Username: dbr.NewNullString(username),
+	}
 	err = s.ds.Accounts.Create(ctx, account)
 	if err != nil {
 		return err

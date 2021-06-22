@@ -73,7 +73,7 @@ func (ds *AccountDatastore) Create(ctx context.Context, account *model.Account) 
 		account.Nonce = dbr.NewNullString(random.RandomString(20))
 	}
 
-	cols := []string{"created_at", "address", "nonce"}
+	cols := []string{"created_at", "address", "nonce", "username"}
 	err = tx.
 		InsertInto(ds.table).
 		Columns(cols...).
