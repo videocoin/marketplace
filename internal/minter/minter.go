@@ -60,14 +60,14 @@ func (m *Minter) Mint(ctx context.Context, to common.Address, id *big.Int, uri s
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	opts := m.getCallOpts(ctx)
-	_, err := m.contract.OwnerOf(opts, id)
-	if err == nil {
-		return nil, fmt.Errorf("token with ID %s already exists", id.String())
-	}
-	if err.Error() != "execution reverted: ERC721: owner query for nonexistent token" {
-		return nil, err
-	}
+	// opts := m.getCallOpts(ctx)
+	// _, err := m.contract.OwnerOf(opts, id)
+	// if err == nil {
+	// 	return nil, fmt.Errorf("token with ID %s already exists", id.String())
+	// }
+	// if err.Error() != "execution reverted: ERC721: owner query for nonexistent token" {
+	// 	return nil, err
+	// }
 
 	txOpts := m.getTxOpts(ctx)
 	tx, err := m.contract.Mint(txOpts, to, id, uri)
@@ -82,14 +82,14 @@ func (m *Minter) UpdateTokenURI(ctx context.Context, id *big.Int, uri string) (*
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	opts := m.getCallOpts(ctx)
-	_, err := m.contract.OwnerOf(opts, id)
-	if err == nil {
-		return nil, fmt.Errorf("token with ID %s already exists", id.String())
-	}
-	if err.Error() != "execution reverted: ERC721: owner query for nonexistent token" {
-		return nil, err
-	}
+	// opts := m.getCallOpts(ctx)
+	// _, err := m.contract.OwnerOf(opts, id)
+	// if err == nil {
+	// 	return nil, fmt.Errorf("token with ID %s already exists", id.String())
+	// }
+	// if err.Error() != "execution reverted: ERC721: owner query for nonexistent token" {
+	// 	return nil, err
+	// }
 
 	txOpts := m.getTxOpts(ctx)
 	tx, err := m.contract.UpdateTokenURI(txOpts, id, uri)
