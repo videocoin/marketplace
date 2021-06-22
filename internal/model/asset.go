@@ -9,6 +9,7 @@ import (
 	"github.com/kkdai/youtube/v2"
 	"github.com/videocoin/marketplace/pkg/random"
 	"gopkg.in/vansante/go-ffprobe.v2"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -151,10 +152,22 @@ func (a *Asset) GetURL() string {
 }
 
 func (a *Asset) GetIPFSURL() string {
-	urlParts := strings.Split(a.URL.String, "/")
-	if len(urlParts) > 4 {
-		return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+	if strings.Contains(a.URL.String, "textile.io") {
+		urlParts := strings.Split(a.URL.String, "/")
+		if len(urlParts) > 4 {
+			return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+		}
 	}
+
+	if strings.Contains(a.URL.String, "ipfs.dweb.link") {
+		u, _ := url.Parse(a.URL.String)
+		hostParts := strings.Split(u.Host, ".")
+		urlParts := strings.Split(a.URL.String, "/")
+		if len(urlParts) > 3 {
+			return fmt.Sprintf("ipfs://%s/%s", hostParts[0], strings.Join(urlParts[3:], "/"))
+		}
+	}
+
 	return ""
 }
 
@@ -163,10 +176,22 @@ func (a *Asset) GetEncryptedURL() string {
 }
 
 func (a *Asset) GetIPFSEncryptedURL() string {
-	urlParts := strings.Split(a.EncryptedURL.String, "/")
-	if len(urlParts) > 4 {
-		return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+	if strings.Contains(a.EncryptedURL.String, "textile.io") {
+		urlParts := strings.Split(a.EncryptedURL.String, "/")
+		if len(urlParts) > 4 {
+			return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+		}
 	}
+
+	if strings.Contains(a.EncryptedURL.String, "ipfs.dweb.link") {
+		u, _ := url.Parse(a.EncryptedURL.String)
+		hostParts := strings.Split(u.Host, ".")
+		urlParts := strings.Split(a.EncryptedURL.String, "/")
+		if len(urlParts) > 3 {
+			return fmt.Sprintf("ipfs://%s/%s", hostParts[0], strings.Join(urlParts[3:], "/"))
+		}
+	}
+
 	return ""
 }
 
@@ -183,10 +208,22 @@ func (a *Asset) GetThumbnailURL() string {
 }
 
 func (a *Asset) GetIPFSThumbnailURL() string {
-	urlParts := strings.Split(a.ThumbnailURL.String, "/")
-	if len(urlParts) > 4 {
-		return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+	if strings.Contains(a.ThumbnailURL.String, "textile.io") {
+		urlParts := strings.Split(a.ThumbnailURL.String, "/")
+		if len(urlParts) > 4 {
+			return fmt.Sprintf("ipfs://%s", strings.Join(urlParts[4:], "/"))
+		}
 	}
+
+	if strings.Contains(a.ThumbnailURL.String, "ipfs.dweb.link") {
+		u, _ := url.Parse(a.ThumbnailURL.String)
+		hostParts := strings.Split(u.Host, ".")
+		urlParts := strings.Split(a.ThumbnailURL.String, "/")
+		if len(urlParts) > 3 {
+			return fmt.Sprintf("ipfs://%s/%s", hostParts[0], strings.Join(urlParts[3:], "/"))
+		}
+	}
+
 	return ""
 }
 
