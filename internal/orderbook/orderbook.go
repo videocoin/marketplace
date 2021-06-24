@@ -86,12 +86,14 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return err
 		}
 
-		//logger = logger.WithField("on_sale", asset.OnSale)
+		logger = logger.
+			WithField("asset_id", asset.ID).
+			WithField("on_sale", asset.OnSale)
 
-		//if !asset.OnSale {
-		//	logger.Warning("asset is not for sale")
-		//	return nil
-		//}
+		if !asset.OnSale {
+			logger.Warning("asset is not for sale")
+			return nil
+		}
 
 		logger.Info("marking order as processing")
 		err = book.ds.Orders.MarkStatusAsProcessing(ctx, order)
@@ -173,7 +175,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			WithField("new_drm_key_id", drmKeyID)
 
 		assetFields = datastore.AssetUpdatedFields{
-			QrURL:    pointer.ToString(qrLink),
+			QrURL: pointer.ToString(qrLink),
 		}
 		err = book.ds.Assets.Update(ctx, asset, assetFields)
 		if err != nil {
@@ -183,11 +185,19 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		logger.Info("uploading new token json")
 
 		tokenJSON, _ := token.ToTokenJSON(asset)
-		_, err = book.storage.PushPath(
+		tokenURI, err := book.storage.PushPath(
 			fmt.Sprintf("%d.json", asset.ID),
 			bytes.NewBuffer(tokenJSON))
 		if err != nil {
 			return fmt.Errorf("failed to upload token json to storage")
+		}
+
+		logger = logger.WithField("token_uri", tokenURI)
+		logger.Info("updating token uri")
+
+		err = book.ds.Assets.UpdateTokenURL(ctx, asset, tokenURI)
+		if err != nil {
+			return err
 		}
 
 		logger.Info("marking asset as ready")

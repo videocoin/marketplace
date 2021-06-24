@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"math/big"
 	"mime/multipart"
@@ -14,15 +13,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/AlekSi/pointer"
 	"github.com/gocraft/dbr/v2"
 	"github.com/labstack/echo/v4"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
-	qrcode "github.com/skip2/go-qrcode"
 )
 
 func (s *Server) upload(c echo.Context) error {
@@ -371,6 +372,13 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	logger := s.logger.WithField("token_uri", tokenURI)
+	logger.Info("updating token url")
+
+	err = s.ds.Assets.UpdateTokenURL(ctx, asset, tokenURI)
+	if err != nil {
+		return err
+	}
+
 	logger.Info("minting")
 
 	mintTx, err := s.minter.Mint(

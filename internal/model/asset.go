@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gocraft/dbr/v2"
-	"github.com/kkdai/youtube/v2"
-	"github.com/videocoin/marketplace/pkg/random"
-	"gopkg.in/vansante/go-ffprobe.v2"
 	"net/url"
 	"os"
 	"path"
@@ -16,6 +12,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gocraft/dbr/v2"
+	"github.com/kkdai/youtube/v2"
+	"github.com/videocoin/marketplace/pkg/random"
+	"gopkg.in/vansante/go-ffprobe.v2"
 )
 
 type AssetMeta struct {
@@ -125,6 +126,7 @@ type Asset struct {
 	ThumbnailURL dbr.NullString `db:"thumbnail_url"`
 	EncryptedURL dbr.NullString `db:"encrypted_url"`
 	QrURL        dbr.NullString `db:"qr_url"`
+	TokenURL     dbr.NullString `db:"token_url"`
 
 	DRMKey   string `db:"drm_key"`
 	DRMKeyID string `db:"drm_key_id"`

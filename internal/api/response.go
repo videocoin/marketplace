@@ -83,6 +83,7 @@ type AssetResponse struct {
 	PreviewURL   *string `json:"preview_url"`
 	EncryptedURL *string `json:"encrypted_url"`
 	QrURL        *string `json:"qr_url"`
+	TokenURL     *string `json:"token_url"`
 
 	IPFSURL          string  `json:"ipfs_url"`
 	IPFSThumbnailURL *string `json:"ipfs_thumbnail_url"`
@@ -201,6 +202,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		URL:         asset.GetURL(),
 		IPFSURL:     asset.GetIPFSURL(),
 		QrURL:       pointer.ToString(asset.QrURL.String),
+		TokenURL:    pointer.ToString(asset.TokenURL.String),
 		Collection: &AssetCollectionResponse{
 			CreatedDate:                 asset.CreatedAt,
 			OpenSeaBuyerFeeBasisPoints:  "0",

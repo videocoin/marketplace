@@ -3,11 +3,12 @@ package datastore
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/AlekSi/pointer"
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
-	"time"
 )
 
 var (
@@ -443,6 +444,36 @@ func (ds *AssetDatastore) UpdateEncryptedURL(ctx context.Context, asset *model.A
 	}
 
 	asset.EncryptedURL = dbr.NewNullString(url)
+
+	return nil
+}
+
+func (ds *AssetDatastore) UpdateTokenURL(ctx context.Context, asset *model.Asset, url string) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("token_url", url).
+		Where("id = ?", asset.ID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	asset.TokenURL = dbr.NewNullString(url)
 
 	return nil
 }
