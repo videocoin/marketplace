@@ -41,7 +41,7 @@ type AssetMeta struct {
 	GCPBucket        string
 }
 
-func NewAssetMeta(name, contentType string, userID int64, gcpBucket string) *AssetMeta {
+func NewAssetMeta(name, contentType string, userID int64) *AssetMeta {
 	filename := fmt.Sprintf("original%s", filepath.Ext(name))
 	previewFilename := fmt.Sprintf("preview%s", filepath.Ext(name))
 	encFilename := fmt.Sprintf("encrypted%s", filepath.Ext(name))
@@ -67,7 +67,6 @@ func NewAssetMeta(name, contentType string, userID int64, gcpBucket string) *Ass
 		LocalPreviewDest: path.Join("/tmp", tmpFilename+"_preview"+filepath.Ext(filename)),
 		LocalEncDest:     path.Join("/tmp", tmpFilename+"_encrypted"+filepath.Ext(filename)),
 		LocalThumbDest:   path.Join("/tmp", tmpFilename+".jpg"),
-		GCPBucket:        gcpBucket,
 	}
 }
 

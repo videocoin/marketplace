@@ -3,14 +3,13 @@ package api
 import (
 	"context"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/kkdai/youtube/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/auth"
 	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/mediaprocessor"
 	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/logger"
@@ -21,11 +20,9 @@ type Server struct {
 	logger     *logrus.Entry
 	addr       string
 	authSecret string
-	gcpBucket  string
 	ds         *datastore.Datastore
 	storage    *storage.Storage
-	mc         *mediaconverter.MediaConverter
-	yt         *youtube.Client
+	mp         *mediaprocessor.MediaProcessor
 	e          *echo.Echo
 	minter     *minter.Minter
 }
@@ -39,8 +36,6 @@ func NewServer(ctx context.Context, opts ...ServerOption) (*Server, error) {
 			return nil, err
 		}
 	}
-
-	srv.yt = &youtube.Client{}
 
 	srv.e = echo.New()
 	srv.e.HideBanner = true
@@ -79,7 +74,6 @@ func (s *Server) route() {
 	assetsGroup.POST("", s.createAsset, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 	assetsGroup.GET("/:asset_id", s.getAsset)
 	assetsGroup.POST("/upload", s.upload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
-	assetsGroup.POST("/ytupload", s.ytUpload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 
 	v1.GET("/asset/:contract_address/:token_id", s.getAssetByContractAddressAndTokenID)
 	v1.GET("/tokens", s.getTokens)

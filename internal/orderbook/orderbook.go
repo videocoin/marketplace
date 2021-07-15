@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/skip2/go-qrcode"
 	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/mediaprocessor"
 	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
@@ -23,7 +23,7 @@ import (
 type OrderBook struct {
 	logger  *logrus.Entry
 	ds      *datastore.Datastore
-	mc      *mediaconverter.MediaConverter
+	mp      *mediaprocessor.MediaProcessor
 	storage *storage.Storage
 	minter  *minter.Minter
 }
@@ -130,12 +130,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return fmt.Errorf("failed to update asset: %s", err)
 		}
 
-		meta := model.NewAssetMeta(
-			fmt.Sprintf("%d.mp4", asset.ID),
-			"video/mp4",
-			newOwner.ID,
-			"",
-		)
+		meta := model.NewAssetMeta(fmt.Sprintf("%d.mp4", asset.ID), "video/mp4", newOwner.ID)
 		meta.LocalDest = asset.GetURL()
 
 		logger.Infof("encrypting %s to %s", meta.LocalDest, meta.DestEncKey)
@@ -148,7 +143,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		wg := &sync.WaitGroup{}
 		wg.Add(1)
 		go func(wg *sync.WaitGroup) {
-			book.mc.RunEncryptJob(wg, job)
+			book.mp.RunEncryptJob(wg, job)
 		}(wg)
 		wg.Wait()
 

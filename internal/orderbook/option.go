@@ -3,7 +3,7 @@ package orderbook
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/mediaprocessor"
 	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/storage"
 )
@@ -24,9 +24,9 @@ func WithDatastore(ds *datastore.Datastore) Option {
 	}
 }
 
-func WithMediaConverter(mc *mediaconverter.MediaConverter) Option {
+func WithMediaProcessor(mp *mediaprocessor.MediaProcessor) Option {
 	return func(book *OrderBook) error {
-		book.mc = mc
+		book.mp = mp
 		return nil
 	}
 }

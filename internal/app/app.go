@@ -2,15 +2,15 @@ package app
 
 import (
 	"context"
+	"github.com/videocoin/marketplace/internal/mediaprocessor"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/api"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/listener"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
-	minter "github.com/videocoin/marketplace/internal/minter"
-	orderbook "github.com/videocoin/marketplace/internal/orderbook"
+	"github.com/videocoin/marketplace/internal/minter"
+	"github.com/videocoin/marketplace/internal/orderbook"
 	"github.com/videocoin/marketplace/internal/storage"
 )
 
@@ -19,7 +19,7 @@ type App struct {
 	logger *logrus.Entry
 	stop   chan bool
 	ds     *datastore.Datastore
-	mc     *mediaconverter.MediaConverter
+	mp     *mediaprocessor.MediaProcessor
 	api    *api.Server
 	el     *listener.ExchangeListener
 }
@@ -53,24 +53,13 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	mcOpts := []mediaconverter.Option{
-		mediaconverter.WithLogger(logger.WithField("system", "mediaconverter")),
-		mediaconverter.WithDatastore(ds),
-		mediaconverter.WithStorage(storageCli),
+	mpOpts := []mediaprocessor.Option{
+		mediaprocessor.WithLogger(logger.WithField("system", "mediaprocessor")),
+		mediaprocessor.WithDatastore(ds),
+		mediaprocessor.WithStorage(storageCli),
 	}
-	if cfg.EnableTranscoding {
-		mcOpts = append(mcOpts, mediaconverter.WithGCPConfig(&mediaconverter.GCPConfig{
-			Bucket:             cfg.GCPBucket,
-			Project:            cfg.GCPProject,
-			Region:             cfg.GCPRegion,
-			PubSubTopic:        cfg.GCPPubSubTopic,
-			PubSubSubscription: cfg.GCPPubSubSubscription,
-		}), mediaconverter.WithTranscoding())
-	}
-	mc, err := mediaconverter.NewMediaConverter(
-		ctx,
-		mcOpts...,
-	)
+
+	mc, err := mediaprocessor.NewMediaProcessor(ctx, mpOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +81,6 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		api.WithAuthSecret(cfg.AuthSecret),
 		api.WithDatastore(ds),
 		api.WithStorage(storageCli),
-		api.WithGCPBucket(cfg.GCPBucket),
 		api.WithMediaConverter(mc),
 		api.WithMinter(m),
 	)
@@ -104,7 +92,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		ctx,
 		orderbook.WithMinter(m),
 		orderbook.WithDatastore(ds),
-		orderbook.WithMediaConverter(mc),
+		orderbook.WithMediaProcessor(mc),
 		orderbook.WithStorage(storageCli),
 	)
 	if err != nil {
@@ -128,7 +116,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		logger: ctxlogrus.Extract(ctx),
 		stop:   make(chan bool, 1),
 		ds:     ds,
-		mc:     mc,
+		mp:     mc,
 		api:    apiSrv,
 		el:     el,
 	}, nil
@@ -140,7 +128,7 @@ func (s *App) Start(errCh chan error) {
 	}()
 
 	go func() {
-		s.mc.Start(errCh)
+		s.mp.Start(errCh)
 	}()
 
 	go func() {
@@ -161,7 +149,7 @@ func (s *App) Stop() error {
 		s.logger.WithError(err).Error("failed to stop api server")
 	}
 
-	err = s.mc.Stop()
+	err = s.mp.Stop()
 	if err != nil {
 		s.logger.WithError(err).Error("failed to stop media converter")
 	}

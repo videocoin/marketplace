@@ -350,37 +350,6 @@
         ]
       }
     },
-    "/api/v1/assets/ytupload": {
-      "post": {
-        "summary": "Upload asset from YouTube",
-        "operationId": "YTUploadAsset",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/AssetResponse"
-            }
-          },
-          "401": {
-            "description": "Returned when the user is not logged in.",
-            "schema": {}
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/YTUploadRequest"
-            }
-          }
-        ],
-        "tags": [
-          "Assets"
-        ]
-      }
-    },
     "/api/v1/assets/{id}": {
       "get": {
         "summary": "Get detail asset info",

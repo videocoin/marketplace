@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"github.com/AlekSi/pointer"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gocraft/dbr/v2"
 	"github.com/labstack/echo/v4"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
@@ -41,7 +39,7 @@ func (s *Server) upload(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID, s.gcpBucket)
+	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID)
 
 	ek := token.GenerateEncryptionKey()
 	drmKey, err := token.GenerateDRMKey(account.PublicKey.String, ek)
@@ -161,7 +159,7 @@ func (s *Server) upload(c echo.Context) error {
 
 		logger.Info("thumbnail has been generated successfully")
 
-		s.mc.JobCh <- model.MediaConverterJob{
+		s.mp.JobCh <- model.MediaConverterJob{
 			Asset: asset,
 			Meta:  meta,
 		}
@@ -226,89 +224,6 @@ func (s *Server) generateThumbnail(ctx context.Context, asset *model.Asset, meta
 	}
 
 	return nil
-}
-
-func (s *Server) ytUpload(c echo.Context) error {
-	ctxAccount := c.Get("account")
-	account := ctxAccount.(*model.Account)
-
-	logger := s.logger.
-		WithField("account_id", account.ID).
-		WithField("address", account.Address)
-	logger.Info("uploading asset from youtube")
-
-	req := new(YTUploadRequest)
-	err := c.Bind(req)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
-	ytURL, err := pkgyt.ValidateVideoURL(req.Link)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": err,
-		})
-	}
-
-	ytVideoID, err := pkgyt.ExtractVideoID(ytURL)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": err,
-		})
-	}
-
-	ytVideo, err := s.yt.GetVideo(ytVideoID)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"message": mediaconverter.ErrYTVideoNotFound,
-		})
-	}
-
-	ctx := context.Background()
-	meta := model.NewAssetMeta(fmt.Sprintf("%s.mp4", ytVideo.ID), "video/mp4", account.ID, s.gcpBucket)
-	meta.YTVideo = ytVideo
-
-	ek := token.GenerateEncryptionKey()
-	drmKey, err := token.GenerateDRMKey(account.PublicKey.String, ek)
-	if err != nil {
-		logger.WithError(err).Error("failed to generate drm key")
-		return echo.ErrInternalServerError
-	}
-
-	asset := &model.Asset{
-		CreatedByID:  account.ID,
-		ContentType:  meta.ContentType,
-		Status:       model.AssetStatusProcessing,
-		Key:          meta.DestKey,
-		PreviewKey:   meta.DestPreviewKey,
-		ThumbnailKey: meta.DestThumbKey,
-		EncryptedKey: meta.DestEncKey,
-		YTVideoID:    dbr.NewNullString(ytVideoID),
-		DRMKey:       drmKey,
-		DRMKeyID:     token.GenerateDRMKeyID(account),
-		EK:           ek,
-	}
-	err = s.ds.Assets.Create(ctx, asset)
-	if err != nil {
-		logger.WithError(err).Error("failed to create asset")
-		return c.JSON(http.StatusBadRequest, echo.Map{"message": ErrInvalidVideo.Error()})
-	}
-
-	go func() {
-		s.mc.JobCh <- model.MediaConverterJob{
-			Asset: asset,
-			Meta:  meta,
-		}
-	}()
-
-	resp := &AssetResponse{
-		ID:          asset.ID,
-		Status:      asset.Status,
-		ContentType: asset.ContentType,
-		YTVideoID:   pointer.ToString(ytVideoID),
-	}
-
-	return c.JSON(http.StatusOK, resp)
 }
 
 func (s *Server) createAsset(c echo.Context) error {

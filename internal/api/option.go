@@ -5,7 +5,7 @@ import (
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/storage"
-	"github.com/videocoin/marketplace/internal/mediaconverter"
+	"github.com/videocoin/marketplace/internal/mediaprocessor"
 )
 
 type ServerOption func(service *Server) error
@@ -38,16 +38,9 @@ func WithDatastore(ds *datastore.Datastore) ServerOption {
 	}
 }
 
-func WithGCPBucket(bucket string) ServerOption {
+func WithMediaConverter(mp *mediaprocessor.MediaProcessor) ServerOption {
 	return func(s *Server) error {
-		s.gcpBucket = bucket
-		return nil
-	}
-}
-
-func WithMediaConverter(mc *mediaconverter.MediaConverter) ServerOption {
-	return func(s *Server) error {
-		s.mc = mc
+		s.mp = mp
 		return nil
 	}
 }

@@ -8,13 +8,6 @@ type Config struct {
 	DBURI      string `envconfig:"DBURI" default:"host=127.0.0.1 port=5432 dbname=marketplace sslmode=disable"`
 	AuthSecret string `envconfig:"AUTH_SECRET" default:"secret"`
 
-	EnableTranscoding     bool   `envconfig:"ENABLE_TRANSCODING" default:"false"`
-	GCPBucket             string `envconfig:"GCP_BUCKET" required:"false"`
-	GCPProject            string `envconfig:"GCP_PROJECT" required:"false"`
-	GCPRegion             string `envconfig:"GCP_REGION" required:"false"`
-	GCPPubSubTopic        string `envconfig:"GCP_PUBSUB_TOPIC" required:"false"`
-	GCPPubSubSubscription string `envconfig:"GCP_PUBSUB_SUB" required:"false"`
-
 	StorageBackend string `envconfig:"STORAGE_BACKEND" required:"true" default:"textile"`
 
 	TextileAuthKey       string `envconfig:"TEXTILE_AUTH_KEY" required:"false"`
