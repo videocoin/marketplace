@@ -30,6 +30,7 @@ require (
 	github.com/ipfs/go-ipfs-api v0.2.0 // indirect
 	github.com/jinzhu/copier v0.2.8
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/kevinburke/nacl v0.0.0-20210405173606-cd9060f5f776
 	github.com/kkdai/youtube/v2 v2.6.1
 	github.com/labstack/echo v3.3.10+incompatible // indirect
 	github.com/labstack/echo/v4 v4.2.1
@@ -48,6 +49,7 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac
 	github.com/textileio/textile/v2 v2.6.8
+	github.com/twystd/tweetnacl-go v0.0.0-20210413205227-681aa97ec383
 	github.com/videocoin/common v0.0.0-20200510014350-b8f6b3848d06 // indirect
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/net v0.0.0-20210330142815-c8897c278d10 // indirect

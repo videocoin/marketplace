@@ -6,7 +6,8 @@ import (
 )
 
 type RegisterRequest struct {
-	Address string `json:"address"`
+	Address             string `json:"address"`
+	EncryptionPublicKey string `json:"epk"`
 }
 
 type AuthRequest struct {

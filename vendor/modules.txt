@@ -234,6 +234,10 @@ github.com/karalabe/usb
 # github.com/kelseyhightower/envconfig v1.4.0
 ## explicit
 github.com/kelseyhightower/envconfig
+# github.com/kevinburke/nacl v0.0.0-20210405173606-cd9060f5f776
+## explicit
+github.com/kevinburke/nacl
+github.com/kevinburke/nacl/randombytes
 # github.com/kkdai/youtube/v2 v2.6.1
 ## explicit
 github.com/kkdai/youtube/v2
@@ -387,6 +391,9 @@ github.com/textileio/textile/v2/api/bucketsd/pb
 github.com/textileio/textile/v2/api/common
 github.com/textileio/textile/v2/buckets
 github.com/textileio/textile/v2/util
+# github.com/twystd/tweetnacl-go v0.0.0-20210413205227-681aa97ec383
+## explicit
+github.com/twystd/tweetnacl-go/tweetnacl
 # github.com/tyler-smith/go-bip39 v1.0.1-0.20181017060643-dbb3b84ba2ef
 github.com/tyler-smith/go-bip39
 github.com/tyler-smith/go-bip39/wordlists

@@ -112,7 +112,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		}
 
 		ek := token.GenerateEncryptionKey()
-		drmKey, err := token.GenerateDRMKey(newOwner.PublicKey.String, ek)
+		drmKey, err := token.GenerateDRMKey(newOwner.EncryptionPublicKey.String, ek)
 		if err != nil {
 			return fmt.Errorf("failed to generate drm key: %s", err)
 		}

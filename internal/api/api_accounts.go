@@ -54,6 +54,11 @@ func (s *Server) register(c echo.Context) error {
 		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": ErrInvalidAddress.Error()})
 	}
 
+	epk, err := base64.StdEncoding.DecodeString(req.EncryptionPublicKey)
+	if err != nil || len(epk) != 32 {
+		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": ErrInvalidEncPublicKey.Error()})
+	}
+
 	ctx := context.Background()
 	_, err = s.ds.Accounts.GetByAddress(ctx, address)
 	if err == nil {
@@ -80,8 +85,9 @@ func (s *Server) register(c echo.Context) error {
 	}
 
 	account := &model.Account{
-		Address:  address,
-		Username: dbr.NewNullString(username),
+		Address:             address,
+		Username:            dbr.NewNullString(username),
+		EncryptionPublicKey: dbr.NewNullString(req.EncryptionPublicKey),
 	}
 	err = s.ds.Accounts.Create(ctx, account)
 	if err != nil {

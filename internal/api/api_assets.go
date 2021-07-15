@@ -5,14 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/AlekSi/pointer"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/labstack/echo/v4"
-	qrcode "github.com/skip2/go-qrcode"
-	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/model"
-	"github.com/videocoin/marketplace/internal/token"
-	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 	"io"
 	"math/big"
 	"mime/multipart"
@@ -21,6 +13,15 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/AlekSi/pointer"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/labstack/echo/v4"
+	qrcode "github.com/skip2/go-qrcode"
+	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/token"
+	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 )
 
 func (s *Server) upload(c echo.Context) error {
@@ -42,7 +43,7 @@ func (s *Server) upload(c echo.Context) error {
 	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"), account.ID)
 
 	ek := token.GenerateEncryptionKey()
-	drmKey, err := token.GenerateDRMKey(account.PublicKey.String, ek)
+	drmKey, err := token.GenerateDRMKey(account.EncryptionPublicKey.String, ek)
 	if err != nil {
 		logger.WithError(err).Error("failed to generate drm key")
 		return echo.ErrInternalServerError
