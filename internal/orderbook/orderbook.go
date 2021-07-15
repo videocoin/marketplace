@@ -8,7 +8,6 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
-	"github.com/skip2/go-qrcode"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/mediaprocessor"
 	"github.com/videocoin/marketplace/internal/minter"
@@ -17,7 +16,8 @@ import (
 	"github.com/videocoin/marketplace/internal/token"
 	"github.com/videocoin/marketplace/internal/wyvern"
 	"math/big"
-	"sync"
+	"os"
+	"path"
 )
 
 type OrderBook struct {
@@ -89,6 +89,13 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return err
 		}
 
+		mediae, err := book.ds.Media.ListByAssetID(ctx, asset.ID)
+		if err != nil {
+			return err
+		}
+
+		media := mediae[0]
+
 		logger = logger.
 			WithField("asset_id", asset.ID).
 			WithField("on_sale", asset.OnSale)
@@ -130,49 +137,48 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return fmt.Errorf("failed to update asset: %s", err)
 		}
 
-		meta := model.NewAssetMeta(fmt.Sprintf("%d.mp4", asset.ID), "video/mp4", newOwner.ID)
-		meta.LocalDest = asset.GetURL()
-
-		logger.Infof("encrypting %s to %s", meta.LocalDest, meta.DestEncKey)
-
-		job := model.MediaConverterJob{
-			Asset: asset,
-			Meta:  meta,
-		}
-
-		wg := &sync.WaitGroup{}
-		wg.Add(1)
-		go func(wg *sync.WaitGroup) {
-			book.mp.RunEncryptJob(wg, job)
-		}(wg)
-		wg.Wait()
-
-		logger.Info("generating qr code")
-		png, err := qrcode.Encode(drmKey, qrcode.Medium, 340)
-		if err != nil {
-			logger.WithError(err).Error("failed to generate qr code")
-			return nil
-		}
-
-		logger.Info("qr code has been generated")
-
-		qrCID, err := book.storage.PushPath(meta.QRKey, bytes.NewReader(png))
-		if err != nil {
-			logger.WithError(err).Error("failed to push qr code to storage")
-			return nil
-		}
-		logger = logger.WithField("qr_cid", qrCID)
-		err = book.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			QrCID: pointer.ToString(qrCID),
-		})
-		if err != nil {
-			logger.WithError(err).Error("failed to update qr cid")
-			return nil
-		}
-
 		logger = logger.
 			WithField("new_drm_key", drmKey).
 			WithField("new_drm_key_id", drmKeyID)
+
+		logger.Infof("encrypting media %s", asset.GetURL())
+		encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetURL(), ek, drmKeyID)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt media: %s", err.Error())
+		}
+		defer func() { _ = os.Remove(encryptedMediaPath) }()
+
+		meta := model.NewAssetMeta(path.Base(encryptedMediaPath), media.ContentType)
+
+		logger = logger.
+			WithField("encrypted_media_path", encryptedMediaPath).
+			WithField("encrypted_media_to", meta.DestEncKey)
+		logger.Info("uploading encrypted media")
+
+		encryptedCID, err := book.storage.Upload(encryptedMediaPath, meta.DestEncKey)
+		if err != nil {
+			return fmt.Errorf("failed to uploed encrypted media: %s", err.Error())
+		}
+
+		logger.Info("updating asset and media encryption data")
+
+		mediaFields := datastore.MediaUpdatedFields{
+			EncryptedKey: pointer.ToString(meta.DestEncKey),
+			EncryptedCID: pointer.ToString(encryptedCID),
+		}
+		err = book.ds.Media.Update(ctx, media, mediaFields)
+		if err != nil {
+			return fmt.Errorf("failed to update media: %s", err)
+		}
+
+		assetFields = datastore.AssetUpdatedFields{
+			EncryptedKey: pointer.ToString(meta.DestEncKey),
+			EncryptedCID: pointer.ToString(encryptedCID),
+		}
+		err = book.ds.Assets.Update(ctx, asset, assetFields)
+		if err != nil {
+			return fmt.Errorf("failed to update asset: %s", err)
+		}
 
 		logger.Info("uploading new token json")
 

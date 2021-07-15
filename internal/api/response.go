@@ -71,6 +71,15 @@ type AssetCollectionResponse struct {
 	DevSellerFeeBasisPoints     string     `json:"dev_seller_fee_basis_points"`
 }
 
+type MediaResponse struct {
+	ID          string            `json:"id"`
+	ContentType string            `json:"content_type"`
+	MediaType   string            `json:"media_type"`
+	Status      model.MediaStatus `json:"status"`
+	URL         string            `json:"url"`
+	Creator     *AccountResponse  `json:"creator"`
+}
+
 type AssetResponse struct {
 	ID          int64             `json:"id"`
 	TokenID     *string           `json:"token_id"`
@@ -83,7 +92,6 @@ type AssetResponse struct {
 	ThumbnailURL *string `json:"thumbnail_url"`
 	PreviewURL   *string `json:"preview_url"`
 	EncryptedURL *string `json:"encrypted_url"`
-	QrURL        *string `json:"qr_url"`
 	TokenURL     *string `json:"token_url"`
 
 	IPFSURL          string  `json:"ipfs_url"`
@@ -197,7 +205,6 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		Contract:    contract,
 		URL:         asset.GetURL(),
 		IPFSURL:     asset.GetIpfsURL(),
-		QrURL:       asset.GetQrURL(),
 		TokenURL:    asset.GetTokenURL(),
 		Collection: &AssetCollectionResponse{
 			CreatedDate:                 asset.CreatedAt,
@@ -349,6 +356,22 @@ func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, cou
 
 	if count != nil {
 		resp.Count = count.TotalCount
+	}
+
+	return resp
+}
+
+func toMediaResponse(media *model.Media) *MediaResponse {
+	resp := &MediaResponse{
+		ID:          media.ID,
+		ContentType: media.ContentType,
+		MediaType:   media.MediaType,
+		Status:      media.Status,
+		URL:         media.GetURL(),
+	}
+
+	if media.CreatedBy != nil {
+		resp.Creator = toAccountResponse(media.CreatedBy)
 	}
 
 	return resp

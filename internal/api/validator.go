@@ -9,14 +9,17 @@ import (
 )
 
 var (
-	SupportedVideoContentTypes = []string{"video/mp4", "video/quicktime"}
+	SupportedContentTypes = []string{
+		"video/mp4", "video/quicktime",
+		"image/jpeg", "image/png", "image/gif", "image/webp",
+		"audio/mpeg"}
 )
 
 func preUploadValidate(file *multipart.FileHeader) error {
 	reqContentType := file.Header.Get("Content-Type")
 
 	found := false
-	for _, ct := range SupportedVideoContentTypes {
+	for _, ct := range SupportedContentTypes {
 		if ct == reqContentType {
 			found = true
 			break

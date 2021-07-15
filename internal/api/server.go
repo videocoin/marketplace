@@ -73,7 +73,10 @@ func (s *Server) route() {
 	assetsGroup.GET("", s.getAssets)
 	assetsGroup.POST("", s.createAsset, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 	assetsGroup.GET("/:asset_id", s.getAsset)
-	assetsGroup.POST("/upload", s.upload, auth.JWTAuth(s.logger, s.ds, s.authSecret))
+
+	mediaGroup := v1.Group("/media")
+	mediaGroup.POST("/upload", s.uploadMedia, auth.JWTAuth(s.logger, s.ds, s.authSecret))
+	mediaGroup.GET("/:media_id", s.getMedia, auth.JWTAuth(s.logger, s.ds, s.authSecret))
 
 	v1.GET("/asset/:contract_address/:token_id", s.getAssetByContractAddressAndTokenID)
 	v1.GET("/tokens", s.getTokens)

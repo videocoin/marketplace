@@ -12,6 +12,7 @@ var (
 
 	ErrUnsupportedContentType = errors.New("unsupported content type")
 	ErrInvalidVideo           = errors.New("invalid video")
+	ErrInvalidMedia           = errors.New("invalid media")
 
 	ErrInvalidEncPublicKey = errors.New("invalid encryption public key")
 )

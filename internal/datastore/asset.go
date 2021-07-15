@@ -34,8 +34,9 @@ type AssetUpdatedFields struct {
 	PreviewCID   *string
 	ThumbnailCID *string
 	EncryptedCID *string
-	QrCID        *string
 	TokenCID     *string
+
+	EncryptedKey *string
 
 	Status *string
 }
@@ -73,9 +74,12 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	}
 
 	cols := []string{
-		"created_at", "created_by_id", "owner_id", "content_type", "yt_video_id", "status",
-		"root_key", "key", "preview_key", "encrypted_key", "thumbnail_key", "qr_key",
-		"drm_key_id", "drm_key", "ek",
+		"created_at", "created_by_id", "owner_id", "content_type", "status",
+		"name", "description", "yt_video_link",
+		"root_key", "key", "preview_key", "thumbnail_key", "encrypted_key", "qr_key",
+		"cid", "thumbnail_cid",
+		"drm_key", "drm_key_id", "ek",
+		"contract_address", "on_sale", "royalty", "instant_sale_price",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -283,9 +287,9 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		asset.EncryptedCID = dbr.NewNullString(*fields.EncryptedCID)
 	}
 
-	if fields.QrCID != nil {
-		stmt.Set("qr_cid", *fields.QrCID)
-		asset.QrCID = dbr.NewNullString(*fields.QrCID)
+	if fields.EncryptedKey != nil {
+		stmt.Set("encrypted_key", *fields.EncryptedKey)
+		asset.EncryptedKey = *fields.EncryptedKey
 	}
 
 	if fields.TokenCID != nil {
@@ -302,66 +306,6 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (ds *AssetDatastore) UpdateJobID(ctx context.Context, asset *model.Asset, jobID string) error {
-	var err error
-	tx, ok := dbrutil.DbTxFromContext(ctx)
-	if !ok {
-		sess := ds.conn.NewSession(nil)
-		tx, err = sess.Begin()
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			err = tx.Commit()
-			tx.RollbackUnlessCommitted()
-		}()
-	}
-
-	_, err = tx.
-		Update(ds.table).
-		Set("job_id", jobID).
-		Where("id = ?", asset.ID).
-		ExecContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	asset.JobID = dbr.NewNullString(jobID)
-
-	return nil
-}
-
-func (ds *AssetDatastore) MarkJobStatusAs(ctx context.Context, asset *model.Asset, status string) error {
-	var err error
-	tx, ok := dbrutil.DbTxFromContext(ctx)
-	if !ok {
-		sess := ds.conn.NewSession(nil)
-		tx, err = sess.Begin()
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			err = tx.Commit()
-			tx.RollbackUnlessCommitted()
-		}()
-	}
-
-	_, err = tx.
-		Update(ds.table).
-		Set("job_status", status).
-		Where("id = ?", asset.ID).
-		ExecContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	asset.JobStatus = dbr.NewNullString(status)
 
 	return nil
 }

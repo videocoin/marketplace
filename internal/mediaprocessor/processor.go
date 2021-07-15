@@ -3,19 +3,14 @@ package mediaprocessor
 import (
 	"context"
 	"fmt"
-	"github.com/AlekSi/pointer"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
-	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
-	"os"
 	"os/exec"
 	"strings"
-	"sync"
 )
 
 type MediaProcessor struct {
-	JobCh   chan model.MediaConverterJob
 	logger  *logrus.Entry
 	ds      *datastore.Datastore
 	storage *storage.Storage
@@ -29,125 +24,29 @@ func NewMediaProcessor(ctx context.Context, opts ...Option) (*MediaProcessor, er
 		}
 	}
 
-	mc.JobCh = make(chan model.MediaConverterJob, 1)
-
 	return mc, nil
 }
 
-func (mc *MediaProcessor) Start(errCh chan error) {
-	mc.logger.Info("starting media processor")
-	errCh <- mc.dispatch()
-}
+func (mc *MediaProcessor) EncryptVideo(inputURI string, ek string, kid string) (string, error) {
+	logger := mc.logger.WithField("input_uti", inputURI)
 
-func (m *MediaProcessor) Stop() error {
-	m.logger.Info("stopping media converter")
-
-	return nil
-}
-
-func (mc *MediaProcessor) dispatch() error {
-	errCh := make(chan error, 1)
-
-	go mc.dispatchJobs()
-
-	select {
-	case err := <-errCh:
-		return err
-	}
-}
-
-func (mc *MediaProcessor) dispatchJobs() {
-	for job := range mc.JobCh {
-		go mc.processVideo(job)
-	}
-}
-
-func (mc *MediaProcessor) processVideo(job model.MediaConverterJob) {
-	defer func() {
-		_ = os.Remove(job.Meta.LocalDest)
-	}()
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(1)
-	go mc.RunEncryptJob(wg, job)
-
-	wg.Wait()
-
-	if !job.Asset.StatusIsFailed() {
-		ctx := context.Background()
-		err := mc.ds.Assets.MarkStatusAsReady(ctx, job.Asset)
-		if err != nil {
-			mc.logger.
-				WithField("asset_id", job.Asset.ID).
-				WithError(err).
-				Error("failed to mark asset status as ready")
-		}
-	}
-}
-
-func (mc *MediaProcessor) RunEncryptJob(wg *sync.WaitGroup, job model.MediaConverterJob) {
-	defer wg.Done()
-
-	meta := job.Meta
-
-	logger := mc.logger.WithField("asset_id", job.Asset.ID)
-	logger.Info("running media encrypt job")
+	outputPath := genTempFilepath("", ".mp4")
 
 	ctx := context.Background()
 	cmdArgs := []string{
-		"-hide_banner", "-loglevel", "info", "-y", "-i", meta.LocalDest,
+		"-hide_banner", "-loglevel", "info", "-y", "-i", inputURI,
 		"-vcodec", "copy", "-acodec", "copy", "-encryption_scheme", "cenc-aes-ctr",
-		"-encryption_key", job.Asset.EK,
-		"-encryption_kid", job.Asset.DRMKeyID,
-		meta.LocalEncDest,
+		"-encryption_key", ek, "-encryption_kid", kid,
+		outputPath,
 	}
 
-	logger.Debug("ffmpeg %s", strings.Join(cmdArgs, " "))
+	logger.Debugf("ffmpeg %s", strings.Join(cmdArgs, " "))
 
 	cmd := exec.CommandContext(ctx, "ffmpeg", cmdArgs...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		logger.
-			WithError(fmt.Errorf("%s: %s", err.Error(), string(out))).
-			Error("failed to encrypt video")
-		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
-		return
+		return "", fmt.Errorf("%s: %s", err.Error(), string(out))
 	}
 
-	f, err := os.Open(meta.LocalEncDest)
-	if err != nil {
-		logger.
-			WithError(fmt.Errorf("%s: %s", err.Error(), string(out))).
-			Error("failed to open encrypted video")
-		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
-		return
-	}
-	defer func() {
-		_ = os.Remove(meta.LocalEncDest)
-	}()
-
-	encryptedCID, err := mc.storage.PushPath(meta.DestEncKey, f)
-	if err != nil {
-		logger.
-			WithError(err).
-			Error("failed to push encrypted video to storage")
-		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
-		return
-	}
-
-	err = mc.ds.Assets.Update(ctx, job.Asset, datastore.AssetUpdatedFields{
-		EncryptedCID: pointer.ToString(encryptedCID),
-	})
-	if err != nil {
-		logger.
-			WithError(err).
-			Error("failed to update asset encrypted url")
-		_ = mc.ds.Assets.MarkStatusAsFailed(ctx, job.Asset)
-		return
-	}
-
-	logger.
-		WithField("encrypted_cid", encryptedCID).
-		Info("encrypt job has been completed")
+	return outputPath, nil
 }

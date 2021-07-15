@@ -6,14 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/AlekSi/pointer"
-	"os"
-	"path"
-	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/gocraft/dbr/v2"
-	"github.com/kkdai/youtube/v2"
 	"github.com/videocoin/marketplace/pkg/random"
 	"gopkg.in/vansante/go-ffprobe.v2"
 )
@@ -22,53 +18,6 @@ const (
 	IpfsGateway = "https://%s.ipfs.dweb.link"
 )
 
-type AssetMeta struct {
-	ContentType      string
-	Probe            *ffprobe.ProbeData
-	File             *os.File
-	Name             string
-	FolderID         string
-	LocalDest        string
-	LocalPreviewDest string
-	LocalThumbDest   string
-	LocalEncDest     string
-	DestKey          string
-	DestPreviewKey   string
-	DestThumbKey     string
-	DestEncKey       string
-	QRKey            string
-	YTVideo          *youtube.Video
-	GCPBucket        string
-}
-
-func NewAssetMeta(name, contentType string, userID int64) *AssetMeta {
-	filename := fmt.Sprintf("original%s", filepath.Ext(name))
-	previewFilename := fmt.Sprintf("preview%s", filepath.Ext(name))
-	encFilename := fmt.Sprintf("encrypted%s", filepath.Ext(name))
-	folder := fmt.Sprintf("a/%d/%s", userID, GenAssetFolderID())
-	tmpFilename := GenAssetFolderID()
-
-	destKey := fmt.Sprintf("%s/%s", folder, filename)
-	destPreviewKey := fmt.Sprintf("%s/%s", folder, previewFilename)
-	destEncKey := fmt.Sprintf("%s/%s", folder, encFilename)
-	destThumbKey := fmt.Sprintf("%s/thumb.jpg", folder)
-	destQrKey := fmt.Sprintf("%s/qr.png", folder)
-
-	return &AssetMeta{
-		Name:             filename,
-		ContentType:      contentType,
-		FolderID:         folder,
-		DestKey:          destKey,
-		DestPreviewKey:   destPreviewKey,
-		DestThumbKey:     destThumbKey,
-		DestEncKey:       destEncKey,
-		QRKey:            destQrKey,
-		LocalDest:        path.Join("/tmp", tmpFilename+filepath.Ext(filename)),
-		LocalPreviewDest: path.Join("/tmp", tmpFilename+"_preview"+filepath.Ext(filename)),
-		LocalEncDest:     path.Join("/tmp", tmpFilename+"_encrypted"+filepath.Ext(filename)),
-		LocalThumbDest:   path.Join("/tmp", tmpFilename+".jpg"),
-	}
-}
 
 type AssetProbe struct {
 	Data *ffprobe.ProbeData `json:"data"`
@@ -129,7 +78,6 @@ type Asset struct {
 	PreviewCID   dbr.NullString `db:"preview_cid"`
 	ThumbnailCID dbr.NullString `db:"thumbnail_cid"`
 	EncryptedCID dbr.NullString `db:"encrypted_cid"`
-	QrCID        dbr.NullString `db:"qr_cid"`
 	TokenCID     dbr.NullString `db:"token_cid"`
 
 	DRMKey   string `db:"drm_key"`
@@ -137,9 +85,6 @@ type Asset struct {
 	EK       string `db:"ek"`
 
 	Status AssetStatus `db:"status"`
-
-	JobID     dbr.NullString `db:"job_id"`
-	JobStatus dbr.NullString `db:"job_status"`
 
 	CreatedBy *Account `db:"-"`
 	Owner     *Account `db:"-"`
@@ -200,14 +145,6 @@ func (a *Asset) GetIpfsThumbnailURL() *string {
 	return nil
 }
 
-func (a *Asset) GetQrURL() *string {
-	if a.QrCID.String != "" {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.QrCID.String))
-	}
-
-	return nil
-}
-
 func (a *Asset) GetTokenURL() *string {
 	if a.TokenCID.String != "" {
 		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.TokenCID.String))
@@ -222,4 +159,8 @@ func GenAssetFolderID() string {
 		random.RandomString(6),
 		strconv.FormatInt(time.Now().UnixNano(), 10),
 	)
+}
+
+func MakeIPFSLink(cid string) string {
+	return fmt.Sprintf(IpfsGateway, cid)
 }

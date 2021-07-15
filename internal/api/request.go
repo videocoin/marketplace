@@ -30,13 +30,13 @@ type YTUploadRequest struct {
 }
 
 type CreateAssetRequest struct {
-	Name             string  `json:"name"`
-	AssetID          int64   `json:"asset_id"`
-	Desc             *string `json:"desc"`
-	YTVideoLink      *string `json:"yt_video_link"`
-	Royalty          uint    `json:"royalty"`
-	OnSale           bool    `json:"on_sale"`
-	InstantSalePrice string  `json:"instant_sale_price"`
+	Name             string   `json:"name"`
+	MediaIds         []string `json:"media_ids"`
+	Desc             *string  `json:"desc"`
+	YTVideoLink      *string  `json:"yt_video_link"`
+	Royalty          uint     `json:"royalty"`
+	OnSale           bool     `json:"on_sale"`
+	InstantSalePrice string   `json:"instant_sale_price"`
 }
 
 type PostOrderRequest struct {

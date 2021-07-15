@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"io"
+	"os"
 	"time"
 )
 
@@ -110,4 +111,18 @@ func (s *Storage) PushPath(path string, src io.Reader) (string, error) {
 	}
 
 	return "", ErrUnknownStorageBackend
+}
+
+func (s *Storage) Upload(input string, to string) (string, error) {
+	f, err := os.Open(input)
+	if err != nil {
+		return "", err
+	}
+
+	cid, err := s.PushPath(to, f)
+	if err != nil {
+		return "", err
+	}
+
+	return cid, nil
 }

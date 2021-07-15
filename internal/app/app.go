@@ -128,10 +128,6 @@ func (s *App) Start(errCh chan error) {
 	}()
 
 	go func() {
-		s.mp.Start(errCh)
-	}()
-
-	go func() {
 		s.el.Start(errCh)
 	}()
 
@@ -147,11 +143,6 @@ func (s *App) Stop() error {
 	err := s.api.Stop()
 	if err != nil {
 		s.logger.WithError(err).Error("failed to stop api server")
-	}
-
-	err = s.mp.Stop()
-	if err != nil {
-		s.logger.WithError(err).Error("failed to stop media converter")
 	}
 
 	err = s.el.Stop()
