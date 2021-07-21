@@ -1,0 +1,42 @@
+kind: pipeline
+type: kubernetes
+name: develop
+steps:
+  - name: build
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: registry_username
+      password:
+        from_secret: registry_password
+      registry: registry.videocoin.net
+      repo: registry.videocoin.net/cloud/marketplace
+      tags:
+        - latest
+        - ${DRONE_COMMIT_SHA}
+trigger:
+  event:
+    - push
+  branch:
+    - develop
+
+
+---
+kind: pipeline
+type: kubernetes
+name: release
+steps:
+  - name: build
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: registry_username
+      password:
+        from_secret: registry_password
+      registry: registry.videocoin.net
+      repo: registry.videocoin.net/cloud/marketplace
+      tags:
+        - ${DRONE_TAG}
+trigger:
+  event:
+    - tag
