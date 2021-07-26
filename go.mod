@@ -3,9 +3,9 @@ module github.com/videocoin/marketplace
 go 1.15
 
 require (
-	cloud.google.com/go v0.80.0
-	cloud.google.com/go/pubsub v1.3.1
-	cloud.google.com/go/storage v1.14.0
+	cloud.google.com/go v0.80.0 // indirect
+	cloud.google.com/go/pubsub v1.3.1 // indirect
+	cloud.google.com/go/storage v1.14.0 // indirect
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054 // indirect
@@ -56,7 +56,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558 // indirect
 	golang.org/x/sys v0.0.0-20210326220804-49726bf1d181 // indirect
 	google.golang.org/api v0.43.0 // indirect
-	google.golang.org/genproto v0.0.0-20210329143202-679c6ae281ee
+	google.golang.org/genproto v0.0.0-20210329143202-679c6ae281ee // indirect
 	google.golang.org/grpc v1.36.1
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/vansante/go-ffprobe.v2 v2.0.2
