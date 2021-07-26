@@ -1,11 +1,12 @@
 package api
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/AlekSi/pointer"
 	"github.com/jinzhu/copier"
 	"github.com/videocoin/marketplace/internal/model"
-	"strconv"
-	"time"
 )
 
 type NonceResponse struct {
@@ -142,7 +143,7 @@ func toNonceResponse(account *model.Account) *NonceResponse {
 func toRegisterResponse(account *model.Account) *RegisterResponse {
 	return &RegisterResponse{
 		Address:  account.Address,
-		Nonce:    account.Nonce.String,
+		Nonce:    NoncePrefix + account.Nonce.String,
 		Username: account.Username.String,
 	}
 }
