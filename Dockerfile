@@ -3,12 +3,16 @@ FROM golang:1.15 as builder
 WORKDIR /go/src/github.com/videocoin/marketplace
 COPY . .
 
+ENV GOOS=linux
+ENV GOARCH=amd64
+
 RUN make build
 
 
-FROM alpine:3
+FROM ubuntu:20.04
 
-RUN apk add ca-certificates ffmpeg bash
+RUN apt-get update
+RUN apt-get install -y ffmpeg
 
 COPY --from=builder /go/src/github.com/videocoin/marketplace/api /api
 COPY --from=builder /go/src/github.com/videocoin/marketplace/bin/marketplace /marketplace
