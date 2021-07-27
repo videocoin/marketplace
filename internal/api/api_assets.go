@@ -355,8 +355,8 @@ func (s *Server) getAssets(c echo.Context) error {
 	limit, _ := strconv.ParseUint(c.FormValue("limit"), 10, 64)
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 	fltr := &datastore.AssetsFilter{
-		Status: pointer.ToString(string(model.AssetStatusReady)),
-		OnSale: pointer.ToBool(true),
+		Statuses: []string{string(model.AssetStatusReady)},
+		OnSale:   pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,
@@ -391,9 +391,9 @@ func (s *Server) getAssetsByCreator(c echo.Context) error {
 	}
 
 	fltr := &datastore.AssetsFilter{
-		Status:      pointer.ToString(string(model.AssetStatusReady)),
-		OnSale:      pointer.ToBool(true),
-		CreatedByID: pointer.ToInt64(creatorID),
+		Statuses: []string{string(model.AssetStatusReady), string(model.AssetStatusTransferred)},
+		OwnerID:  pointer.ToInt64(creatorID),
+		Minted:   pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,

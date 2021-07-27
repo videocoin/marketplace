@@ -16,8 +16,8 @@ func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
-		Status: pointer.ToString(string(model.AssetStatusReady)),
-		OnSale: pointer.ToBool(true),
+		Statuses: []string{string(model.AssetStatusReady)},
+		OnSale:   pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,
@@ -47,8 +47,8 @@ func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
-		Status: pointer.ToString(string(model.AssetStatusReady)),
-		OnSale: pointer.ToBool(true),
+		Statuses: []string{string(model.AssetStatusReady)},
+		OnSale:   pointer.ToBool(true),
 		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,

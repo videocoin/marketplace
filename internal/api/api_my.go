@@ -19,9 +19,9 @@ func (s *Server) getMyAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
-		Status:      pointer.ToString(string(model.AssetStatusReady)),
-		OnSale:      pointer.ToBool(true),
-		CreatedByID: pointer.ToInt64(account.ID),
+		Statuses: []string{string(model.AssetStatusReady)},
+		OnSale:   pointer.ToBool(true),
+		OwnerID:  pointer.ToInt64(account.ID),
 		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,
@@ -54,9 +54,9 @@ func (s *Server) getMySoldAssets(c echo.Context) error {
 	limitOpts := datastore.NewLimitOpts(offset, limit)
 
 	fltr := &datastore.AssetsFilter{
-		Status:      pointer.ToString(string(model.AssetStatusReady)),
-		Sold:        pointer.ToBool(true),
-		CreatedByID: pointer.ToInt64(account.ID),
+		Statuses: []string{string(model.AssetStatusReady)},
+		Sold:     pointer.ToBool(true),
+		OwnerID:  pointer.ToInt64(account.ID),
 		Sort: &datastore.SortOption{
 			Field: "created_at",
 			IsAsc: false,

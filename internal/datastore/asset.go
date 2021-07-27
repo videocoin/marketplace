@@ -439,11 +439,17 @@ func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *L
 		if fltr.CreatedByID != nil {
 			selectStmt = selectStmt.Where("created_by_id = ?", *fltr.CreatedByID)
 		}
-		if fltr.Status != nil {
-			selectStmt = selectStmt.Where("status = ?", *fltr.Status)
+		if fltr.OwnerID != nil {
+			selectStmt = selectStmt.Where("owner_id = ?", *fltr.OwnerID)
+		}
+		if len(fltr.Statuses) > 0 {
+			selectStmt = selectStmt.Where("status IN ?", fltr.Statuses)
 		}
 		if fltr.OnSale != nil && *fltr.OnSale {
 			selectStmt = selectStmt.Where("on_sale = ?", *fltr.OnSale)
+		}
+		if fltr.Minted != nil && *fltr.Minted {
+			selectStmt = selectStmt.Where("mint_tx_id IS NOT NULL")
 		}
 		if fltr.Sold != nil && *fltr.Sold {
 			selectStmt = selectStmt.
@@ -494,14 +500,20 @@ func (ds *AssetDatastore) Count(ctx context.Context, fltr *AssetsFilter) (int64,
 		if fltr.CreatedByID != nil {
 			selectStmt = selectStmt.Where("created_by_id = ?", *fltr.CreatedByID)
 		}
-		if fltr.Status != nil {
-			selectStmt = selectStmt.Where("status = ?", *fltr.Status)
+		if fltr.OwnerID != nil {
+			selectStmt = selectStmt.Where("owner_id = ?", *fltr.OwnerID)
+		}
+		if len(fltr.Statuses) > 0 {
+			selectStmt = selectStmt.Where("status IN ?", fltr.Statuses)
 		}
 		if fltr.OnSale != nil && *fltr.OnSale {
 			selectStmt = selectStmt.Where("on_sale = ?", *fltr.OnSale)
 		}
 		if fltr.Sold != nil && *fltr.Sold {
 			selectStmt = selectStmt.Where("on_sale = ? AND status = ?", false, model.AssetStatusTransferred)
+		}
+		if fltr.Minted != nil && *fltr.Minted {
+			selectStmt = selectStmt.Where("mint_tx_id IS NOT NULL")
 		}
 	}
 

@@ -6,10 +6,12 @@ type SortOption struct {
 }
 
 type AssetsFilter struct {
-	Status      *string
+	Statuses    []string
 	CreatedByID *int64
+	OwnerID     *int64
 	OnSale      *bool
 	Sold        *bool
+	Minted      *bool
 	Sort        *SortOption
 }
 
