@@ -128,12 +128,14 @@ func (s *Server) uploadMedia(c echo.Context) error {
 			return
 		}
 
-		logger.Info("generating thumbnail")
+		if media.IsVideo() {
+			logger.Info("generating thumbnail")
 
-		err = s.generateThumbnail(ctx, media, meta)
-		if err != nil {
-			logger.WithError(err).Error("failed to generate media thumbnail")
-			return
+			err = s.generateThumbnail(ctx, media, meta)
+			if err != nil {
+				logger.WithError(err).Error("failed to generate media thumbnail")
+				return
+			}
 		}
 
 		err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{

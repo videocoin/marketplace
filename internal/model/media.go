@@ -17,6 +17,10 @@ const (
 	MediaStatusProcessing MediaStatus = "PROCESSING"
 	MediaStatusReady      MediaStatus = "READY"
 	MediaStatusFailed     MediaStatus = "FAILED"
+
+	MediaTypeVideo string = "video"
+	MediaTypeAudio string = "audio"
+	MediaTypeImage string = "image"
 )
 
 type Media struct {
@@ -54,4 +58,16 @@ func (m *Media) GetURL() string {
 	}
 
 	return ""
+}
+
+func (m *Media) IsVideo() bool {
+	return m.MediaType == MediaTypeVideo
+}
+
+func (m *Media) IsAudio() bool {
+	return m.MediaType == MediaTypeAudio
+}
+
+func (m *Media) IsImage() bool {
+	return m.MediaType == MediaTypeImage
 }

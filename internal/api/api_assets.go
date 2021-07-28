@@ -161,78 +161,82 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	go func() {
-		logger.Info("encrypting media")
+		tokenURI := pointer.ToString("")
 
-		outputPath, err := s.mp.EncryptVideo(media.GetURL(), asset.EK, asset.DRMKeyID)
-		if err != nil {
-			logger.WithError(err).Error("failed to encrypt media")
-			_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
-			return
-		}
-		defer func() { _ = os.Remove(outputPath) }()
+		if media.IsVideo() {
+			logger.Info("encrypting media")
 
-		cid, err := s.storage.Upload(outputPath, media.EncryptedKey)
-		if err != nil {
+			outputPath, err := s.mp.EncryptVideo(media.GetURL(), asset.EK, asset.DRMKeyID)
+			if err != nil {
+				logger.WithError(err).Error("failed to encrypt media")
+				_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
+				return
+			}
+			defer func() { _ = os.Remove(outputPath) }()
+
+			cid, err := s.storage.Upload(outputPath, media.EncryptedKey)
+			if err != nil {
+				logger.
+					WithError(err).
+					Error("failed to upload encrypted media file")
+				_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
+				return
+			}
+
+			err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+				EncryptedCID: pointer.ToString(cid),
+			})
+			if err != nil {
+				logger.
+					WithError(err).
+					Error("failed to update media encrypted CID")
+				_ = s.ds.Media.MarkStatusAsFailed(ctx, media)
+				return
+			}
+
 			logger.
-				WithError(err).
-				Error("failed to upload encrypted media file")
-			_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
-			return
-		}
+				WithField("encrypted_cid", cid).
+				Info("encrypt media job has been completed")
 
-		err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-			EncryptedCID: pointer.ToString(cid),
-		})
-		if err != nil {
-			logger.
-				WithError(err).
-				Error("failed to update media encrypted CID")
-			_ = s.ds.Media.MarkStatusAsFailed(ctx, media)
-			return
-		}
+			err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+				EncryptedCID: pointer.ToString(media.EncryptedCID.String),
+			})
+			if err != nil {
+				logger.
+					WithError(err).
+					Error("failed to update asset encrypted cid")
+				return
+			}
 
-		logger.
-			WithField("encrypted_cid", cid).
-			Info("encrypt media job has been completed")
+			tokenJSON, _ := token.ToTokenJSON(asset)
+			tokenCID, err := s.storage.PushPath(
+				strconv.FormatInt(asset.ID, 10),
+				bytes.NewBuffer(tokenJSON),
+			)
+			if err != nil {
+				logger.WithError(err).Error("failed to upload token json to storage")
+				return
+			}
 
-		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			EncryptedCID: pointer.ToString(media.EncryptedCID.String),
-		})
-		if err != nil {
-			logger.
-				WithError(err).
-				Error("failed to update asset encrypted cid")
-			return
-		}
+			logger := s.logger.WithField("token_cid", tokenCID)
+			logger.Info("updating token url")
 
-		tokenJSON, _ := token.ToTokenJSON(asset)
-		tokenCID, err := s.storage.PushPath(
-			strconv.FormatInt(asset.ID, 10),
-			bytes.NewBuffer(tokenJSON),
-		)
-		if err != nil {
-			logger.WithError(err).Error("failed to upload token json to storage")
-			return
-		}
+			err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+				TokenCID: pointer.ToString(tokenCID),
+			})
+			if err != nil {
+				logger.WithError(err).Error("failed to update asset token cid")
+				return
+			}
 
-		logger := s.logger.WithField("token_cid", tokenCID)
-		logger.Info("updating token url")
+			tokenURI = asset.GetTokenURL()
 
-		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			TokenCID: pointer.ToString(tokenCID),
-		})
-		if err != nil {
-			logger.WithError(err).Error("failed to update asset token cid")
-			return
-		}
+			logger.WithField("token_uri", tokenURI)
 
-		tokenURI := asset.GetTokenURL()
-
-		logger.WithField("token_uri", tokenURI)
-
-		if tokenURI == nil {
-			logger.WithError(err).Error("failed to get asset token uri")
-			return
+			if tokenURI == nil {
+				logger.WithError(err).Error("failed to get asset token uri")
+				return
+			}
 		}
 
 		logger.Info("minting")

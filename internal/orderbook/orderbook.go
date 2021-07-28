@@ -141,80 +141,82 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			WithField("new_drm_key", drmKey).
 			WithField("new_drm_key_id", drmKeyID)
 
-		logger.Infof("encrypting media %s", asset.GetURL())
-		encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetURL(), ek, drmKeyID)
-		if err != nil {
-			return fmt.Errorf("failed to encrypt media: %s", err.Error())
-		}
-		defer func() { _ = os.Remove(encryptedMediaPath) }()
-
-		meta := model.NewAssetMeta(path.Base(encryptedMediaPath), media.ContentType)
-
-		logger = logger.
-			WithField("encrypted_media_path", encryptedMediaPath).
-			WithField("encrypted_media_to", meta.DestEncKey)
-		logger.Info("uploading encrypted media")
-
-		encryptedCID, err := book.storage.Upload(encryptedMediaPath, meta.DestEncKey)
-		if err != nil {
-			return fmt.Errorf("failed to uploed encrypted media: %s", err.Error())
-		}
-
-		logger.Info("updating asset and media encryption data")
-
-		mediaFields := datastore.MediaUpdatedFields{
-			EncryptedKey: pointer.ToString(meta.DestEncKey),
-			EncryptedCID: pointer.ToString(encryptedCID),
-		}
-		err = book.ds.Media.Update(ctx, media, mediaFields)
-		if err != nil {
-			return fmt.Errorf("failed to update media: %s", err)
-		}
-
-		assetFields = datastore.AssetUpdatedFields{
-			EncryptedKey: pointer.ToString(meta.DestEncKey),
-			EncryptedCID: pointer.ToString(encryptedCID),
-		}
-		err = book.ds.Assets.Update(ctx, asset, assetFields)
-		if err != nil {
-			return fmt.Errorf("failed to update asset: %s", err)
-		}
-
-		logger.Info("uploading new token json")
-
-		tokenJSON, _ := token.ToTokenJSON(asset)
-		tokenCID, err := book.storage.PushPath(
-			fmt.Sprintf("%d.json", asset.ID),
-			bytes.NewBuffer(tokenJSON))
-		if err != nil {
-			return fmt.Errorf("failed to upload token json to storage")
-		}
-
-		logger = logger.
-			WithField("token_cid", tokenCID)
-		logger.Info("updating token uri")
-
-		err = book.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			TokenCID: pointer.ToString(tokenCID),
-		})
-		if err != nil {
-			return err
-		}
-
-		logger.Info("updating token uri in blockchain")
-
-		tokenUri := asset.GetTokenURL()
-		if tokenUri == nil {
-			return errors.New("empty new token uri")
-		}
-
-		tx, err := book.minter.UpdateTokenURI(ctx, big.NewInt(asset.ID), *tokenUri)
-		if err != nil {
-			if tx != nil {
-				logger = logger.WithField("token_uri_tx", tx.Hash().String())
+		if media.IsVideo() {
+			logger.Infof("encrypting media %s", asset.GetURL())
+			encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetURL(), ek, drmKeyID)
+			if err != nil {
+				return fmt.Errorf("failed to encrypt media: %s", err.Error())
 			}
-			logger.WithError(err).Error("failed to update token uri in blockchain")
-			return err
+			defer func() { _ = os.Remove(encryptedMediaPath) }()
+
+			meta := model.NewAssetMeta(path.Base(encryptedMediaPath), media.ContentType)
+
+			logger = logger.
+				WithField("encrypted_media_path", encryptedMediaPath).
+				WithField("encrypted_media_to", meta.DestEncKey)
+			logger.Info("uploading encrypted media")
+
+			encryptedCID, err := book.storage.Upload(encryptedMediaPath, meta.DestEncKey)
+			if err != nil {
+				return fmt.Errorf("failed to uploed encrypted media: %s", err.Error())
+			}
+
+			logger.Info("updating asset and media encryption data")
+
+			mediaFields := datastore.MediaUpdatedFields{
+				EncryptedKey: pointer.ToString(meta.DestEncKey),
+				EncryptedCID: pointer.ToString(encryptedCID),
+			}
+			err = book.ds.Media.Update(ctx, media, mediaFields)
+			if err != nil {
+				return fmt.Errorf("failed to update media: %s", err)
+			}
+
+			assetFields = datastore.AssetUpdatedFields{
+				EncryptedKey: pointer.ToString(meta.DestEncKey),
+				EncryptedCID: pointer.ToString(encryptedCID),
+			}
+			err = book.ds.Assets.Update(ctx, asset, assetFields)
+			if err != nil {
+				return fmt.Errorf("failed to update asset: %s", err)
+			}
+
+			logger.Info("uploading new token json")
+
+			tokenJSON, _ := token.ToTokenJSON(asset)
+			tokenCID, err := book.storage.PushPath(
+				fmt.Sprintf("%d.json", asset.ID),
+				bytes.NewBuffer(tokenJSON))
+			if err != nil {
+				return fmt.Errorf("failed to upload token json to storage")
+			}
+
+			logger = logger.
+				WithField("token_cid", tokenCID)
+			logger.Info("updating token uri")
+
+			err = book.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+				TokenCID: pointer.ToString(tokenCID),
+			})
+			if err != nil {
+				return err
+			}
+
+			logger.Info("updating token uri in blockchain")
+
+			tokenUri := asset.GetTokenURL()
+			if tokenUri == nil {
+				return errors.New("empty new token uri")
+			}
+
+			tx, err := book.minter.UpdateTokenURI(ctx, big.NewInt(asset.ID), *tokenUri)
+			if err != nil {
+				if tx != nil {
+					logger = logger.WithField("token_uri_tx", tx.Hash().String())
+				}
+				logger.WithError(err).Error("failed to update token uri in blockchain")
+				return err
+			}
 		}
 
 		logger.Info("marking asset as ready")
