@@ -197,6 +197,33 @@ func (ds *MediaDatastore) Update(ctx context.Context, media *model.Media, fields
 	return nil
 }
 
+func (ds *MediaDatastore) BindToAsset(ctx context.Context, mediaIds []string, assetID int64) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	stmt := tx.Update(ds.table).
+		Set("asset_id", assetID)
+
+	_, err = stmt.Where("id IN ?", mediaIds).ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ds *MediaDatastore) MarkStatusAsFailed(ctx context.Context, media *model.Media) error {
 	return ds.MarkStatusAs(ctx, media, model.MediaStatusFailed)
 }

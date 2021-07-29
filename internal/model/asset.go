@@ -18,7 +18,6 @@ const (
 	IpfsGateway = "https://%s.ipfs.dweb.link"
 )
 
-
 type AssetProbe struct {
 	Data *ffprobe.ProbeData `json:"data"`
 }
@@ -88,6 +87,7 @@ type Asset struct {
 
 	CreatedBy *Account `db:"-"`
 	Owner     *Account `db:"-"`
+	Media     []*Media `db:"-"`
 }
 
 func (a *Asset) StatusIsFailed() bool {

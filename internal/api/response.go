@@ -72,12 +72,14 @@ type AssetCollectionResponse struct {
 }
 
 type MediaResponse struct {
-	ID          string            `json:"id"`
-	ContentType string            `json:"content_type"`
-	MediaType   string            `json:"media_type"`
-	Status      model.MediaStatus `json:"status"`
-	URL         string            `json:"url"`
-	Creator     *AccountResponse  `json:"creator"`
+	ID          string                `json:"id"`
+	ContentType string                `json:"content_type"`
+	MediaType   string                `json:"media_type"`
+	Status      model.MediaStatus     `json:"status"`
+	URL         string                `json:"url"`
+	Creator     *AccountResponse      `json:"creator"`
+	Visibility  model.MediaVisibility `json:"visibility"`
+	Featured    bool                  `json:"featured"`
 }
 
 type AssetResponse struct {
@@ -109,6 +111,8 @@ type AssetResponse struct {
 	InstantSalePrice string `json:"instant_sale_price"`
 
 	Sold bool `json:"sold"`
+
+	Media []*MediaResponse `json:"media"`
 }
 
 type AssetsResponse struct {
@@ -256,6 +260,10 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		resp.Owner = resp.Creator
 	}
 
+	for _, media := range asset.Media {
+		resp.Media = append(resp.Media, toMediaResponse(media))
+	}
+
 	return resp
 }
 
@@ -368,6 +376,8 @@ func toMediaResponse(media *model.Media) *MediaResponse {
 		MediaType:   media.MediaType,
 		Status:      media.Status,
 		URL:         media.GetURL(),
+		Visibility:  media.Visibility,
+		Featured:    media.Featured,
 	}
 
 	if media.CreatedBy != nil {

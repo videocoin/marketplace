@@ -74,12 +74,18 @@ func (s *Server) createAsset(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	if len(req.MediaIds) != 1 {
+	if req.Media == nil || len(req.Media) == 0 {
 		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "invalid media"})
 	}
 
+	primaryMedia := req.Media[0]
+	mediaIds := make([]string, 0)
+	for _, media := range req.Media {
+		mediaIds = append(mediaIds, media.ID)
+	}
+
 	ctx := context.Background()
-	media, err := s.ds.Media.GetByID(ctx, req.MediaIds[0])
+	media, err := s.ds.Media.GetByID(ctx, primaryMedia.ID)
 	if err != nil {
 		if err == datastore.ErrMediaNotFound {
 			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not found"})
@@ -155,7 +161,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		return err
 	}
 
-	err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{AssetID: pointer.ToInt64(asset.ID)})
+	err = s.ds.Media.BindToAsset(ctx, mediaIds, asset.ID)
 	if err != nil {
 		return err
 	}
@@ -373,6 +379,14 @@ func (s *Server) getAsset(c echo.Context) error {
 		return err
 	}
 	asset.Owner = owner
+
+
+	media, err := s.ds.Media.ListByAssetID(ctx, asset.ID)
+	if err != nil {
+		return err
+	}
+
+	asset.Media = media
 
 	resp := toAssetResponse(asset)
 	return c.JSON(http.StatusOK, resp)

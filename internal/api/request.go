@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/wyvern"
 	"time"
 )
@@ -29,14 +30,20 @@ type YTUploadRequest struct {
 	Link string `json:"link"`
 }
 
+type AssetMediaRequest struct {
+	ID         string                `json:"id"`
+	Visibility model.MediaVisibility `json:"visibility"`
+	Featured   bool                  `json:"featured"`
+}
+
 type CreateAssetRequest struct {
-	Name             string   `json:"name"`
-	MediaIds         []string `json:"media_ids"`
-	Desc             *string  `json:"desc"`
-	YTVideoLink      *string  `json:"yt_video_link"`
-	Royalty          uint     `json:"royalty"`
-	OnSale           bool     `json:"on_sale"`
-	InstantSalePrice string   `json:"instant_sale_price"`
+	Name             string               `json:"name"`
+	Media            []*AssetMediaRequest `json:"media"`
+	Desc             *string              `json:"desc"`
+	YTVideoLink      *string              `json:"yt_video_link"`
+	Royalty          uint                 `json:"royalty"`
+	OnSale           bool                 `json:"on_sale"`
+	InstantSalePrice string               `json:"instant_sale_price"`
 }
 
 type PostOrderRequest struct {
