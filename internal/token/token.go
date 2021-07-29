@@ -12,7 +12,6 @@ type Metadata struct {
 	Desc             *string `json:"description"`
 	URL              string  `json:"url"`
 	ThumbnailURL     *string `json:"thumbnail_url"`
-	PreviewURL       *string `json:"preview_url"`
 	EncryptedURL     *string `json:"encrypted_url"`
 	IPFSURL          string  `json:"ipfs_url"`
 	IPFSThumbnailURL *string `json:"ipfs_thumbnail_url"`
@@ -38,8 +37,6 @@ func ToMetadata(asset *model.Asset) *Metadata {
 	if asset.Desc.Valid {
 		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
-
-	resp.PreviewURL = asset.GetPreviewURL()
 
 	if asset.ThumbnailCID.Valid {
 		resp.ThumbnailURL = asset.GetThumbnailURL()

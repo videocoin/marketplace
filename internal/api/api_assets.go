@@ -141,7 +141,6 @@ func (s *Server) createAsset(c echo.Context) error {
 		Key:          media.Key,
 		ThumbnailKey: media.ThumbnailKey,
 		EncryptedKey: media.EncryptedKey,
-		QrKey:        "",
 
 		CID:          media.CID,
 		ThumbnailCID: media.ThumbnailCID,

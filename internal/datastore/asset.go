@@ -31,7 +31,6 @@ type AssetUpdatedFields struct {
 	OwnerID  *int64
 
 	CID          *string
-	PreviewCID   *string
 	ThumbnailCID *string
 	EncryptedCID *string
 	TokenCID     *string
@@ -76,7 +75,7 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	cols := []string{
 		"created_at", "created_by_id", "owner_id", "content_type", "status",
 		"name", "description", "yt_video_link",
-		"root_key", "key", "preview_key", "thumbnail_key", "encrypted_key", "qr_key",
+		"root_key", "key", "thumbnail_key", "encrypted_key",
 		"cid", "thumbnail_cid",
 		"drm_key", "drm_key_id", "ek",
 		"contract_address", "on_sale", "royalty", "instant_sale_price",
@@ -270,11 +269,6 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if fields.CID != nil {
 		stmt.Set("cid", *fields.CID)
 		asset.CID = dbr.NewNullString(*fields.CID)
-	}
-
-	if fields.PreviewCID != nil {
-		stmt.Set("preview_cid", *fields.PreviewCID)
-		asset.PreviewCID = dbr.NewNullString(*fields.PreviewCID)
 	}
 
 	if fields.ThumbnailCID != nil {

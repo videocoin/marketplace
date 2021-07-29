@@ -68,13 +68,10 @@ type Asset struct {
 
 	RootKey      string `db:"root_key"`
 	Key          string `db:"key"`
-	PreviewKey   string `db:"preview_key"`
 	ThumbnailKey string `db:"thumbnail_key"`
 	EncryptedKey string `db:"encrypted_key"`
-	QrKey        string `db:"qr_key"`
 
 	CID          dbr.NullString `db:"cid"`
-	PreviewCID   dbr.NullString `db:"preview_cid"`
 	ThumbnailCID dbr.NullString `db:"thumbnail_cid"`
 	EncryptedCID dbr.NullString `db:"encrypted_cid"`
 	TokenCID     dbr.NullString `db:"token_cid"`
@@ -119,14 +116,6 @@ func (a *Asset) GetIpfsEncryptedURL() *string {
 	}
 
 	return nil
-}
-
-func (a *Asset) GetPreviewURL() *string {
-	if a.Status == AssetStatusReady && a.PreviewCID.Valid {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.PreviewCID.String))
-	}
-
-	return pointer.ToString(a.GetURL())
 }
 
 func (a *Asset) GetThumbnailURL() *string {

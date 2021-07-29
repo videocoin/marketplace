@@ -92,7 +92,6 @@ type AssetResponse struct {
 
 	URL          string  `json:"url"`
 	ThumbnailURL *string `json:"thumbnail_url"`
-	PreviewURL   *string `json:"preview_url"`
 	EncryptedURL *string `json:"encrypted_url"`
 	TokenURL     *string `json:"token_url"`
 
@@ -237,8 +236,6 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 	if asset.Desc.Valid {
 		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
-
-	resp.PreviewURL = asset.GetPreviewURL()
 
 	if asset.ThumbnailCID.Valid {
 		resp.ThumbnailURL = asset.GetThumbnailURL()
