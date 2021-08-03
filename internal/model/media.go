@@ -7,13 +7,9 @@ import (
 	"time"
 )
 
-type MediaVisibility string
 type MediaStatus string
 
 const (
-	MediaVisibilityPublic  MediaVisibility = "public"
-	MediaVisibilityPrivate MediaVisibility = "private"
-
 	MediaStatusProcessing MediaStatus = "PROCESSING"
 	MediaStatusReady      MediaStatus = "READY"
 	MediaStatusFailed     MediaStatus = "FAILED"
@@ -29,7 +25,6 @@ type Media struct {
 	CreatedByID int64           `db:"created_by_id"`
 	ContentType string          `db:"content_type"`
 	MediaType   string          `db:"media_type"`
-	Visibility  MediaVisibility `db:"visibility"`
 	Featured    bool            `db:"featured"`
 	Status      MediaStatus     `db:"status"`
 

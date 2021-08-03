@@ -52,7 +52,6 @@ type Asset struct {
 	CreatedAt   *time.Time `db:"created_at"`
 	CreatedByID int64      `db:"created_by_id"`
 	OwnerID     int64      `db:"owner_id"`
-	ContentType string     `db:"content_type"`
 
 	Name            dbr.NullString `db:"name"`
 	Desc            dbr.NullString `db:"description"`
@@ -66,14 +65,6 @@ type Asset struct {
 	YTVideoLink dbr.NullString `db:"yt_video_link"`
 	YTVideoID   dbr.NullString `db:"yt_video_id"`
 
-	RootKey      string `db:"root_key"`
-	Key          string `db:"key"`
-	ThumbnailKey string `db:"thumbnail_key"`
-	EncryptedKey string `db:"encrypted_key"`
-
-	CID          dbr.NullString `db:"cid"`
-	ThumbnailCID dbr.NullString `db:"thumbnail_cid"`
-	EncryptedCID dbr.NullString `db:"encrypted_cid"`
 	TokenCID     dbr.NullString `db:"token_cid"`
 
 	DRMKey   string `db:"drm_key"`
@@ -95,43 +86,76 @@ func (a *Asset) StatusIsTransferred() bool {
 	return a.Status == AssetStatusTransferred
 }
 
+func (a *Asset) GetFirstPrivateMedia() *Media {
+	for _, media := range a.Media {
+		if !media.Featured {
+			return media
+		}
+	}
+	return nil
+}
+
+func (a *Asset) GetContentType() string {
+	media := a.GetFirstPrivateMedia()
+	if media == nil {
+		return ""
+	}
+
+	return media.ContentType
+}
+
 func (a *Asset) GetURL() string {
-	return fmt.Sprintf(IpfsGateway, a.CID.String)
+	media := a.GetFirstPrivateMedia()
+	if media == nil || media.CID.String == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(IpfsGateway, media.CID.String)
 }
 
 func (a *Asset) GetIpfsURL() string {
-	return fmt.Sprintf("ipfs://%s", a.CID.String)
+	media := a.GetFirstPrivateMedia()
+	if media == nil || media.CID.String == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("ipfs://%s", media.CID.String)
 }
 
 func (a *Asset) GetEncryptedURL() *string {
-	if a.EncryptedCID.String != "" {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.EncryptedCID.String))
+	media := a.GetFirstPrivateMedia()
+	if media == nil || media.EncryptedCID.String == "" {
+		return nil
 	}
-	return nil
+
+	return pointer.ToString(fmt.Sprintf(IpfsGateway, media.EncryptedCID.String))
 }
 
 func (a *Asset) GetIpfsEncryptedURL() *string {
-	if a.EncryptedCID.String != "" {
-		return pointer.ToString(fmt.Sprintf("ipfs://%s", a.EncryptedCID.String))
+	media := a.GetFirstPrivateMedia()
+	if media == nil || media.EncryptedCID.String == "" {
+		return nil
 	}
 
-	return nil
+	return pointer.ToString(fmt.Sprintf("ipfs://%s", media.EncryptedCID.String))
 }
 
 func (a *Asset) GetThumbnailURL() *string {
-	if a.ThumbnailCID.String != "" {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.ThumbnailCID.String))
+	media := a.GetFirstPrivateMedia()
+	if media == nil || media.ThumbnailCID.String == "" {
+		return nil
 	}
 
-	return nil
+	return pointer.ToString(fmt.Sprintf(IpfsGateway, media.ThumbnailCID.String))
 }
 
 func (a *Asset) GetIpfsThumbnailURL() *string {
-	if a.ThumbnailCID.String != "" {
-		return pointer.ToString(fmt.Sprintf("ipfs://%s", a.ThumbnailCID.String))
+	media := a.GetFirstPrivateMedia()
+	if media == nil || media.ThumbnailCID.String == "" {
+		return nil
 	}
 
-	return nil
+	return pointer.ToString(fmt.Sprintf("ipfs://%s", media.ThumbnailCID.String))
 }
 
 func (a *Asset) GetTokenURL() *string {

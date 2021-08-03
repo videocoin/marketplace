@@ -25,7 +25,12 @@ func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	assets, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	if err != nil {
+		return err
+	}
+
+	err = s.ds.JoinMediaToAssets(ctx, assets)
 	if err != nil {
 		return err
 	}
@@ -37,7 +42,7 @@ func (s *Server) getSpotlightFeaturedAssets(c echo.Context) error {
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toAssetsResponse(arts, countResp)
+	resp := toAssetsResponse(assets, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -56,7 +61,12 @@ func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	assets, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	if err != nil {
+		return err
+	}
+
+	err = s.ds.JoinMediaToAssets(ctx, assets)
 	if err != nil {
 		return err
 	}
@@ -68,7 +78,7 @@ func (s *Server) getSpotlightLiveAssets(c echo.Context) error {
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toAssetsResponse(arts, countResp)
+	resp := toAssetsResponse(assets, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
 

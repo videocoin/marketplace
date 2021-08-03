@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS media (
   created_by_id  INT NOT NULL,
   content_type   VARCHAR(100) NOT NULL,
   media_type     VARCHAR(100) NOT NULL,
-  visibility     VARCHAR(100) DEFAULT 'public',
   featured       BOOL DEFAULT 'f',
   status         VARCHAR(50) DEFAULT 'UNKNOWN_STATUS',
   root_key       VARCHAR(255) NOT NULL DEFAULT '',

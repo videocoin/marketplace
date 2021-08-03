@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/wyvern"
 	"time"
 )
@@ -31,9 +30,8 @@ type YTUploadRequest struct {
 }
 
 type AssetMediaRequest struct {
-	ID         string                `json:"id"`
-	Visibility model.MediaVisibility `json:"visibility"`
-	Featured   bool                  `json:"featured"`
+	ID       string `json:"id"`
+	Featured bool   `json:"featured"`
 }
 
 type CreateAssetRequest struct {

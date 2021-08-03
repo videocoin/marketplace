@@ -22,6 +22,7 @@ type MediaUpdatedFields struct {
 	EncryptedKey *string
 	Status       *string
 	AssetID      *int64
+	Featured     *bool
 }
 
 type MediaDatastore struct {
@@ -61,7 +62,7 @@ func (ds *MediaDatastore) Create(ctx context.Context, media *model.Media) error 
 	}
 
 	cols := []string{
-		"id", "created_at", "created_by_id", "content_type", "media_type", "visibility", "status",
+		"id", "created_at", "created_by_id", "content_type", "media_type", "status",
 		"featured", "root_key", "key", "thumbnail_key", "encrypted_key",
 	}
 	err = tx.
@@ -125,20 +126,46 @@ func (ds *MediaDatastore) ListByAssetID(ctx context.Context, assetID int64) ([]*
 		}()
 	}
 
-	mediae := make([]*model.Media, 0)
+	items := make([]*model.Media, 0)
 	_, err = tx.
 		Select("*").
 		From(ds.table).
 		Where("asset_id = ?", assetID).
-		LoadContext(ctx, &mediae)
+		LoadContext(ctx, &items)
 	if err != nil {
-		if err == dbr.ErrNotFound {
-			return nil, ErrMediaNotFound
-		}
 		return nil, err
 	}
 
-	return mediae, nil
+	return items, nil
+}
+
+func (ds *MediaDatastore) ListByAssetIds(ctx context.Context, assetIds []int64) ([]*model.Media, error) {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	items := make([]*model.Media, 0)
+	_, err = tx.
+		Select("*").
+		From(ds.table).
+		Where("asset_id IN ?", assetIds).
+		LoadContext(ctx, &items)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }
 
 func (ds *MediaDatastore) Update(ctx context.Context, media *model.Media, fields MediaUpdatedFields) error {
@@ -187,6 +214,11 @@ func (ds *MediaDatastore) Update(ctx context.Context, media *model.Media, fields
 	if fields.AssetID != nil {
 		stmt.Set("asset_id", *fields.AssetID)
 		media.AssetID = dbr.NewNullInt64(*fields.AssetID)
+	}
+
+	if fields.Featured != nil {
+		stmt.Set("featured", *fields.Featured)
+		media.Featured = *fields.Featured
 	}
 
 	_, err = stmt.Where("id = ?", media.ID).ExecContext(ctx)

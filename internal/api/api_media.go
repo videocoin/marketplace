@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 func (s *Server) uploadMediaFile(ctx context.Context, file *multipart.FileHeader, meta *model.AssetMeta) error {
@@ -62,6 +63,7 @@ func (s *Server) uploadMedia(c echo.Context) error {
 		WithField("address", account.Address)
 	logger.Info("uploading media")
 
+	featured, _ := strconv.ParseBool(c.Param("featured"))
 	file, err := c.FormFile("file")
 	if err != nil {
 		logger.WithError(err).Error("failed to form file")
@@ -80,9 +82,8 @@ func (s *Server) uploadMedia(c echo.Context) error {
 		CreatedByID:  account.ID,
 		ContentType:  meta.ContentType,
 		MediaType:    meta.MediaType(),
-		Visibility:   model.MediaVisibilityPublic,
 		Status:       model.MediaStatusProcessing,
-		Featured:     false,
+		Featured:     featured,
 		RootKey:      s.storage.RootPath(),
 		Key:          meta.DestKey,
 		ThumbnailKey: meta.DestThumbKey,
@@ -128,14 +129,12 @@ func (s *Server) uploadMedia(c echo.Context) error {
 			return
 		}
 
-		if media.IsVideo() {
-			logger.Info("generating thumbnail")
+		logger.Info("generating thumbnail")
 
-			err = s.generateThumbnail(ctx, media, meta)
-			if err != nil {
-				logger.WithError(err).Error("failed to generate media thumbnail")
-				return
-			}
+		err = s.mp.GenerateThumbnail(ctx, media, meta)
+		if err != nil {
+			logger.WithError(err).Error("failed to generate media thumbnail")
+			return
 		}
 
 		err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{

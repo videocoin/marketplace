@@ -24,20 +24,12 @@ type AssetUpdatedFields struct {
 	OnSale          *bool
 	Price           *float64
 	Royalty         *uint
-
-	DRMKey   *string
-	DRMKeyID *string
-	EK       *string
-	OwnerID  *int64
-
-	CID          *string
-	ThumbnailCID *string
-	EncryptedCID *string
-	TokenCID     *string
-
-	EncryptedKey *string
-
-	Status *string
+	Status          *string
+	DRMKey          *string
+	DRMKeyID        *string
+	EK              *string
+	OwnerID         *int64
+	TokenCID        *string
 }
 
 type AssetDatastore struct {
@@ -73,10 +65,8 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	}
 
 	cols := []string{
-		"created_at", "created_by_id", "owner_id", "content_type", "status",
+		"created_at", "created_by_id", "owner_id", "status",
 		"name", "description", "yt_video_link",
-		"root_key", "key", "thumbnail_key", "encrypted_key",
-		"cid", "thumbnail_cid",
 		"drm_key", "drm_key_id", "ek",
 		"contract_address", "on_sale", "royalty", "price",
 	}
@@ -264,26 +254,6 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if fields.OwnerID != nil {
 		stmt.Set("owner_id", *fields.OwnerID)
 		asset.OwnerID = *fields.OwnerID
-	}
-
-	if fields.CID != nil {
-		stmt.Set("cid", *fields.CID)
-		asset.CID = dbr.NewNullString(*fields.CID)
-	}
-
-	if fields.ThumbnailCID != nil {
-		stmt.Set("thumbnail_cid", *fields.ThumbnailCID)
-		asset.ThumbnailCID = dbr.NewNullString(*fields.ThumbnailCID)
-	}
-
-	if fields.EncryptedCID != nil {
-		stmt.Set("encrypted_cid", *fields.EncryptedCID)
-		asset.EncryptedCID = dbr.NewNullString(*fields.EncryptedCID)
-	}
-
-	if fields.EncryptedKey != nil {
-		stmt.Set("encrypted_key", *fields.EncryptedKey)
-		asset.EncryptedKey = *fields.EncryptedKey
 	}
 
 	if fields.TokenCID != nil {

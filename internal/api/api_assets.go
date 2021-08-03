@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 	"math/big"
 	"net/http"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -21,43 +18,6 @@ import (
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
 )
-
-func (s *Server) generateThumbnail(ctx context.Context, media *model.Media, meta *model.AssetMeta) error {
-	cmdArgs := []string{
-		"-hide_banner", "-loglevel", "info", "-y", "-ss", "2", "-i", meta.LocalDest,
-		"-an", "-vf", "scale=1280:-1", "-vframes", "1", meta.LocalThumbDest,
-	}
-
-	cmd := exec.CommandContext(ctx, "ffmpeg", cmdArgs...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), string(out))
-	}
-
-	s.logger.Debug(string(out))
-
-	f, err := os.Open(meta.LocalThumbDest)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = os.Remove(meta.LocalThumbDest)
-	}()
-
-	cid, err := s.storage.PushPath(meta.DestThumbKey, f)
-	if err != nil {
-		return err
-	}
-
-	err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-		ThumbnailCID: pointer.ToString(cid),
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func (s *Server) createAsset(c echo.Context) error {
 	ctxAccount := c.Get("account")
@@ -79,28 +39,41 @@ func (s *Server) createAsset(c echo.Context) error {
 		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "invalid media"})
 	}
 
-	primaryMedia := req.Media[0]
 	mediaIds := make([]string, 0)
 	for _, media := range req.Media {
 		mediaIds = append(mediaIds, media.ID)
 	}
 
 	ctx := context.Background()
-	media, err := s.ds.Media.GetByID(ctx, primaryMedia.ID)
-	if err != nil {
-		if err == datastore.ErrMediaNotFound {
-			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not found"})
+	mediaItems := make([]*model.Media, 0)
+
+	for _, mediaItem := range req.Media {
+		media, err := s.ds.Media.GetByID(ctx, mediaItem.ID)
+		if err != nil {
+			if err == datastore.ErrMediaNotFound {
+				return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not found"})
+			}
+
+			return err
 		}
 
-		return err
-	}
+		if media.CreatedByID != account.ID {
+			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media file not found"})
+		}
 
-	if media.CreatedByID != account.ID {
-		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media file not found"})
-	}
+		if media.Status != model.MediaStatusReady || media.AssetID.Int64 != 0 {
+			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not available"})
+		}
 
-	if media.Status != model.MediaStatusReady || media.AssetID.Int64 != 0 {
-		return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not available"})
+		if mediaItem.Featured {
+			err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+				Featured: pointer.ToBool(true),
+			})
+
+			return err
+		}
+
+		mediaItems = append(mediaItems, media)
 	}
 
 	assetName := strings.TrimSpace(req.Name)
@@ -131,20 +104,11 @@ func (s *Server) createAsset(c echo.Context) error {
 	asset := &model.Asset{
 		CreatedByID: account.ID,
 		OwnerID:     account.ID,
-		ContentType: media.ContentType,
 		Status:      model.AssetStatusProcessing,
 
 		Name:        dbr.NewNullString(assetName),
 		Desc:        dbr.NewNullString(assetDesc),
 		YTVideoLink: dbr.NewNullString(ytLink),
-
-		RootKey:      s.storage.RootPath(),
-		Key:          media.Key,
-		ThumbnailKey: media.ThumbnailKey,
-		EncryptedKey: media.EncryptedKey,
-
-		CID:          media.CID,
-		ThumbnailCID: media.ThumbnailCID,
 
 		DRMKey:   drmKey,
 		DRMKeyID: token.GenerateDRMKeyID(account),
@@ -167,82 +131,50 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	go func() {
+		for _, media := range mediaItems {
+			if media.Featured {
+				continue
+			}
+
+			err = s.mp.EncryptMedia(ctx, media, asset.EK, asset.DRMKeyID)
+			if err != nil {
+				logger.
+					WithError(err).
+					Error("failed to encrypt media")
+				_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
+				return
+			}
+		}
+
 		tokenURI := pointer.ToString("")
+		tokenJSON, _ := token.ToTokenJSON(asset)
+		tokenCID, err := s.storage.PushPath(
+			strconv.FormatInt(asset.ID, 10),
+			bytes.NewBuffer(tokenJSON),
+		)
+		if err != nil {
+			logger.WithError(err).Error("failed to upload token json to storage")
+			return
+		}
 
-		if media.IsVideo() {
-			logger.Info("encrypting media")
+		logger := s.logger.WithField("token_cid", tokenCID)
+		logger.Info("updating token url")
 
-			outputPath, err := s.mp.EncryptVideo(media.GetURL(), asset.EK, asset.DRMKeyID)
-			if err != nil {
-				logger.WithError(err).Error("failed to encrypt media")
-				_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
-				return
-			}
-			defer func() { _ = os.Remove(outputPath) }()
+		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+			TokenCID: pointer.ToString(tokenCID),
+		})
+		if err != nil {
+			logger.WithError(err).Error("failed to update asset token cid")
+			return
+		}
 
-			cid, err := s.storage.Upload(outputPath, media.EncryptedKey)
-			if err != nil {
-				logger.
-					WithError(err).
-					Error("failed to upload encrypted media file")
-				_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
-				return
-			}
+		tokenURI = asset.GetTokenURL()
 
-			err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-				EncryptedCID: pointer.ToString(cid),
-			})
-			if err != nil {
-				logger.
-					WithError(err).
-					Error("failed to update media encrypted CID")
-				_ = s.ds.Media.MarkStatusAsFailed(ctx, media)
-				return
-			}
+		logger.WithField("token_uri", tokenURI)
 
-			logger.
-				WithField("encrypted_cid", cid).
-				Info("encrypt media job has been completed")
-
-			err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-				EncryptedCID: pointer.ToString(media.EncryptedCID.String),
-			})
-			if err != nil {
-				logger.
-					WithError(err).
-					Error("failed to update asset encrypted cid")
-				return
-			}
-
-			tokenJSON, _ := token.ToTokenJSON(asset)
-			tokenCID, err := s.storage.PushPath(
-				strconv.FormatInt(asset.ID, 10),
-				bytes.NewBuffer(tokenJSON),
-			)
-			if err != nil {
-				logger.WithError(err).Error("failed to upload token json to storage")
-				return
-			}
-
-			logger := s.logger.WithField("token_cid", tokenCID)
-			logger.Info("updating token url")
-
-			err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-				TokenCID: pointer.ToString(tokenCID),
-			})
-			if err != nil {
-				logger.WithError(err).Error("failed to update asset token cid")
-				return
-			}
-
-			tokenURI = asset.GetTokenURL()
-
-			logger.WithField("token_uri", tokenURI)
-
-			if tokenURI == nil {
-				logger.WithError(err).Error("failed to get asset token uri")
-				return
-			}
+		if tokenURI == nil {
+			logger.WithError(err).Error("failed to get asset token uri")
+			return
 		}
 
 		logger.Info("minting")
@@ -303,6 +235,11 @@ func (s *Server) getAssets(c echo.Context) error {
 		return err
 	}
 
+	err = s.ds.JoinMediaToAssets(ctx, assets)
+	if err != nil {
+		return err
+	}
+
 	tc, _ := s.ds.GetAssetsListCount(ctx, fltr)
 	countResp := &ItemsCountResponse{
 		TotalCount: tc,
@@ -335,7 +272,12 @@ func (s *Server) getAssetsByCreator(c echo.Context) error {
 	}
 
 	ctx := context.Background()
-	arts, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	assets, err := s.ds.GetAssetsList(ctx, fltr, limitOpts)
+	if err != nil {
+		return err
+	}
+
+	err = s.ds.JoinMediaToAssets(ctx, assets)
 	if err != nil {
 		return err
 	}
@@ -347,7 +289,7 @@ func (s *Server) getAssetsByCreator(c echo.Context) error {
 		Limit:      *limitOpts.Limit,
 	}
 
-	resp := toAssetsResponse(arts, countResp)
+	resp := toAssetsResponse(assets, countResp)
 	return c.JSON(http.StatusOK, resp)
 }
 

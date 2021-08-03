@@ -117,3 +117,32 @@ func JoinAccountsToAsset(ctx context.Context, assets []*model.Asset, accounts []
 		asset.Owner = byID[asset.OwnerID]
 	}
 }
+
+func (ds *Datastore) JoinMediaToAssets(ctx context.Context, assets []*model.Asset) error {
+	assetIds := make([]int64, 0)
+	for _, asset := range assets {
+		assetIds = append(assetIds, asset.ID)
+	}
+
+	media, err := ds.Media.ListByAssetIds(ctx, assetIds)
+	if err != nil {
+		return err
+	}
+
+	mediaByAssetID := map[int64][]*model.Media{}
+	for _, mediaItem := range media {
+		if mediaByAssetID[mediaItem.AssetID.Int64] == nil {
+			mediaByAssetID[mediaItem.AssetID.Int64] = make([]*model.Media, 0)
+		}
+		mediaByAssetID[mediaItem.AssetID.Int64] = append(
+			mediaByAssetID[mediaItem.AssetID.Int64],
+			mediaItem,
+		)
+	}
+
+	for _, asset := range assets {
+		asset.Media = mediaByAssetID[asset.ID]
+	}
+
+	return nil
+}

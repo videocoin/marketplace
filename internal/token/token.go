@@ -38,15 +38,11 @@ func ToMetadata(asset *model.Asset) *Metadata {
 		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
 
-	if asset.ThumbnailCID.Valid {
-		resp.ThumbnailURL = asset.GetThumbnailURL()
-		resp.IPFSThumbnailURL = asset.GetIpfsThumbnailURL()
-	}
+	resp.ThumbnailURL = asset.GetThumbnailURL()
+	resp.IPFSThumbnailURL = asset.GetIpfsThumbnailURL()
 
-	if asset.EncryptedCID.Valid {
-		resp.EncryptedURL = asset.GetEncryptedURL()
-		resp.IPFSEncryptedURL = asset.GetIpfsEncryptedURL()
-	}
+	resp.EncryptedURL = asset.GetEncryptedURL()
+	resp.IPFSEncryptedURL = asset.GetIpfsEncryptedURL()
 
 	return resp
 }

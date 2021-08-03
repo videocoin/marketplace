@@ -72,14 +72,13 @@ type AssetCollectionResponse struct {
 }
 
 type MediaResponse struct {
-	ID          string                `json:"id"`
-	ContentType string                `json:"content_type"`
-	MediaType   string                `json:"media_type"`
-	Status      model.MediaStatus     `json:"status"`
-	URL         string                `json:"url"`
-	Creator     *AccountResponse      `json:"creator"`
-	Visibility  model.MediaVisibility `json:"visibility"`
-	Featured    bool                  `json:"featured"`
+	ID          string            `json:"id"`
+	ContentType string            `json:"content_type"`
+	MediaType   string            `json:"media_type"`
+	Status      model.MediaStatus `json:"status"`
+	URL         string            `json:"url"`
+	Creator     *AccountResponse  `json:"creator"`
+	Featured    bool              `json:"featured"`
 }
 
 type AssetResponse struct {
@@ -203,7 +202,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 	resp := &AssetResponse{
 		ID:          asset.ID,
 		TokenID:     pointer.ToString(strconv.FormatInt(asset.ID, 10)),
-		ContentType: asset.ContentType,
+		ContentType: asset.GetContentType(),
 		Status:      asset.Status,
 		Contract:    contract,
 		URL:         asset.GetURL(),
@@ -237,15 +236,11 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
 
-	if asset.ThumbnailCID.Valid {
-		resp.ThumbnailURL = asset.GetThumbnailURL()
-		resp.IPFSThumbnailURL = asset.GetIpfsThumbnailURL()
-	}
+	resp.ThumbnailURL = asset.GetThumbnailURL()
+	resp.IPFSThumbnailURL = asset.GetIpfsThumbnailURL()
 
-	if asset.EncryptedCID.Valid {
-		resp.EncryptedURL = asset.GetEncryptedURL()
-		resp.IPFSEncryptedURL = asset.GetIpfsEncryptedURL()
-	}
+	resp.EncryptedURL = asset.GetEncryptedURL()
+	resp.IPFSEncryptedURL = asset.GetIpfsEncryptedURL()
 
 	if asset.CreatedBy != nil {
 		resp.Creator = toAccountResponse(asset.CreatedBy)
@@ -373,7 +368,6 @@ func toMediaResponse(media *model.Media) *MediaResponse {
 		MediaType:   media.MediaType,
 		Status:      media.Status,
 		URL:         media.GetURL(),
-		Visibility:  media.Visibility,
 		Featured:    media.Featured,
 	}
 
