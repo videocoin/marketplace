@@ -71,6 +71,7 @@ func (s *Server) createAsset(c echo.Context) error {
 	req := new(CreateAssetRequest)
 	err := c.Bind(req)
 	if err != nil {
+		logger.WithError(err).Warning("failed to bind request")
 		return echo.ErrBadRequest
 	}
 
@@ -149,10 +150,10 @@ func (s *Server) createAsset(c echo.Context) error {
 		DRMKeyID: token.GenerateDRMKeyID(account),
 		EK:       ek,
 
-		ContractAddress:  dbr.NewNullString(strings.ToLower(s.minter.ContractAddress().Hex())),
-		OnSale:           false,
-		Royalty:          req.Royalty,
-		InstantSalePrice: req.InstantSalePrice,
+		ContractAddress: dbr.NewNullString(strings.ToLower(s.minter.ContractAddress().Hex())),
+		OnSale:          false,
+		Royalty:         req.Royalty,
+		Price:           req.InstantSalePrice,
 	}
 
 	err = s.ds.Assets.Create(ctx, asset)
@@ -378,7 +379,6 @@ func (s *Server) getAsset(c echo.Context) error {
 		return err
 	}
 	asset.Owner = owner
-
 
 	media, err := s.ds.Media.ListByAssetID(ctx, asset.ID)
 	if err != nil {

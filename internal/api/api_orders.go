@@ -84,11 +84,11 @@ func (s *Server) postOrder(c echo.Context) error {
 		}
 
 		price := ethutil.WeiToEther(basePrice)
-
+		priceFloat, _ := price.Float64()
 		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			InstantSalePrice: pointer.ToString(price.String()),
-			OnSale:           pointer.ToBool(true),
-			Status:           pointer.ToString(string(model.AssetStatusReady)),
+			Price:  pointer.ToFloat64(priceFloat),
+			OnSale: pointer.ToBool(true),
+			Status: pointer.ToString(string(model.AssetStatusReady)),
 		})
 		if err != nil {
 			return err

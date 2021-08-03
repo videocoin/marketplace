@@ -106,8 +106,8 @@ type AssetResponse struct {
 	DRMKey     *string                  `json:"drm_key"`
 	Collection *AssetCollectionResponse `json:"collection"`
 
-	OnSale           bool   `json:"on_sale"`
-	InstantSalePrice string `json:"instant_sale_price"`
+	OnSale           bool    `json:"on_sale"`
+	InstantSalePrice float64 `json:"instant_sale_price"`
 
 	Sold bool `json:"sold"`
 
@@ -217,7 +217,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			DevSellerFeeBasisPoints:     "0",
 		},
 		OnSale:           asset.OnSale,
-		InstantSalePrice: asset.InstantSalePrice,
+		InstantSalePrice: asset.Price,
 		Sold:             !asset.OnSale && asset.StatusIsTransferred(),
 	}
 

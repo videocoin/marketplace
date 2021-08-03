@@ -59,9 +59,9 @@ type Asset struct {
 	ContractAddress dbr.NullString `db:"contract_address"`
 	MintTxID        dbr.NullString `db:"mint_tx_id"`
 
-	OnSale           bool   `db:"on_sale"`
-	InstantSalePrice string `db:"instant_sale_price"`
-	Royalty          uint   `db:"royalty"`
+	OnSale  bool    `db:"on_sale"`
+	Price   float64 `db:"price"`
+	Royalty uint    `db:"royalty"`
 
 	YTVideoLink dbr.NullString `db:"yt_video_link"`
 	YTVideoID   dbr.NullString `db:"yt_video_id"`

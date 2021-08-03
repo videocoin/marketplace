@@ -16,14 +16,14 @@ var (
 )
 
 type AssetUpdatedFields struct {
-	Name             *string
-	Desc             *string
-	YTVideoLink      *string
-	ContractAddress  *string
-	MintTxID         *string
-	OnSale           *bool
-	InstantSalePrice *string
-	Royalty          *uint
+	Name            *string
+	Desc            *string
+	YTVideoLink     *string
+	ContractAddress *string
+	MintTxID        *string
+	OnSale          *bool
+	Price           *float64
+	Royalty         *uint
 
 	DRMKey   *string
 	DRMKeyID *string
@@ -78,7 +78,7 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 		"root_key", "key", "thumbnail_key", "encrypted_key",
 		"cid", "thumbnail_cid",
 		"drm_key", "drm_key_id", "ek",
-		"contract_address", "on_sale", "royalty", "instant_sale_price",
+		"contract_address", "on_sale", "royalty", "price",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -241,9 +241,9 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		asset.Royalty = *fields.Royalty
 	}
 
-	if fields.InstantSalePrice != nil {
-		stmt.Set("instant_sale_price", *fields.InstantSalePrice)
-		asset.InstantSalePrice = *fields.InstantSalePrice
+	if fields.Price != nil {
+		stmt.Set("price", *fields.Price)
+		asset.Price = *fields.Price
 	}
 
 	if fields.DRMKeyID != nil {
