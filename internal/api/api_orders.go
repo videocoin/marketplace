@@ -161,6 +161,19 @@ func (s *Server) postOrder(c echo.Context) error {
 		}
 	}
 
+	if order.Side == wyvern.Sell {
+		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+			OnSale: pointer.ToBool(true),
+		})
+		if err != nil {
+			s.logger.
+				WithField("asset_id", asset.ID).
+				WithError(err).
+				Error("failed to put on sale")
+			return err
+		}
+	}
+
 	return c.JSON(http.StatusOK, resp)
 }
 

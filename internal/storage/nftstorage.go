@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
 type NftStorageResponseValue struct {
@@ -29,18 +32,27 @@ func NewNftStorageClient(apiKey string) *NftStorageClient {
 }
 
 func (s *NftStorageClient) PushPath(path string, src io.Reader) (string, error) {
+	p := strings.Split(path, "/")
+	filename := p[len(p)-1]
+
 	body := &bytes.Buffer{}
-	_, err := io.Copy(body, src)
+	w := multipart.NewWriter(body)
+	part, _ := w.CreateFormFile("file", filepath.Base(filename))
+	_, err := io.Copy(part, src)
+	if err != nil {
+		return "", err
+	}
+	_ = w.Close()
 
 	req, err := http.NewRequest("POST", "https://api.nft.storage/upload", body)
-	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.apiKey))
-
+	req.Header.Set("Content-Type", w.FormDataContentType())
 	nsCli := &http.Client{}
 	resp, err := nsCli.Do(req)
 	if err != nil {
 		return "", err
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("failed to upload file to nftstorage, returned status: %d", resp.StatusCode)
 	}

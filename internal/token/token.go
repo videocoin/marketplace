@@ -11,19 +11,19 @@ type Metadata struct {
 	Name             *string `json:"name"`
 	Desc             *string `json:"description"`
 	URL              string  `json:"url"`
-	ThumbnailURL     *string `json:"thumbnail_url"`
-	EncryptedURL     *string `json:"encrypted_url"`
-	IPFSURL          string  `json:"ipfs_url"`
-	IPFSThumbnailURL *string `json:"ipfs_thumbnail_url"`
-	IPFSEncryptedURL *string `json:"ipfs_encrypted_url"`
+	ThumbnailUrl     *string `json:"thumbnail_url"`
+	EncryptedUrl     *string `json:"encrypted_url"`
+	IpfsUrl          string  `json:"ipfs_url"`
+	IpfsThumbnailUrl *string `json:"ipfs_thumbnail_url"`
+	IpfsEncryptedUrl *string `json:"ipfs_encrypted_url"`
 	DRMKey           *string `json:"drm_key"`
 }
 
 func ToMetadata(asset *model.Asset) *Metadata {
 	resp := &Metadata{
 		ID:      asset.ID,
-		URL:     asset.GetURL(),
-		IPFSURL: asset.GetIpfsURL(),
+		URL:     asset.GetUrl(),
+		IpfsUrl: asset.GetIpfsUrl(),
 	}
 
 	if asset.DRMKey != "" {
@@ -38,16 +38,16 @@ func ToMetadata(asset *model.Asset) *Metadata {
 		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
 
-	resp.ThumbnailURL = asset.GetThumbnailURL()
-	resp.IPFSThumbnailURL = asset.GetIpfsThumbnailURL()
+	resp.ThumbnailUrl = asset.GetThumbnailUrl()
+	resp.IpfsThumbnailUrl = asset.GetIpfsThumbnailUrl()
 
-	resp.EncryptedURL = asset.GetEncryptedURL()
-	resp.IPFSEncryptedURL = asset.GetIpfsEncryptedURL()
+	resp.EncryptedUrl = asset.GetEncryptedUrl()
+	resp.IpfsEncryptedUrl = asset.GetIpfsEncryptedUrl()
 
 	return resp
 }
 
-func ToTokenJSON(asset *model.Asset) ([]byte, error){
+func ToTokenJSON(asset *model.Asset) ([]byte, error) {
 	meta := ToMetadata(asset)
 	return json.Marshal(meta)
 }

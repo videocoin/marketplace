@@ -99,7 +99,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	logger := mp.logger.WithField("media_id", media.ID)
 
 	if media.IsVideo() {
-		outputPath, err := mp.EncryptVideo(media.GetURL(), ek, kid)
+		outputPath, err := mp.EncryptVideo(media.GetUrl(), ek, kid)
 		if err != nil {
 			return err
 		}

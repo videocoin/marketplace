@@ -152,8 +152,8 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		encryptedMediaPaths := make([]string, 0)
 		for _, media := range mediaItems {
 			if media.IsVideo() {
-				logger.Infof("encrypting media %s", asset.GetURL())
-				encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetURL(), ek, drmKeyID)
+				logger.Infof("encrypting media %s", asset.GetUrl())
+				encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetUrl(), ek, drmKeyID)
 				if err != nil {
 					return fmt.Errorf("failed to encrypt media: %s", err.Error())
 				}
@@ -205,7 +205,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 
 				logger.Info("updating token uri in blockchain")
 
-				tokenUri := asset.GetTokenURL()
+				tokenUri := asset.GetTokenUrl()
 				if tokenUri == nil {
 					return errors.New("empty new token uri")
 				}

@@ -16,6 +16,7 @@ import (
 
 const (
 	IpfsGateway = "https://%s.ipfs.dweb.link"
+	TextileIpnsGateway = "https://%s.textile.space/%s"
 )
 
 type AssetProbe struct {
@@ -104,61 +105,61 @@ func (a *Asset) GetContentType() string {
 	return media.ContentType
 }
 
-func (a *Asset) GetURL() string {
+func (a *Asset) GetUrl() string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil || media.CID.String == "" {
+	if media == nil  {
 		return ""
 	}
 
-	return fmt.Sprintf(IpfsGateway, media.CID.String)
+	return media.GetUrl()
 }
 
-func (a *Asset) GetIpfsURL() string {
+func (a *Asset) GetIpfsUrl() string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil || media.CID.String == "" {
+	if media == nil {
 		return ""
 	}
 
-	return fmt.Sprintf("ipfs://%s", media.CID.String)
+	return media.GetIpfsUrl()
 }
 
-func (a *Asset) GetEncryptedURL() *string {
+func (a *Asset) GetThumbnailUrl() *string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil || media.EncryptedCID.String == "" {
+	if media == nil {
 		return nil
 	}
 
-	return pointer.ToString(fmt.Sprintf(IpfsGateway, media.EncryptedCID.String))
+	return pointer.ToString(media.GetThumbnailUrl())
 }
 
-func (a *Asset) GetIpfsEncryptedURL() *string {
+func (a *Asset) GetIpfsThumbnailUrl() *string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil || media.EncryptedCID.String == "" {
+	if media == nil {
 		return nil
 	}
 
-	return pointer.ToString(fmt.Sprintf("ipfs://%s", media.EncryptedCID.String))
+	return pointer.ToString(media.GetIpfsThumbnailUrl())
 }
 
-func (a *Asset) GetThumbnailURL() *string {
+func (a *Asset) GetEncryptedUrl() *string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil || media.ThumbnailCID.String == "" {
+	if media == nil {
 		return nil
 	}
 
-	return pointer.ToString(fmt.Sprintf(IpfsGateway, media.ThumbnailCID.String))
+	return pointer.ToString(media.GetEncryptedUrl())
 }
 
-func (a *Asset) GetIpfsThumbnailURL() *string {
+func (a *Asset) GetIpfsEncryptedUrl() *string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil || media.ThumbnailCID.String == "" {
+	if media == nil {
 		return nil
 	}
 
-	return pointer.ToString(fmt.Sprintf("ipfs://%s", media.ThumbnailCID.String))
+	return pointer.ToString(media.GetIpfsEncryptedUrl())
 }
 
-func (a *Asset) GetTokenURL() *string {
+func (a *Asset) GetTokenUrl() *string {
 	if a.TokenCID.String != "" {
 		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.TokenCID.String))
 	}

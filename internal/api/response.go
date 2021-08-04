@@ -205,9 +205,9 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		ContentType: asset.GetContentType(),
 		Status:      asset.Status,
 		Contract:    contract,
-		URL:         asset.GetURL(),
-		IPFSURL:     asset.GetIpfsURL(),
-		TokenURL:    asset.GetTokenURL(),
+		URL:         asset.GetUrl(),
+		IPFSURL:     asset.GetIpfsUrl(),
+		TokenURL:    asset.GetTokenUrl(),
 		Collection: &AssetCollectionResponse{
 			CreatedDate:                 asset.CreatedAt,
 			OpenSeaBuyerFeeBasisPoints:  "0",
@@ -236,11 +236,11 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		resp.Desc = pointer.ToString(asset.Desc.String)
 	}
 
-	resp.ThumbnailURL = asset.GetThumbnailURL()
-	resp.IPFSThumbnailURL = asset.GetIpfsThumbnailURL()
+	resp.ThumbnailURL = asset.GetThumbnailUrl()
+	resp.IPFSThumbnailURL = asset.GetIpfsThumbnailUrl()
 
-	resp.EncryptedURL = asset.GetEncryptedURL()
-	resp.IPFSEncryptedURL = asset.GetIpfsEncryptedURL()
+	resp.EncryptedURL = asset.GetEncryptedUrl()
+	resp.IPFSEncryptedURL = asset.GetIpfsEncryptedUrl()
 
 	if asset.CreatedBy != nil {
 		resp.Creator = toAccountResponse(asset.CreatedBy)
@@ -367,7 +367,7 @@ func toMediaResponse(media *model.Media) *MediaResponse {
 		ContentType: media.ContentType,
 		MediaType:   media.MediaType,
 		Status:      media.Status,
-		URL:         media.GetURL(),
+		URL:         media.GetUrl(),
 		Featured:    media.Featured,
 	}
 

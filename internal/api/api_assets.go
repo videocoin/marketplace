@@ -130,6 +130,8 @@ func (s *Server) createAsset(c echo.Context) error {
 		return err
 	}
 
+	asset.Media = mediaItems
+
 	go func() {
 		for _, media := range mediaItems {
 			if media.Featured {
@@ -168,7 +170,7 @@ func (s *Server) createAsset(c echo.Context) error {
 			return
 		}
 
-		tokenURI = asset.GetTokenURL()
+		tokenURI = asset.GetTokenUrl()
 
 		logger.WithField("token_uri", tokenURI)
 
@@ -204,7 +206,6 @@ func (s *Server) createAsset(c echo.Context) error {
 
 		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
 			Status: pointer.ToString(string(model.MediaStatusReady)),
-			OnSale: pointer.ToBool(true),
 		})
 		if err != nil {
 			logger.WithError(err).Error("failed to mark asset as ready")

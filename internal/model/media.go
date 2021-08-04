@@ -47,12 +47,58 @@ func GenMediaID() string {
 	return id
 }
 
-func (m *Media) GetURL() string {
-	if m.CID.String != "" {
-		return fmt.Sprintf(IpfsGateway, m.CID.String)
+func (m *Media) GetUrl() string {
+	if m.RootKey != "" {
+		if m.CID.String != "" {
+			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.Key)
+		}
+	} else {
+		if m.CID.String != "" {
+			return fmt.Sprintf(IpfsGateway, m.CID.String)
+		}
 	}
 
 	return ""
+}
+
+func (m *Media) GetIpfsUrl() string {
+	return fmt.Sprintf("ipfs://%s", m.CID.String)
+}
+
+func (m *Media) GetThumbnailUrl() string {
+	if m.RootKey != "" {
+		if m.ThumbnailCID.String != "" {
+			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.ThumbnailKey)
+		}
+	} else {
+		if m.ThumbnailCID.String != "" {
+			return fmt.Sprintf(IpfsGateway, m.ThumbnailCID.String)
+		}
+	}
+
+	return ""
+}
+
+func (m *Media) GetIpfsThumbnailUrl() string {
+	return fmt.Sprintf("ipfs://%s", m.ThumbnailCID.String)
+}
+
+func (m *Media) GetEncryptedUrl() string {
+	if m.RootKey != "" {
+		if m.EncryptedCID.String != "" {
+			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.EncryptedKey)
+		}
+	} else {
+		if m.EncryptedCID.String != "" {
+			return fmt.Sprintf(IpfsGateway, m.EncryptedCID.String)
+		}
+	}
+
+	return ""
+}
+
+func (m *Media) GetIpfsEncryptedUrl() string {
+	return fmt.Sprintf("ipfs://%s", m.EncryptedCID.String)
 }
 
 func (m *Media) IsVideo() bool {
