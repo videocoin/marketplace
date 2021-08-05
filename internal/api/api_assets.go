@@ -134,9 +134,13 @@ func (s *Server) createAsset(c echo.Context) error {
 	}
 
 	asset.Media = mediaItems
+	asset.CreatedBy = account
+	asset.Owner = account
 
 	go func() {
 		for _, media := range mediaItems {
+			media.CreatedBy = asset.CreatedBy
+
 			if media.Featured {
 				continue
 			}

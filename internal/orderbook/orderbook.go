@@ -89,6 +89,12 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return err
 		}
 
+		account, err := book.ds.Accounts.GetByID(ctx, asset.CreatedByID)
+		if err != nil {
+			return err
+		}
+		asset.CreatedBy = account
+
 		mediaItems, err := book.ds.Media.ListByAssetID(ctx, asset.ID)
 		if err != nil {
 			return err
