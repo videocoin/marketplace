@@ -33,6 +33,10 @@ func NewAssetMeta(name, contentType string) *AssetMeta {
 	filename := fmt.Sprintf("original%s", filepath.Ext(name))
 	previewFilename := fmt.Sprintf("preview%s", filepath.Ext(name))
 	encFilename := fmt.Sprintf("encrypted%s", filepath.Ext(name))
+	if strings.HasPrefix(contentType, "video/") ||
+		strings.HasPrefix(contentType, "audio/") {
+		encFilename = fmt.Sprintf("encrypted.mpd")
+	}
 	folder := fmt.Sprintf("a/%s", GenAssetFolderID())
 	tmpFilename := GenAssetFolderID()
 
@@ -55,4 +59,3 @@ func NewAssetMeta(name, contentType string) *AssetMeta {
 		LocalThumbDest:   path.Join("/tmp", tmpFilename+".jpg"),
 	}
 }
-

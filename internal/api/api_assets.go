@@ -3,9 +3,12 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
+	"github.com/videocoin/marketplace/internal/drm"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
 	"math/big"
@@ -94,12 +97,13 @@ func (s *Server) createAsset(c echo.Context) error {
 		}
 	}
 
-	ek := token.GenerateEncryptionKey()
-	drmKey, err := token.GenerateDRMKey(account.EncryptionPublicKey.String, ek)
+	drmKey, drmMeta, err := drm.GenerateDRMKey(account.EncryptionPublicKey.String)
 	if err != nil {
 		logger.WithError(err).Error("failed to generate drm key")
 		return echo.ErrInternalServerError
 	}
+
+	drmMetaJSON, _ := json.Marshal(drmMeta)
 
 	asset := &model.Asset{
 		CreatedByID: account.ID,
@@ -110,9 +114,8 @@ func (s *Server) createAsset(c echo.Context) error {
 		Desc:        dbr.NewNullString(assetDesc),
 		YTVideoLink: dbr.NewNullString(ytLink),
 
-		DRMKey:   drmKey,
-		DRMKeyID: token.GenerateDRMKeyID(account),
-		EK:       ek,
+		DRMKey:  drmKey,
+		DRMMeta: string(drmMetaJSON),
 
 		ContractAddress: dbr.NewNullString(strings.ToLower(s.minter.ContractAddress().Hex())),
 		OnSale:          false,
@@ -138,7 +141,7 @@ func (s *Server) createAsset(c echo.Context) error {
 				continue
 			}
 
-			err = s.mp.EncryptMedia(ctx, media, asset.EK, asset.DRMKeyID)
+			err = s.mp.EncryptMedia(ctx, media, drmMeta)
 			if err != nil {
 				logger.
 					WithError(err).
@@ -151,7 +154,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		tokenURI := pointer.ToString("")
 		tokenJSON, _ := token.ToTokenJSON(asset)
 		tokenCID, err := s.storage.PushPath(
-			strconv.FormatInt(asset.ID, 10),
+			fmt.Sprintf("%d.json", asset.ID),
 			bytes.NewBuffer(tokenJSON),
 		)
 		if err != nil {

@@ -71,3 +71,46 @@ func (s *NftStorageClient) PushPath(path string, src io.Reader) (string, error) 
 
 	return uploadResp.Value.CID, nil
 }
+
+func (s *NftStorageClient) PushPaths(paths []string, sources []io.Reader) (string, error) {
+	body := &bytes.Buffer{}
+	w := multipart.NewWriter(body)
+
+	for idx, path := range paths {
+		p := strings.Split(path, "/")
+		filename := p[len(p)-1]
+		part, _ := w.CreateFormFile("file", filepath.Base(filename))
+		_, err := io.Copy(part, sources[idx])
+		if err != nil {
+			return "", err
+		}
+	}
+	_ = w.Close()
+
+	req, err := http.NewRequest("POST", "https://api.nft.storage/upload", body)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.apiKey))
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	nsCli := &http.Client{}
+	resp, err := nsCli.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to upload file to nftstorage, returned status: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	uploadResp := new(NftStorageUploadResponse)
+	err = json.Unmarshal(b, uploadResp)
+	if err != nil {
+		return "", err
+	}
+
+	return uploadResp.Value.CID, nil
+}

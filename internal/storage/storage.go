@@ -118,6 +118,7 @@ func (s *Storage) Upload(input string, to string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer f.Close()
 
 	cid, err := s.PushPath(to, f)
 	if err != nil {
@@ -125,4 +126,39 @@ func (s *Storage) Upload(input string, to string) (string, error) {
 	}
 
 	return cid, nil
+}
+
+func (s *Storage) MultiUpload(inputs []string, to []string) (string, error) {
+	cids := make([]string, 0)
+	if len(inputs) != len(to) {
+		return "", errors.New("different number of input/output paths")
+	}
+
+	if s.backend == Textile {
+		for idx, input := range inputs {
+			cid, err := s.Upload(input, to[idx])
+			if err != nil {
+				return "", err
+			}
+			cids = append(cids, cid)
+		}
+	}
+
+	if s.backend == NftStorage {
+		srcs := make([]io.Reader, 0)
+		for _, input := range inputs {
+			f, err := os.Open(input)
+			if err != nil {
+				return "", err
+			}
+			srcs = append(srcs, f)
+		}
+		cid, err := s.nsCli.PushPaths(inputs, srcs)
+		if err != nil {
+			return "", err
+		}
+		cids = append(cids, cid)
+	}
+
+	return cids[0], nil
 }

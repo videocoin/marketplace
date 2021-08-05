@@ -3,12 +3,14 @@ package orderbook
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/AlekSi/pointer"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/drm"
 	"github.com/videocoin/marketplace/internal/mediaprocessor"
 	"github.com/videocoin/marketplace/internal/minter"
 	"github.com/videocoin/marketplace/internal/model"
@@ -126,34 +128,28 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 			return fmt.Errorf("failed to mark asset as transferring: %s", err)
 		}
 
-		ek := token.GenerateEncryptionKey()
-		drmKey, err := token.GenerateDRMKey(newOwner.EncryptionPublicKey.String, ek)
+		drmKey, drmMeta, err := drm.GenerateDRMKey(newOwner.EncryptionPublicKey.String)
 		if err != nil {
 			return fmt.Errorf("failed to generate drm key: %s", err)
 		}
-		drmKeyID := token.GenerateDRMKeyID(newOwner)
+		drmMetaJSON, _ := json.Marshal(drmMeta)
 
 		assetFields := datastore.AssetUpdatedFields{
-			DRMKey:   pointer.ToString(drmKey),
-			DRMKeyID: pointer.ToString(drmKeyID),
-			EK:       pointer.ToString(ek),
-			OwnerID:  pointer.ToInt64(newOwner.ID),
-			OnSale:   pointer.ToBool(false),
+			DRMKey:  pointer.ToString(drmKey),
+			DRMMeta: pointer.ToString(string(drmMetaJSON)),
+			OwnerID: pointer.ToInt64(newOwner.ID),
+			OnSale:  pointer.ToBool(false),
 		}
 		err = book.ds.Assets.Update(ctx, asset, assetFields)
 		if err != nil {
 			return fmt.Errorf("failed to update asset: %s", err)
 		}
 
-		logger = logger.
-			WithField("new_drm_key", drmKey).
-			WithField("new_drm_key_id", drmKeyID)
-
 		encryptedMediaPaths := make([]string, 0)
 		for _, media := range mediaItems {
 			if media.IsVideo() {
 				logger.Infof("encrypting media %s", asset.GetUrl())
-				encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetUrl(), ek, drmKeyID)
+				encryptedMediaPath, err := book.mp.EncryptVideo(asset.GetUrl(), drmMeta)
 				if err != nil {
 					return fmt.Errorf("failed to encrypt media: %s", err.Error())
 				}

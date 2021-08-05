@@ -26,7 +26,7 @@ type AssetUpdatedFields struct {
 	Royalty         *uint
 	Status          *string
 	DRMKey          *string
-	DRMKeyID        *string
+	DRMMeta         *string
 	EK              *string
 	OwnerID         *int64
 	TokenCID        *string
@@ -67,7 +67,7 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 	cols := []string{
 		"created_at", "created_by_id", "owner_id", "status",
 		"name", "description", "yt_video_link",
-		"drm_key", "drm_key_id", "ek",
+		"drm_key", "drm_meta",
 		"contract_address", "on_sale", "royalty", "price",
 	}
 	err = tx.
@@ -236,19 +236,14 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		asset.Price = *fields.Price
 	}
 
-	if fields.DRMKeyID != nil {
-		stmt.Set("drm_key_id", *fields.DRMKeyID)
-		asset.DRMKeyID = *fields.DRMKeyID
+	if fields.DRMMeta != nil {
+		stmt.Set("drm_meta", *fields.DRMMeta)
+		asset.DRMMeta = *fields.DRMMeta
 	}
 
 	if fields.DRMKey != nil {
 		stmt.Set("drm_key", *fields.DRMKey)
 		asset.DRMKey = *fields.DRMKey
-	}
-
-	if fields.EK != nil {
-		stmt.Set("ek", *fields.EK)
-		asset.EK = *fields.EK
 	}
 
 	if fields.OwnerID != nil {

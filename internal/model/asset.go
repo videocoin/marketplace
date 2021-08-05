@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/AlekSi/pointer"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gocraft/dbr/v2"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	IpfsGateway = "https://%s.ipfs.dweb.link"
+	IpfsGateway        = "https://%s.ipfs.dweb.link/%s"
 	TextileIpnsGateway = "https://%s.textile.space/%s"
 )
 
@@ -66,11 +67,10 @@ type Asset struct {
 	YTVideoLink dbr.NullString `db:"yt_video_link"`
 	YTVideoID   dbr.NullString `db:"yt_video_id"`
 
-	TokenCID     dbr.NullString `db:"token_cid"`
+	TokenCID dbr.NullString `db:"token_cid"`
 
-	DRMKey   string `db:"drm_key"`
-	DRMKeyID string `db:"drm_key_id"`
-	EK       string `db:"ek"`
+	DRMKey  string `db:"drm_key"`
+	DRMMeta string `db:"drm_meta"`
 
 	Status AssetStatus `db:"status"`
 
@@ -107,7 +107,7 @@ func (a *Asset) GetContentType() string {
 
 func (a *Asset) GetUrl() string {
 	media := a.GetFirstPrivateMedia()
-	if media == nil  {
+	if media == nil {
 		return ""
 	}
 
@@ -160,8 +160,19 @@ func (a *Asset) GetIpfsEncryptedUrl() *string {
 }
 
 func (a *Asset) GetTokenUrl() *string {
+	media := a.GetFirstPrivateMedia()
+	if media == nil {
+		return nil
+	}
+
 	if a.TokenCID.String != "" {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, a.TokenCID.String))
+		if media.RootKey != "" {
+			url := fmt.Sprintf(IpfsGateway, a.TokenCID.String, "")
+			url = strings.TrimSuffix(url, "/")
+			return pointer.ToString(url)
+		} else {
+			return pointer.ToString(fmt.Sprintf(IpfsGateway, a.TokenCID.String, fmt.Sprintf("%d.json", a.ID)))
+		}
 	}
 
 	return nil
@@ -173,8 +184,4 @@ func GenAssetFolderID() string {
 		random.RandomString(6),
 		strconv.FormatInt(time.Now().UnixNano(), 10),
 	)
-}
-
-func MakeIPFSLink(cid string) string {
-	return fmt.Sprintf(IpfsGateway, cid)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/pkg/uuid4"
+	"path/filepath"
 	"time"
 )
 
@@ -54,7 +55,7 @@ func (m *Media) GetUrl() string {
 		}
 	} else {
 		if m.CID.String != "" {
-			return fmt.Sprintf(IpfsGateway, m.CID.String)
+			return fmt.Sprintf(IpfsGateway, m.CID.String, filepath.Base(m.Key))
 		}
 	}
 
@@ -62,7 +63,7 @@ func (m *Media) GetUrl() string {
 }
 
 func (m *Media) GetIpfsUrl() string {
-	return fmt.Sprintf("ipfs://%s", m.CID.String)
+	return fmt.Sprintf("ipfs://%s/%s", m.CID.String, filepath.Base(m.Key))
 }
 
 func (m *Media) GetThumbnailUrl() string {
@@ -72,7 +73,7 @@ func (m *Media) GetThumbnailUrl() string {
 		}
 	} else {
 		if m.ThumbnailCID.String != "" {
-			return fmt.Sprintf(IpfsGateway, m.ThumbnailCID.String)
+			return fmt.Sprintf(IpfsGateway, m.ThumbnailCID.String, filepath.Base(m.ThumbnailKey))
 		}
 	}
 
@@ -80,7 +81,10 @@ func (m *Media) GetThumbnailUrl() string {
 }
 
 func (m *Media) GetIpfsThumbnailUrl() string {
-	return fmt.Sprintf("ipfs://%s", m.ThumbnailCID.String)
+	if m.ThumbnailCID.String != "" {
+		return fmt.Sprintf("ipfs://%s/%s", m.ThumbnailCID.String, filepath.Base(m.ThumbnailKey))
+	}
+	return ""
 }
 
 func (m *Media) GetEncryptedUrl() string {
@@ -90,7 +94,7 @@ func (m *Media) GetEncryptedUrl() string {
 		}
 	} else {
 		if m.EncryptedCID.String != "" {
-			return fmt.Sprintf(IpfsGateway, m.EncryptedCID.String)
+			return fmt.Sprintf(IpfsGateway, m.EncryptedCID.String, filepath.Base(m.EncryptedKey))
 		}
 	}
 
@@ -98,7 +102,7 @@ func (m *Media) GetEncryptedUrl() string {
 }
 
 func (m *Media) GetIpfsEncryptedUrl() string {
-	return fmt.Sprintf("ipfs://%s", m.EncryptedCID.String)
+	return fmt.Sprintf("ipfs://%s/%s", m.EncryptedCID.String, filepath.Base(m.EncryptedKey))
 }
 
 func (m *Media) IsVideo() bool {
