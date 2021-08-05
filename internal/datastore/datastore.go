@@ -119,6 +119,10 @@ func JoinAccountsToAsset(ctx context.Context, assets []*model.Asset, accounts []
 }
 
 func (ds *Datastore) JoinMediaToAssets(ctx context.Context, assets []*model.Asset) error {
+	if len(assets) <= 0 {
+		return nil
+	}
+
 	assetIds := make([]int64, 0)
 	for _, asset := range assets {
 		assetIds = append(assetIds, asset.ID)
