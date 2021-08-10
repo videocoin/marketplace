@@ -10,12 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/pkg/random"
-	"gopkg.in/vansante/go-ffprobe.v2"
 )
 
 const (
+	DwebIpfsGateway    = "https://%s.ipfs.dweb.link"
 	IpfsGateway        = "https://%s.ipfs.dweb.link/%s"
 	TextileIpnsGateway = "https://%s.textile.space/%s"
 )

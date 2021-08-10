@@ -32,7 +32,7 @@ func (u *Account) Id() int64 {
 
 func (u *Account) GetImageURL() *string {
 	if u.ImageCID.String != "" {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, u.ImageCID.String))
+		return pointer.ToString(fmt.Sprintf(DwebIpfsGateway, u.ImageCID.String))
 	}
 
 	return nil
@@ -40,7 +40,7 @@ func (u *Account) GetImageURL() *string {
 
 func (u *Account) GetCoverURL() *string {
 	if u.CoverCID.String != "" {
-		return pointer.ToString(fmt.Sprintf(IpfsGateway, u.CoverCID.String))
+		return pointer.ToString(fmt.Sprintf(DwebIpfsGateway, u.CoverCID.String))
 	}
 
 	return nil
