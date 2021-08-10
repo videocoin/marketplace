@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/pkg/random"
+	"gopkg.in/vansante/go-ffprobe.v2"
 )
 
 const (
