@@ -12,7 +12,7 @@ RUN make build
 FROM ubuntu:20.04
 
 RUN apt-get update
-RUN apt-get install -y ca-certificates ffmpeg
+RUN apt-get install -y ca-certificates ffmpeg gpac
 
 COPY --from=builder /go/src/github.com/videocoin/marketplace/api /api
 COPY --from=builder /go/src/github.com/videocoin/marketplace/bin/marketplace /marketplace
