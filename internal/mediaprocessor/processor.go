@@ -90,11 +90,11 @@ func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata) (
 	outputMPDPath := filepath.Join(tmpFolder, "encrypted.mpd")
 	drmXmlPath := filepath.Join(tmpFolder, "drm.xml")
 
-	//defer func() {
-	//	_ = os.Remove(inputPath)
-	//	_ = os.Remove(outputEncPath)
-	//	_ = os.Remove(drmXmlPath)
-	//}()
+	defer func() {
+		_ = os.Remove(inputPath)
+		_ = os.Remove(outputEncPath)
+		_ = os.Remove(drmXmlPath)
+	}()
 
 	logger.
 		WithField("input_uri", inputURI).
@@ -257,10 +257,10 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 		segmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "segment_init.mp4", -1)
 		segmentPath := strings.Replace(outputPath, "encrypted.mpd", "segment_init.mp4", -1)
 
-		//defer func() {
-		//	_ = os.Remove(outputPath)
-		//	_ = os.Remove(segmentPath)
-		//}()
+		defer func() {
+			_ = os.Remove(outputPath)
+			_ = os.Remove(segmentPath)
+		}()
 
 		outputPaths := []string{
 			outputPath,
