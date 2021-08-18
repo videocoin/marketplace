@@ -1,6 +1,9 @@
 NAME=marketplace
 VERSION?=$$(git rev-parse HEAD)
 
+REGISTRY_SERVER?=registry.videocoin.net
+REGISTRY_PROJECT?=cloud
+
 default: build
 version:
 	@echo ${VERSION}
@@ -31,3 +34,11 @@ db-up:
 
 db-down:
 	goose -dir migrations postgres ${DB_URI} down
+
+docker-build:
+	docker build -t ${REGISTRY_SERVER}/${REGISTRY_PROJECT}/${NAME}:${VERSION} -f Dockerfile .
+
+docker-push:
+	docker push ${REGISTRY_SERVER}/${REGISTRY_PROJECT}/${NAME}:${VERSION}
+
+release: docker-build docker-push
