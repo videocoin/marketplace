@@ -9,7 +9,7 @@ ENV GOARCH=amd64
 RUN make build
 
 
-FROM ubuntu:20.04
+FROM ubuntu:21.04
 
 RUN apt-get update
 RUN apt-get install -y ca-certificates ffmpeg gpac
