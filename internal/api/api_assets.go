@@ -68,14 +68,6 @@ func (s *Server) createAsset(c echo.Context) error {
 			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not available"})
 		}
 
-		if mediaItem.Featured {
-			err = s.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-				Featured: pointer.ToBool(true),
-			})
-
-			return err
-		}
-
 		mediaItems = append(mediaItems, media)
 	}
 
@@ -178,14 +170,12 @@ func (s *Server) createAsset(c echo.Context) error {
 		}
 
 		tokenURI = asset.GetTokenUrl()
-
-		logger.WithField("token_uri", tokenURI)
-
 		if tokenURI == nil {
 			logger.WithError(err).Error("failed to get asset token uri")
 			return
 		}
 
+		logger = logger.WithField("token_uri", tokenURI)
 		logger.Info("minting")
 
 		mintTx, err := s.minter.Mint(
