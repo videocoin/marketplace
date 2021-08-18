@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"github.com/AlekSi/pointer"
+	"github.com/gocraft/dbr/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
@@ -35,6 +36,7 @@ func (s *Server) uploadMediaFile(ctx context.Context, file *multipart.FileHeader
 
 func (s *Server) handleUploadMediaFile(ctx context.Context, file *multipart.FileHeader) (*model.AssetMeta, error) {
 	meta := model.NewAssetMeta(file.Filename, file.Header.Get("Content-Type"))
+	meta.Size = file.Size
 
 	err := preUploadValidate(file)
 	if err != nil {
@@ -63,7 +65,7 @@ func (s *Server) uploadMedia(c echo.Context) error {
 		WithField("address", account.Address)
 	logger.Info("uploading media")
 
-	featured, _ := strconv.ParseBool(c.Param("featured"))
+	featured, _ := strconv.ParseBool(c.FormValue("featured"))
 	file, err := c.FormFile("file")
 	if err != nil {
 		logger.WithError(err).Error("failed to form file")
@@ -79,6 +81,9 @@ func (s *Server) uploadMedia(c echo.Context) error {
 	}
 
 	media := &model.Media{
+		Name:         dbr.NewNullString(meta.Name),
+		Duration:     meta.Duration,
+		Size:         meta.Size,
 		CreatedByID:  account.ID,
 		ContentType:  meta.ContentType,
 		MediaType:    meta.MediaType(),

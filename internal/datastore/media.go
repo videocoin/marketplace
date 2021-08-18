@@ -62,8 +62,8 @@ func (ds *MediaDatastore) Create(ctx context.Context, media *model.Media) error 
 	}
 
 	cols := []string{
-		"id", "created_at", "created_by_id", "content_type", "media_type", "status",
-		"featured", "root_key", "key", "thumbnail_key", "encrypted_key",
+		"id", "name", "created_at", "created_by_id", "content_type", "media_type", "status",
+		"featured", "root_key", "key", "thumbnail_key", "encrypted_key", "duration", "size",
 	}
 	err = tx.
 		InsertInto(ds.table).

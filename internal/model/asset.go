@@ -75,6 +75,8 @@ type Asset struct {
 
 	Status AssetStatus `db:"status"`
 
+	Locked bool `db:"locked"`
+
 	CreatedBy *Account `db:"-"`
 	Owner     *Account `db:"-"`
 	Media     []*Media `db:"-"`

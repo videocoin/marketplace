@@ -12,8 +12,10 @@ import (
 type AssetMeta struct {
 	ContentType      string
 	Probe            *ffprobe.ProbeData
+	Duration         int64
 	File             *os.File
 	Name             string
+	Size             int64
 	FolderID         string
 	LocalDest        string
 	LocalPreviewDest string

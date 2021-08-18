@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
+	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/drm"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
@@ -17,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/AlekSi/pointer"
-	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/model"
 )
@@ -101,6 +101,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		CreatedByID: account.ID,
 		OwnerID:     account.ID,
 		Status:      model.AssetStatusProcessing,
+		Locked:      req.Locked,
 
 		Name:        dbr.NewNullString(assetName),
 		Desc:        dbr.NewNullString(assetDesc),
@@ -323,6 +324,10 @@ func (s *Server) getAsset(c echo.Context) error {
 	media, err := s.ds.Media.ListByAssetID(ctx, asset.ID)
 	if err != nil {
 		return err
+	}
+
+	for _, item := range media {
+		item.CreatedBy = asset.CreatedBy
 	}
 
 	asset.Media = media

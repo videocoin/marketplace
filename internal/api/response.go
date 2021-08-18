@@ -72,13 +72,17 @@ type AssetCollectionResponse struct {
 }
 
 type MediaResponse struct {
-	ID          string            `json:"id"`
-	ContentType string            `json:"content_type"`
-	MediaType   string            `json:"media_type"`
-	Status      model.MediaStatus `json:"status"`
-	URL         string            `json:"url"`
-	Creator     *AccountResponse  `json:"creator"`
-	Featured    bool              `json:"featured"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	ContentType  string            `json:"content_type"`
+	MediaType    string            `json:"media_type"`
+	Duration     int64             `json:"duration"`
+	Size         int64             `json:"size"`
+	Status       model.MediaStatus `json:"status"`
+	URL          string            `json:"url"`
+	Creator      *AccountResponse  `json:"creator"`
+	Featured     bool              `json:"featured"`
+	ThumbnailURL string            `json:"thumbnail_url"`
 }
 
 type AssetResponse struct {
@@ -107,6 +111,7 @@ type AssetResponse struct {
 
 	OnSale           bool    `json:"on_sale"`
 	InstantSalePrice float64 `json:"instant_sale_price"`
+	Locked           bool    `json:"locked"`
 
 	Sold bool `json:"sold"`
 
@@ -218,6 +223,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		OnSale:           asset.OnSale,
 		InstantSalePrice: asset.Price,
 		Sold:             !asset.OnSale && asset.StatusIsTransferred(),
+		Locked:           asset.Locked,
 	}
 
 	if asset.DRMKey != "" {
@@ -363,12 +369,16 @@ func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, cou
 
 func toMediaResponse(media *model.Media) *MediaResponse {
 	resp := &MediaResponse{
-		ID:          media.ID,
-		ContentType: media.ContentType,
-		MediaType:   media.MediaType,
-		Status:      media.Status,
-		URL:         media.GetUrl(),
-		Featured:    media.Featured,
+		ID:           media.ID,
+		Name:         media.Name.String,
+		Duration:     media.Duration,
+		Size:         media.Size,
+		ContentType:  media.ContentType,
+		MediaType:    media.MediaType,
+		Status:       media.Status,
+		URL:          media.GetUrl(),
+		ThumbnailURL: media.GetThumbnailUrl(),
+		Featured:     media.Featured,
 	}
 
 	if media.CreatedBy != nil {

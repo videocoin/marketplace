@@ -21,13 +21,16 @@ const (
 )
 
 type Media struct {
-	ID          string          `db:"id"`
-	CreatedAt   *time.Time      `db:"created_at"`
-	CreatedByID int64           `db:"created_by_id"`
-	ContentType string          `db:"content_type"`
-	MediaType   string          `db:"media_type"`
-	Featured    bool            `db:"featured"`
-	Status      MediaStatus     `db:"status"`
+	ID          string         `db:"id"`
+	Name        dbr.NullString `db:"name"`
+	Duration    int64          `db:"duration"`
+	Size        int64          `db:"size"`
+	CreatedAt   *time.Time     `db:"created_at"`
+	CreatedByID int64          `db:"created_by_id"`
+	ContentType string         `db:"content_type"`
+	MediaType   string         `db:"media_type"`
+	Featured    bool           `db:"featured"`
+	Status      MediaStatus    `db:"status"`
 
 	RootKey      string `db:"root_key"`
 	Key          string `db:"key"`
@@ -75,6 +78,10 @@ func (m *Media) GetThumbnailUrl() string {
 		if m.ThumbnailCID.String != "" {
 			return fmt.Sprintf(IpfsGateway, m.ThumbnailCID.String, filepath.Base(m.ThumbnailKey))
 		}
+	}
+
+	if m.MediaType == MediaTypeImage {
+		return m.GetUrl()
 	}
 
 	return ""

@@ -5,6 +5,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"gopkg.in/vansante/go-ffprobe.v2"
 	"mime/multipart"
+	"strconv"
 	"time"
 )
 
@@ -42,6 +43,17 @@ func postUploadValidate(meta *model.AssetMeta) error {
 	}
 
 	meta.Probe = probe
+	audio := probe.FirstAudioStream()
+	if audio != nil {
+		durationFloat, _ := strconv.ParseFloat(audio.Duration, 64)
+		meta.Duration = int64(durationFloat)
+	}
+
+	video := probe.FirstVideoStream()
+	if video != nil {
+		durationFloat, _ := strconv.ParseFloat(video.Duration, 64)
+		meta.Duration = int64(durationFloat)
+	}
 
 	return nil
 }

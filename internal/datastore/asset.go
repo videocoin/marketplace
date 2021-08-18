@@ -69,6 +69,7 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 		"name", "description", "yt_video_link",
 		"drm_key", "drm_meta",
 		"contract_address", "on_sale", "royalty", "price",
+		"locked",
 	}
 	err = tx.
 		InsertInto(ds.table).
