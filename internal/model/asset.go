@@ -19,6 +19,7 @@ const (
 	DwebIpfsGateway    = "https://%s.ipfs.dweb.link"
 	IpfsGateway        = "https://%s.ipfs.dweb.link/%s"
 	TextileIpnsGateway = "https://%s.textile.space/%s"
+	CachedGateway      = "https://storage.googleapis.com/%s/%s"
 )
 
 type AssetProbe struct {

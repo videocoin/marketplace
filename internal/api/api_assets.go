@@ -153,6 +153,7 @@ func (s *Server) createAsset(c echo.Context) error {
 		tokenCID, err := s.storage.PushPath(
 			fmt.Sprintf("%d.json", asset.ID),
 			bytes.NewBuffer(tokenJSON),
+			true,
 		)
 		if err != nil {
 			logger.WithError(err).Error("failed to upload token json to storage")

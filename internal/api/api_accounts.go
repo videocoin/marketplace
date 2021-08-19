@@ -282,7 +282,7 @@ func (s *Server) handleImageData(data string, accountID int64) (string, error) {
 	imageID := random.RandomString(5)
 
 	k := fmt.Sprintf("u/%d/r_%s.jpg", accountID, imageID)
-	cid, err := s.storage.PushPath(k, rcImageJpeg)
+	cid, err := s.storage.PushPath(k, rcImageJpeg, true)
 	if err != nil {
 		return "", err
 	}
@@ -340,7 +340,7 @@ func (s *Server) handleCoverData(data string, accountID int64) (string, error) {
 	imageID := random.RandomString(5)
 
 	k := fmt.Sprintf("u/%d/r_cover_%s.jpg", accountID, imageID)
-	cid, err := s.storage.PushPath(k, rcImageJpeg)
+	cid, err := s.storage.PushPath(k, rcImageJpeg, true)
 	if err != nil {
 		return "", err
 	}

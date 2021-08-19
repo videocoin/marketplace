@@ -16,3 +16,10 @@ func WithNftStorage(config *NftStorageConfig) Option {
 	}
 }
 
+func WithGCPStorage(bucket string) Option {
+	return func(s *Storage) error {
+		s.gcpBucket = bucket
+		return nil
+	}
+}
+

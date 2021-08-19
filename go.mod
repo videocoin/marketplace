@@ -5,7 +5,7 @@ go 1.15
 require (
 	cloud.google.com/go v0.80.0 // indirect
 	cloud.google.com/go/pubsub v1.3.1 // indirect
-	cloud.google.com/go/storage v1.14.0 // indirect
+	cloud.google.com/go/storage v1.14.0
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054 // indirect
@@ -31,7 +31,7 @@ require (
 	github.com/jinzhu/copier v0.2.8
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kevinburke/nacl v0.0.0-20210405173606-cd9060f5f776
-	github.com/kkdai/youtube/v2 v2.6.1
+	github.com/kkdai/youtube/v2 v2.6.1 // indirect
 	github.com/labstack/echo v3.3.10+incompatible // indirect
 	github.com/labstack/echo/v4 v4.2.1
 	github.com/labstack/gommon v0.3.0
@@ -46,7 +46,7 @@ require (
 	github.com/plutov/echo-logrus v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/textileio/go-threads v1.1.0-rc1.0.20210317163541-37a104610bac
 	github.com/textileio/textile/v2 v2.6.8
 	github.com/twystd/tweetnacl-go v0.0.0-20210413205227-681aa97ec383

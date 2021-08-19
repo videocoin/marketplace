@@ -34,6 +34,9 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 	}
 
 	storageOpts := make([]storage.Option, 0)
+	storageOpts = append(storageOpts, storage.WithGCPStorage(cfg.GCPBucket))
+	logger.WithField("gcp_bucket", cfg.GCPBucket).Info("initializing cache storage")
+
 	if cfg.StorageBackend == storage.NftStorage {
 		storageOpts = append(storageOpts, storage.WithNftStorage(&storage.NftStorageConfig{
 			ApiKey: cfg.NftStorageApiKey,

@@ -81,7 +81,7 @@ func (s *Server) uploadMedia(c echo.Context) error {
 	}
 
 	media := &model.Media{
-		Name:         dbr.NewNullString(meta.Name),
+		Name:         dbr.NewNullString(meta.OriginalName),
 		Duration:     meta.Duration,
 		Size:         meta.Size,
 		CreatedByID:  account.ID,
@@ -90,6 +90,7 @@ func (s *Server) uploadMedia(c echo.Context) error {
 		Status:       model.MediaStatusProcessing,
 		Featured:     featured,
 		RootKey:      s.storage.RootPath(),
+		CacheRootKey: dbr.NewNullString(s.storage.CacheRootPath()),
 		Key:          meta.DestKey,
 		ThumbnailKey: meta.DestThumbKey,
 		EncryptedKey: meta.DestEncKey,
@@ -117,7 +118,7 @@ func (s *Server) uploadMedia(c echo.Context) error {
 		}
 		defer f.Close()
 
-		cid, err := s.storage.PushPath(meta.DestKey, f)
+		cid, err := s.storage.PushPath(meta.DestKey, f, featured)
 		if err != nil {
 			logger.WithError(err).Error("failed to push media to storage")
 			return

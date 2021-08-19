@@ -14,6 +14,7 @@ type AssetMeta struct {
 	Probe            *ffprobe.ProbeData
 	Duration         int64
 	File             *os.File
+	OriginalName     string
 	Name             string
 	Size             int64
 	FolderID         string
@@ -48,6 +49,7 @@ func NewAssetMeta(name, contentType string) *AssetMeta {
 	destThumbKey := fmt.Sprintf("%s/thumb.jpg", folder)
 
 	return &AssetMeta{
+		OriginalName:     name,
 		Name:             filename,
 		ContentType:      contentType,
 		FolderID:         folder,

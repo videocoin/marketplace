@@ -17,6 +17,8 @@ type Config struct {
 
 	NftStorageApiKey string `envconfig:"NFTSTORAGE_API_KEY" required:"false"`
 
+	GCPBucket string `envconfig:"GCP_BUCKET" default:"assets-marketplace-dev-videocoin-net"`
+
 	BlockchainURL                string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
 	BlockchainScanFrom           uint64 `envconfig:"BLOCKCHAIN_SCAN_FROM" default:"0"`
 	ERC721ContractAddress        string `envconfig:"ERC721_CONTRACT_ADDRESS"`

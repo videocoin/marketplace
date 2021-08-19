@@ -42,6 +42,7 @@ type MediaMetadata struct {
 	Featured   bool       `json:"featured"`
 	MediaType  string     `json:"media_type"`
 	IPFSData   *IPFSData  `json:"ipfs_data"`
+	CloudData  *IPFSData  `json:"cloud_data"`
 	DateAdded  *time.Time `json:"date_added"`
 	AddedBy    string     `json:"added_by"`
 }
@@ -103,23 +104,47 @@ func ToMetadata(asset *model.Asset) *Metadata {
 			visibility = VisibilityPublic
 		}
 
+		ipfsData := &IPFSData{}
+		cloudData := &IPFSData{}
+
+		if media.Featured {
+			ipfsData = &IPFSData{
+				Public: &MediaData{
+					FullMedia: pointer.ToString(media.GetUrl()),
+					Thumbnail: pointer.ToString(media.GetThumbnailUrl()),
+				},
+			}
+			cloudData = &IPFSData{
+				Public: &MediaData{
+					FullMedia: pointer.ToString(media.GetCachedUrl()),
+					Thumbnail: pointer.ToString(media.GetCachedThumbnailUrl()),
+				},
+			}
+		} else {
+			ipfsData = &IPFSData{
+				Private: &MediaData{
+					FullMedia:      pointer.ToString(media.GetEncryptedUrl()),
+					Thumbnail:      pointer.ToString(media.GetThumbnailUrl()),
+					EncryptedMedia: pointer.ToString(media.GetEncryptedUrl()),
+				},
+			}
+			cloudData = &IPFSData{
+				Private: &MediaData{
+					FullMedia:      pointer.ToString(media.GetCachedEncryptedUrl()),
+					Thumbnail:      pointer.ToString(media.GetCachedThumbnailUrl()),
+					EncryptedMedia: pointer.ToString(media.GetCachedEncryptedUrl()),
+				},
+			}
+		}
+
 		mediaItem := &MediaMetadata{
 			ID:         media.ID,
 			Visibility: visibility,
 			Featured:   media.Featured,
 			MediaType:  media.MediaType,
 			DateAdded:  media.CreatedAt,
-			IPFSData: &IPFSData{
-				Public: &MediaData{
-					FullMedia: pointer.ToString(media.GetUrl()),
-					Thumbnail: pointer.ToString(media.GetThumbnailUrl()),
-				},
-				Private: &MediaData{
-					FullMedia:      pointer.ToString(media.GetEncryptedUrl()),
-					Thumbnail:      pointer.ToString(media.GetThumbnailUrl()),
-					EncryptedMedia: pointer.ToString(media.GetEncryptedUrl()),
-				},
-			},
+			IPFSData:   ipfsData,
+			CloudData:  cloudData,
 		}
 		if media.CreatedBy != nil {
 			mediaItem.AddedBy = media.CreatedBy.Address

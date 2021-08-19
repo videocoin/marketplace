@@ -60,7 +60,7 @@ func (mp *MediaProcessor) GenerateThumbnail(ctx context.Context, media *model.Me
 		_ = os.Remove(meta.LocalThumbDest)
 	}()
 
-	cid, err := mp.storage.PushPath(meta.DestThumbKey, f)
+	cid, err := mp.storage.PushPath(meta.DestThumbKey, f, true)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	logger := mp.logger.WithField("media_id", media.ID)
 
 	if media.IsVideo() {
-		outputPath, err := mp.EncryptVideo(media.GetUrl(), drmMeta)
+		outputPath, err := mp.EncryptVideo(media.GetOriginalUrl(), drmMeta)
 		if err != nil {
 			return err
 		}
@@ -291,7 +291,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	}
 
 	if media.IsAudio() {
-		outputPath, err := mp.EncryptAudio(media.GetUrl(), drmMeta)
+		outputPath, err := mp.EncryptAudio(media.GetOriginalUrl(), drmMeta)
 		if err != nil {
 			return err
 		}
@@ -333,7 +333,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	}
 
 	if media.IsImage() {
-		outputPath, err := mp.EncryptImage(media.GetUrl(), drmMeta)
+		outputPath, err := mp.EncryptImage(media.GetOriginalUrl(), drmMeta)
 		if err != nil {
 			return err
 		}

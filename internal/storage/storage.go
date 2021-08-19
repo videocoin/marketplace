@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"bytes"
+	gcpstorage "cloud.google.com/go/storage"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -29,10 +31,13 @@ type Storage struct {
 	backend          string
 	textileConfig    *TextileConfig
 	nftStorageConfig *NftStorageConfig
+	gcpBucket        string
 	authCtx          context.Context
 	ttCli            *bucketsd.Client
 	ttRoot           *bucketspb.RootResponse
 	nsCli            *NftStorageClient
+	gcpStorage       *gcpstorage.Client
+	gcpBh            *gcpstorage.BucketHandle
 }
 
 func NewStorage(opts ...Option) (*Storage, error) {
@@ -86,6 +91,15 @@ func NewStorage(opts ...Option) (*Storage, error) {
 		s.ttRoot = root
 	}
 
+	if s.gcpBucket != "" {
+		gcpCli, err := gcpstorage.NewClient(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		s.gcpStorage = gcpCli
+		s.gcpBh = s.gcpStorage.Bucket(s.gcpBucket)
+	}
+
 	return s, nil
 }
 
@@ -96,21 +110,52 @@ func (s *Storage) RootPath() string {
 	return ""
 }
 
-func (s *Storage) PushPath(path string, src io.Reader) (string, error) {
-	if s.backend == NftStorage {
-		return s.nsCli.PushPath(path, src)
-	}
+func (s *Storage) CacheRootPath() string {
+	return s.gcpBucket
+}
 
-	if s.backend == Textile {
-		result, _, err := s.ttCli.PushPath(s.authCtx, s.ttRoot.Root.Key, path, src)
+func (s *Storage) PushPath(path string, src io.Reader, public bool) (string, error) {
+	var (
+		buf bytes.Buffer
+		cid string
+	)
+
+	r := io.TeeReader(src, &buf)
+
+	if s.backend == NftStorage {
+		result, err := s.nsCli.PushPath(path, r)
 		if err != nil {
 			return "", err
 		}
-
-		return result.Cid().String(), nil
+		cid = result
+	} else if s.backend == Textile {
+		result, _, err := s.ttCli.PushPath(s.authCtx, s.ttRoot.Root.Key, path, r)
+		if err != nil {
+			return "", err
+		}
+		cid = result.Cid().String()
+	} else {
+		return "", ErrUnknownStorageBackend
 	}
 
-	return "", ErrUnknownStorageBackend
+	if s.gcpBh != nil {
+		w := s.gcpBh.Object(path).NewWriter(context.Background())
+		if public {
+			w.ACL = []gcpstorage.ACLRule{
+				{
+					Entity: gcpstorage.AllUsers,
+					Role:   gcpstorage.RoleReader,
+				},
+			}
+		}
+		_, err := io.Copy(w, &buf)
+		if err != nil {
+			return "", err
+		}
+		_ = w.Close()
+	}
+
+	return cid, nil
 }
 
 func (s *Storage) Upload(input string, to string) (string, error) {
@@ -120,7 +165,7 @@ func (s *Storage) Upload(input string, to string) (string, error) {
 	}
 	defer f.Close()
 
-	cid, err := s.PushPath(to, f)
+	cid, err := s.PushPath(to, f, true)
 	if err != nil {
 		return "", err
 	}

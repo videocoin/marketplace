@@ -205,6 +205,7 @@ func (book *OrderBook) transferAsset(ctx context.Context, asset *model.Asset, ne
 	tokenCID, err := book.storage.PushPath(
 		fmt.Sprintf("%d.json", asset.ID),
 		bytes.NewBuffer(tokenJSON),
+		true,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to upload token json to storage: %s", err)

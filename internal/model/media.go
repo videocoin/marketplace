@@ -32,10 +32,11 @@ type Media struct {
 	Featured    bool           `db:"featured"`
 	Status      MediaStatus    `db:"status"`
 
-	RootKey      string `db:"root_key"`
-	Key          string `db:"key"`
-	ThumbnailKey string `db:"thumbnail_key"`
-	EncryptedKey string `db:"encrypted_key"`
+	RootKey      string         `db:"root_key"`
+	CacheRootKey dbr.NullString `db:"cache_root_key"`
+	Key          string         `db:"key"`
+	ThumbnailKey string         `db:"thumbnail_key"`
+	EncryptedKey string         `db:"encrypted_key"`
 
 	CID          dbr.NullString `db:"cid"`
 	ThumbnailCID dbr.NullString `db:"thumbnail_cid"`
@@ -52,6 +53,24 @@ func GenMediaID() string {
 }
 
 func (m *Media) GetUrl() string {
+	//if !m.Featured {
+	//	return m.GetEncryptedUrl()
+	//}
+
+	if m.RootKey != "" {
+		if m.CID.String != "" {
+			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.Key)
+		}
+	} else {
+		if m.CID.String != "" {
+			return fmt.Sprintf(IpfsGateway, m.CID.String, filepath.Base(m.Key))
+		}
+	}
+
+	return ""
+}
+
+func (m *Media) GetOriginalUrl() string {
 	if m.RootKey != "" {
 		if m.CID.String != "" {
 			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.Key)
@@ -70,6 +89,10 @@ func (m *Media) GetIpfsUrl() string {
 }
 
 func (m *Media) GetThumbnailUrl() string {
+	if m.MediaType == MediaTypeImage {
+		return m.GetUrl()
+	}
+
 	if m.RootKey != "" {
 		if m.ThumbnailCID.String != "" {
 			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.ThumbnailKey)
@@ -78,10 +101,6 @@ func (m *Media) GetThumbnailUrl() string {
 		if m.ThumbnailCID.String != "" {
 			return fmt.Sprintf(IpfsGateway, m.ThumbnailCID.String, filepath.Base(m.ThumbnailKey))
 		}
-	}
-
-	if m.MediaType == MediaTypeImage {
-		return m.GetUrl()
 	}
 
 	return ""
@@ -110,6 +129,34 @@ func (m *Media) GetEncryptedUrl() string {
 
 func (m *Media) GetIpfsEncryptedUrl() string {
 	return fmt.Sprintf("ipfs://%s/%s", m.EncryptedCID.String, filepath.Base(m.EncryptedKey))
+}
+
+func (m *Media) GetCachedUrl() string {
+	if m.CacheRootKey.String != "" {
+		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.Key)
+	}
+
+	return ""
+}
+
+func (m *Media) GetCachedThumbnailUrl() string {
+	if m.MediaType == MediaTypeImage {
+		return m.GetCachedUrl()
+	}
+
+	if m.CacheRootKey.String != "" {
+		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.ThumbnailKey)
+	}
+
+	return ""
+}
+
+func (m *Media) GetCachedEncryptedUrl() string {
+	if m.CacheRootKey.String != "" {
+		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.EncryptedKey)
+	}
+
+	return ""
 }
 
 func (m *Media) IsVideo() bool {
