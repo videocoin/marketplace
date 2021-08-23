@@ -53,9 +53,9 @@ func GenMediaID() string {
 }
 
 func (m *Media) GetUrl() string {
-	//if !m.Featured {
-	//	return m.GetEncryptedUrl()
-	//}
+	if !m.Featured {
+		return m.GetEncryptedUrl()
+	}
 
 	if m.RootKey != "" {
 		if m.CID.String != "" {
