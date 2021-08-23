@@ -152,7 +152,7 @@ func (s *Server) uploadMedia(c echo.Context) error {
 		}
 	}()
 
-	resp := toMediaResponse(media)
+	resp := toMediaResponse(media, !media.Featured)
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -174,7 +174,7 @@ func (s *Server) getMedia(c echo.Context) error {
 
 	media.CreatedBy = account
 
-	resp := toMediaResponse(media)
+	resp := toMediaResponse(media, !media.Featured)
 
 	return c.JSON(http.StatusOK, resp)
 }

@@ -173,7 +173,7 @@ func (book *OrderBook) transferAsset(ctx context.Context, asset *model.Asset, ne
 			WithField("media_id", media.ID).
 			Info("encrypting media")
 
-		assetMeta := model.NewAssetMeta(path.Base(media.GetUrl()), media.ContentType)
+		assetMeta := model.NewAssetMeta(path.Base(media.GetUrl(false)), media.ContentType)
 		newEncryptedKey := assetMeta.DestEncKey
 		media.EncryptedKey = newEncryptedKey
 		err = book.mp.EncryptMedia(ctx, media, drmMeta)

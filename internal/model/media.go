@@ -52,8 +52,8 @@ func GenMediaID() string {
 	return id
 }
 
-func (m *Media) GetUrl() string {
-	if !m.Featured {
+func (m *Media) GetUrl(locked bool) string {
+	if !m.Featured && locked {
 		return m.GetEncryptedUrl()
 	}
 
@@ -89,10 +89,6 @@ func (m *Media) GetIpfsUrl() string {
 }
 
 func (m *Media) GetThumbnailUrl() string {
-	if m.MediaType == MediaTypeImage {
-		return m.GetUrl()
-	}
-
 	if m.RootKey != "" {
 		if m.ThumbnailCID.String != "" {
 			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.ThumbnailKey)

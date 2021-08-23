@@ -259,7 +259,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 	}
 
 	for _, media := range asset.Media {
-		resp.Media = append(resp.Media, toMediaResponse(media))
+		resp.Media = append(resp.Media, toMediaResponse(media, asset.Locked))
 	}
 
 	return resp
@@ -367,7 +367,12 @@ func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, cou
 	return resp
 }
 
-func toMediaResponse(media *model.Media) *MediaResponse {
+func toMediaResponse(media *model.Media, locked bool) *MediaResponse {
+	thumbUrl := media.GetThumbnailUrl()
+	if media.IsImage() && !media.Featured {
+		thumbUrl = ""
+	}
+
 	resp := &MediaResponse{
 		ID:           media.ID,
 		Name:         media.Name.String,
@@ -376,8 +381,8 @@ func toMediaResponse(media *model.Media) *MediaResponse {
 		ContentType:  media.ContentType,
 		MediaType:    media.MediaType,
 		Status:       media.Status,
-		URL:          media.GetUrl(),
-		ThumbnailURL: media.GetThumbnailUrl(),
+		URL:          media.GetUrl(locked),
+		ThumbnailURL: thumbUrl,
 		Featured:     media.Featured,
 	}
 

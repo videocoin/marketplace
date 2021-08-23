@@ -110,7 +110,7 @@ func ToMetadata(asset *model.Asset) *Metadata {
 		if media.Featured {
 			ipfsData = &IPFSData{
 				Public: &MediaData{
-					FullMedia: pointer.ToString(media.GetUrl()),
+					FullMedia: pointer.ToString(media.GetUrl(asset.Locked)),
 					Thumbnail: pointer.ToString(media.GetThumbnailUrl()),
 				},
 			}

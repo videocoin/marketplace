@@ -115,7 +115,7 @@ func (a *Asset) GetUrl() string {
 		return ""
 	}
 
-	return media.GetUrl()
+	return media.GetUrl(a.Locked)
 }
 
 func (a *Asset) GetIpfsUrl() string {

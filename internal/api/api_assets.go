@@ -51,6 +51,9 @@ func (s *Server) createAsset(c echo.Context) error {
 	mediaItems := make([]*model.Media, 0)
 
 	for _, mediaItem := range req.Media {
+		if mediaItem.ID == "" {
+			return c.JSON(http.StatusPreconditionFailed, echo.Map{"message": "media not found"})
+		}
 		media, err := s.ds.Media.GetByID(ctx, mediaItem.ID)
 		if err != nil {
 			if err == datastore.ErrMediaNotFound {
