@@ -84,7 +84,11 @@ func (m *Media) GetOriginalUrl() string {
 	return ""
 }
 
-func (m *Media) GetIpfsUrl() string {
+func (m *Media) GetIpfsUrl(locked bool) string {
+	if !m.Featured && locked {
+		return m.GetIpfsEncryptedUrl()
+	}
+
 	return fmt.Sprintf("ipfs://%s/%s", m.CID.String, filepath.Base(m.Key))
 }
 

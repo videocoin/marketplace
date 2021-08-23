@@ -124,13 +124,17 @@ func (a *Asset) GetIpfsUrl() string {
 		return ""
 	}
 
-	return media.GetIpfsUrl()
+	return media.GetIpfsUrl(a.Locked)
 }
 
 func (a *Asset) GetThumbnailUrl() *string {
 	media := a.GetFirstPrivateMedia()
 	if media == nil {
 		return nil
+	}
+
+	if media.IsImage() && !a.Locked {
+		return pointer.ToString(media.GetUrl(false))
 	}
 
 	return pointer.ToString(media.GetThumbnailUrl())
@@ -140,6 +144,10 @@ func (a *Asset) GetIpfsThumbnailUrl() *string {
 	media := a.GetFirstPrivateMedia()
 	if media == nil {
 		return nil
+	}
+
+	if media.IsImage() && !a.Locked {
+		return pointer.ToString(media.GetIpfsUrl(false))
 	}
 
 	return pointer.ToString(media.GetIpfsThumbnailUrl())
