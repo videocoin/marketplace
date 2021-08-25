@@ -20,15 +20,23 @@ func mp4boxCryptExec(drmXmlPath, inputPath, outputPath string) (string, error) {
 	return outStr, nil
 }
 
-func mp4boxDashExec(inputPath string, outputPath string) (string, error) {
+func mp4boxDashExec(inputVideoPath, inputAudioPath, outputPath string) (string, error) {
 	ctx := context.Background()
 
-	input := fmt.Sprintf("%s", inputPath)
 	cmdArgs := []string{
-		"-dash", "-1", "-bs-switching", "no", "-single-segment", "-single-file",
-		"-segment-name", "segment_", "-url-template",
-		"-out", outputPath, input,
+		"-dash", "-1", "-bs-switching", "no", "-single-file",
+		"-segment-name", "%s", "-url-template",
+		"-out", outputPath,
 	}
+
+	if inputAudioPath != "" {
+		cmdArgs = append(cmdArgs, "-rap")
+		cmdArgs = append(cmdArgs, inputAudioPath)
+	}
+
+	cmdArgs = append(cmdArgs, inputVideoPath)
+
+	fmt.Println(cmdArgs)
 
 	cmd := exec.CommandContext(ctx, "MP4Box", cmdArgs...)
 	out, err := cmd.CombinedOutput()

@@ -10,6 +10,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/random"
+	"gopkg.in/vansante/go-ffprobe.v2"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -86,13 +87,19 @@ func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata) (
 
 	ext := filepath.Ext(inputURI)
 	inputPath := filepath.Join(tmpFolder, fmt.Sprintf("original%s", ext))
-	outputEncPath := filepath.Join(tmpFolder, fmt.Sprintf("original_e%s", ext))
+	videoPath := filepath.Join(tmpFolder, fmt.Sprintf("_video%s", ext))
+	audioPath := filepath.Join(tmpFolder, "_video.m4a")
+	videoEncPath := filepath.Join(tmpFolder, fmt.Sprintf("video%s", ext))
+	audioEncPath := filepath.Join(tmpFolder, "audio.m4a")
 	outputMPDPath := filepath.Join(tmpFolder, "encrypted.mpd")
 	drmXmlPath := filepath.Join(tmpFolder, "drm.xml")
 
 	defer func() {
 		_ = os.Remove(inputPath)
-		_ = os.Remove(outputEncPath)
+		_ = os.Remove(videoPath)
+		_ = os.Remove(audioPath)
+		_ = os.Remove(videoEncPath)
+		_ = os.Remove(audioEncPath)
 		_ = os.Remove(drmXmlPath)
 	}()
 
@@ -106,6 +113,27 @@ func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata) (
 		return "", err
 	}
 
+	logger.Info("splitting a/v")
+	probe, err := ffprobe.ProbeURL(context.Background(), inputPath)
+	if err != nil {
+		return "", err
+	}
+
+	audioStream := probe.FirstAudioStream()
+	if audioStream != nil {
+		err = ffmpegExtractVideo(inputPath, videoPath)
+		if err != nil {
+			return "", err
+		}
+		err = ffmpegExtractAudio(inputPath, audioStream.Index, audioPath)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		audioPath = ""
+		videoPath = inputPath
+	}
+
 	logger.WithField("drm_xml_path", drmXmlPath).Info("generating drm xml")
 
 	err = ioutil.WriteFile(drmXmlPath, []byte(drm.GenerateDrmXml(drmMeta)), 0644)
@@ -115,21 +143,38 @@ func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata) (
 
 	logger.
 		WithField("drm_xml_path", drmXmlPath).
-		WithField("input_path", inputPath).
-		WithField("output_enc_path", outputEncPath).
-		Info("encrypting")
-	out, err := mp4boxCryptExec(drmXmlPath, inputPath, outputEncPath)
+		WithField("video_path", videoPath).
+		WithField("video_enc_path", videoEncPath).
+		Info("encrypting video")
+	out, err := mp4boxCryptExec(drmXmlPath, videoPath, videoEncPath)
 	if err != nil {
 		return "", err
 	}
 
-	logger.Debugf("mp4box crypt out: %s", out)
+	logger.Debugf("mp4box crypt video out: %s", out)
+
+	if audioPath != "" {
+		logger.
+			WithField("drm_xml_path", drmXmlPath).
+			WithField("audio_path", audioPath).
+			WithField("audio_enc_path", audioEncPath).
+			Info("encrypting audio")
+		out, err = mp4boxCryptExec(drmXmlPath, audioPath, audioEncPath)
+		if err != nil {
+			return "", err
+		}
+
+		logger.Debugf("mp4box crypt audio out: %s", out)
+	} else {
+		audioEncPath = ""
+	}
 
 	logger.
-		WithField("input_path", outputEncPath).
+		WithField("video_enc_path", videoEncPath).
+		WithField("audio_enc_path", audioEncPath).
 		WithField("output_mpd_path", outputMPDPath).
 		Info("generating dash")
-	out, err = mp4boxDashExec(outputEncPath, outputMPDPath)
+	out, err = mp4boxDashExec(videoEncPath, audioEncPath, outputMPDPath)
 	if err != nil {
 		return "", err
 	}
@@ -203,7 +248,7 @@ func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata) (
 		WithField("input_path", outputEncPath).
 		WithField("output_mpd_path", outputMPDPath).
 		Info("generating dash")
-	out, err = mp4boxDashExec(outputEncPath, outputMPDPath)
+	out, err = mp4boxDashExec(outputEncPath, "", outputMPDPath)
 	if err != nil {
 		return "", err
 	}
@@ -254,21 +299,29 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 			return err
 		}
 
-		segmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "segment_init.mp4", -1)
-		segmentPath := strings.Replace(outputPath, "encrypted.mpd", "segment_init.mp4", -1)
+		videoSegmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "videoinit.mp4", -1)
+		audioSegmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "audioinit.mp4", -1)
+		videoSegmentPath := strings.Replace(outputPath, "encrypted.mpd", "videoinit.mp4", -1)
+		audioSegmentPath := strings.Replace(outputPath, "encrypted.mpd", "audioinit.mp4", -1)
 
 		defer func() {
 			_ = os.Remove(outputPath)
-			_ = os.Remove(segmentPath)
+			_ = os.Remove(videoSegmentPath)
+			_ = os.Remove(audioSegmentPath)
 		}()
 
 		outputPaths := []string{
 			outputPath,
-			segmentPath,
+			videoSegmentPath,
 		}
 		to := []string{
 			media.EncryptedKey,
-			segmentKey,
+			videoSegmentKey,
+		}
+
+		if _, err := os.Stat(audioSegmentPath); err == nil {
+			outputPaths = append(outputPaths, audioSegmentPath)
+			to = append(to, audioSegmentKey)
 		}
 
 		logger.Info("uploading dash manifest and segments")
