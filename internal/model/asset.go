@@ -133,11 +133,7 @@ func (a *Asset) GetThumbnailUrl() *string {
 		return nil
 	}
 
-	if media.IsImage() && !a.Locked {
-		return pointer.ToString(media.GetUrl(false))
-	}
-
-	return pointer.ToString(media.GetThumbnailUrl())
+	return pointer.ToString(media.GetThumbnailUrl(a.Locked))
 }
 
 func (a *Asset) GetIpfsThumbnailUrl() *string {

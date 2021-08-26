@@ -11,8 +11,10 @@ require (
 	github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054 // indirect
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/disintegration/imaging v1.6.2
 	github.com/ecies/go v1.0.1 // indirect
 	github.com/ecies/go/v2 v2.0.2
+	github.com/esimov/stackblur-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v1.10.1
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/getsentry/raven-go v0.2.0 // indirect

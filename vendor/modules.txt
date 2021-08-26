@@ -40,6 +40,9 @@ github.com/deckarep/golang-set
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 ## explicit
 github.com/dgrijalva/jwt-go
+# github.com/disintegration/imaging v1.6.2
+## explicit
+github.com/disintegration/imaging
 # github.com/ecies/go v1.0.1
 ## explicit
 # github.com/ecies/go/v2 v2.0.2
@@ -47,6 +50,8 @@ github.com/dgrijalva/jwt-go
 github.com/ecies/go/v2
 # github.com/edsrzf/mmap-go v1.0.0
 github.com/edsrzf/mmap-go
+# github.com/esimov/stackblur-go v1.0.0
+## explicit
 # github.com/ethereum/go-ethereum v1.10.1
 ## explicit
 github.com/ethereum/go-ethereum
@@ -421,6 +426,11 @@ golang.org/x/crypto/ripemd160
 golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/sha3
+# golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8
+golang.org/x/image/bmp
+golang.org/x/image/ccitt
+golang.org/x/image/tiff
+golang.org/x/image/tiff/lzw
 # golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
 golang.org/x/lint
 golang.org/x/lint/golint

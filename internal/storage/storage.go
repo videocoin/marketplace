@@ -216,3 +216,19 @@ func (s *Storage) MakePublic(path string) error {
 
 	return nil
 }
+
+func (s *Storage) UploadToCloud(src io.Reader, path string) error {
+	w := s.gcpBh.Object(path).NewWriter(context.Background())
+	w.ACL = []gcpstorage.ACLRule{
+		{
+			Entity: gcpstorage.AllUsers,
+			Role:   gcpstorage.RoleReader,
+		},
+	}
+	_, err := io.Copy(w, src)
+	if err != nil {
+		return err
+	}
+
+	return w.Close()
+}

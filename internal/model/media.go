@@ -5,6 +5,7 @@ import (
 	"github.com/gocraft/dbr/v2"
 	"github.com/videocoin/marketplace/pkg/uuid4"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -92,7 +93,19 @@ func (m *Media) GetIpfsUrl(locked bool) string {
 	return fmt.Sprintf("ipfs://%s/%s", m.CID.String, filepath.Base(m.Key))
 }
 
-func (m *Media) GetThumbnailUrl() string {
+func (m *Media) GetThumbnailUrl(locked bool) string {
+	if m.IsAudio() {
+		return ""
+	}
+
+	if !m.Featured && locked {
+		return m.GetCachedThumbnailUrl(locked)
+	}
+
+	if m.IsImage() && m.Featured {
+		return m.GetCachedUrl(false)
+	}
+
 	if m.RootKey != "" {
 		if m.ThumbnailCID.String != "" {
 			return fmt.Sprintf(TextileIpnsGateway, m.RootKey, m.ThumbnailKey)
@@ -143,9 +156,13 @@ func (m *Media) GetCachedUrl(locked bool) string {
 	return ""
 }
 
-func (m *Media) GetCachedThumbnailUrl() string {
+func (m *Media) GetCachedThumbnailUrl(locked bool) string {
+	key := m.ThumbnailKey
+	if locked {
+		key = strings.Replace(key, "thumb.jpg", "b_thumb.jpg", -1)
+	}
 	if m.CacheRootKey.String != "" {
-		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.ThumbnailKey)
+		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, key)
 	}
 
 	return ""

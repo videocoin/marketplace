@@ -110,28 +110,28 @@ func ToMetadata(asset *model.Asset) *Metadata {
 		if media.Featured {
 			ipfsData = &IPFSData{
 				Public: &MediaData{
-					FullMedia: pointer.ToString(media.GetUrl(asset.Locked)),
-					Thumbnail: pointer.ToString(media.GetThumbnailUrl()),
+					FullMedia: pointer.ToString(media.GetUrl(false)),
+					Thumbnail: pointer.ToString(media.GetThumbnailUrl(false)),
 				},
 			}
 			cloudData = &IPFSData{
 				Public: &MediaData{
-					FullMedia: pointer.ToString(media.GetCachedUrl(asset.Locked)),
-					Thumbnail: pointer.ToString(media.GetCachedThumbnailUrl()),
+					FullMedia: pointer.ToString(media.GetCachedUrl(false)),
+					Thumbnail: pointer.ToString(media.GetCachedThumbnailUrl(false)),
 				},
 			}
 		} else {
 			ipfsData = &IPFSData{
 				Private: &MediaData{
 					FullMedia:      pointer.ToString(media.GetEncryptedUrl()),
-					Thumbnail:      pointer.ToString(media.GetThumbnailUrl()),
+					Thumbnail:      pointer.ToString(media.GetThumbnailUrl(asset.Locked)),
 					EncryptedMedia: pointer.ToString(media.GetEncryptedUrl()),
 				},
 			}
 			cloudData = &IPFSData{
 				Private: &MediaData{
 					FullMedia:      pointer.ToString(media.GetCachedEncryptedUrl()),
-					Thumbnail:      pointer.ToString(media.GetCachedThumbnailUrl()),
+					Thumbnail:      pointer.ToString(media.GetCachedThumbnailUrl(asset.Locked)),
 					EncryptedMedia: pointer.ToString(media.GetCachedEncryptedUrl()),
 				},
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/AlekSi/pointer"
+	"github.com/disintegration/imaging"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/drm"
@@ -11,6 +12,7 @@ import (
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/random"
 	"gopkg.in/vansante/go-ffprobe.v2"
+	"image"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -36,41 +38,90 @@ func NewMediaProcessor(ctx context.Context, opts ...Option) (*MediaProcessor, er
 }
 
 func (mp *MediaProcessor) GenerateThumbnail(ctx context.Context, media *model.Media, meta *model.AssetMeta) error {
-	if !media.IsVideo() {
-		return nil
-	}
+	if media.IsVideo() {
+		cmdArgs := []string{
+			"-hide_banner", "-loglevel", "info", "-y", "-ss", "2", "-i", meta.LocalDest,
+			"-an", "-vf", "scale=1280:-1", "-vframes", "1", meta.LocalThumbDest,
+		}
 
-	cmdArgs := []string{
-		"-hide_banner", "-loglevel", "info", "-y", "-ss", "2", "-i", meta.LocalDest,
-		"-an", "-vf", "scale=1280:-1", "-vframes", "1", meta.LocalThumbDest,
-	}
+		cmd := exec.CommandContext(ctx, "ffmpeg", cmdArgs...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("%s: %s", err.Error(), string(out))
+		}
 
-	cmd := exec.CommandContext(ctx, "ffmpeg", cmdArgs...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), string(out))
-	}
+		mp.logger.Debug(string(out))
 
-	mp.logger.Debug(string(out))
+		f, err := os.Open(meta.LocalThumbDest)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		defer func() {
+			_ = os.Remove(meta.LocalThumbDest)
+			_ = os.Remove(meta.LocalThumbBluredDest)
+		}()
 
-	f, err := os.Open(meta.LocalThumbDest)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = os.Remove(meta.LocalThumbDest)
-	}()
+		srcImage, _, err := image.Decode(f)
+		blurredImage := imaging.Blur(srcImage, 20)
 
-	cid, err := mp.storage.PushPath(meta.DestThumbKey, f, true)
-	if err != nil {
-		return err
-	}
+		blurred, err := os.Create(meta.LocalThumbBluredDest)
+		if err != nil {
+			return err
+		}
+		defer blurred.Close()
 
-	err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-		ThumbnailCID: pointer.ToString(cid),
-	})
-	if err != nil {
-		return err
+		err = imaging.Encode(blurred, blurredImage, imaging.JPEG)
+		if err != nil {
+			return err
+		}
+
+		cid, err := mp.storage.PushPath(meta.DestThumbKey, f, true)
+		if err != nil {
+			return err
+		}
+
+		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+			ThumbnailCID: pointer.ToString(cid),
+		})
+		if err != nil {
+			return err
+		}
+
+		blurred.Seek(0, 0)
+		err = mp.storage.UploadToCloud(blurred, meta.DestThumbBlurredKey)
+		if err != nil {
+			return err
+		}
+	} else if media.IsImage() {
+		f, err := os.Open(meta.LocalDest)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		defer func() {
+			_ = os.Remove(meta.LocalThumbBluredDest)
+		}()
+
+		srcImage, _, err := image.Decode(f)
+		blurredImage := imaging.Blur(srcImage, 20)
+
+		blurred, err := os.Create(meta.LocalThumbBluredDest)
+		if err != nil {
+			return err
+		}
+		defer blurred.Close()
+
+		err = imaging.Encode(blurred, blurredImage, imaging.JPEG)
+		if err != nil {
+			return err
+		}
+
+		blurred.Seek(0, 0)
+		err = mp.storage.UploadToCloud(blurred, meta.DestThumbBlurredKey)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

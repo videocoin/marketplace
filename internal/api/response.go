@@ -368,10 +368,7 @@ func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, cou
 }
 
 func toMediaResponse(media *model.Media, locked bool) *MediaResponse {
-	thumbUrl := media.GetThumbnailUrl()
-	if media.IsImage() && !media.Featured {
-		thumbUrl = ""
-	}
+	thumbUrl := media.GetThumbnailUrl(locked)
 
 	resp := &MediaResponse{
 		ID:           media.ID,
