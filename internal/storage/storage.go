@@ -207,3 +207,12 @@ func (s *Storage) MultiUpload(inputs []string, to []string) (string, error) {
 
 	return cids[0], nil
 }
+
+func (s *Storage) MakePublic(path string) error {
+	if s.gcpBh != nil {
+		acl := s.gcpBh.Object(path).ACL()
+		return acl.Set(context.Background(), gcpstorage.AllUsers, gcpstorage.RoleReader)
+	}
+
+	return nil
+}

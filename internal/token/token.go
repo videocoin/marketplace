@@ -116,7 +116,7 @@ func ToMetadata(asset *model.Asset) *Metadata {
 			}
 			cloudData = &IPFSData{
 				Public: &MediaData{
-					FullMedia: pointer.ToString(media.GetCachedUrl()),
+					FullMedia: pointer.ToString(media.GetCachedUrl(asset.Locked)),
 					Thumbnail: pointer.ToString(media.GetCachedThumbnailUrl()),
 				},
 			}

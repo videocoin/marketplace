@@ -381,7 +381,7 @@ func toMediaResponse(media *model.Media, locked bool) *MediaResponse {
 		ContentType:  media.ContentType,
 		MediaType:    media.MediaType,
 		Status:       media.Status,
-		URL:          media.GetUrl(locked),
+		URL:          media.GetCachedUrl(locked),
 		ThumbnailURL: thumbUrl,
 		Featured:     media.Featured,
 	}

@@ -131,7 +131,11 @@ func (m *Media) GetIpfsEncryptedUrl() string {
 	return fmt.Sprintf("ipfs://%s/%s", m.EncryptedCID.String, filepath.Base(m.EncryptedKey))
 }
 
-func (m *Media) GetCachedUrl() string {
+func (m *Media) GetCachedUrl(locked bool) string {
+	if !m.Featured && locked {
+		return m.GetCachedEncryptedUrl()
+	}
+
 	if m.CacheRootKey.String != "" {
 		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.Key)
 	}
@@ -140,10 +144,6 @@ func (m *Media) GetCachedUrl() string {
 }
 
 func (m *Media) GetCachedThumbnailUrl() string {
-	if m.MediaType == MediaTypeImage {
-		return m.GetCachedUrl()
-	}
-
 	if m.CacheRootKey.String != "" {
 		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.ThumbnailKey)
 	}

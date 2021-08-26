@@ -100,6 +100,16 @@ func (s *Server) createAsset(c echo.Context) error {
 
 	drmMetaJSON, _ := json.Marshal(drmMeta)
 
+	if !req.Locked {
+		for _, media := range mediaItems {
+			logger.Infof("mark object %s as public", media.Key)
+			err = s.storage.MakePublic(media.Key)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	asset := &model.Asset{
 		CreatedByID: account.ID,
 		OwnerID:     account.ID,
@@ -134,20 +144,22 @@ func (s *Server) createAsset(c echo.Context) error {
 	asset.Owner = account
 
 	go func() {
-		for _, media := range mediaItems {
-			media.CreatedBy = asset.CreatedBy
+		if asset.Locked {
+			for _, media := range mediaItems {
+				media.CreatedBy = asset.CreatedBy
 
-			if media.Featured {
-				continue
-			}
+				if media.Featured {
+					continue
+				}
 
-			err = s.mp.EncryptMedia(ctx, media, drmMeta)
-			if err != nil {
-				logger.
-					WithError(err).
-					Error("failed to encrypt media")
-				_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
-				return
+				err = s.mp.EncryptMedia(ctx, media, drmMeta)
+				if err != nil {
+					logger.
+						WithError(err).
+						Error("failed to encrypt media")
+					_ = s.ds.Assets.MarkStatusAsFailed(context.Background(), asset)
+					return
+				}
 			}
 		}
 
