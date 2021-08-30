@@ -37,7 +37,7 @@ type AssetMediaRequest struct {
 type CreateAssetRequest struct {
 	Name             string               `json:"name"`
 	Media            []*AssetMediaRequest `json:"media"`
-	Desc             *string              `json:"desc"`
+	Desc             *string              `json:"description"`
 	YTVideoLink      *string              `json:"yt_video_link"`
 	Royalty          uint                 `json:"royalty"`
 	OnSale           bool                 `json:"on_sale"`
