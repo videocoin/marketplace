@@ -102,6 +102,10 @@ func (m *Media) GetThumbnailUrl(locked bool) string {
 		return m.GetCachedThumbnailUrl(locked)
 	}
 
+	if !m.Featured && !locked && m.IsImage() {
+		return m.GetCachedUrl(false)
+	}
+
 	if m.IsImage() && m.Featured {
 		return m.GetCachedUrl(false)
 	}
