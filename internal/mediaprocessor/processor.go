@@ -400,8 +400,8 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 			return err
 		}
 
-		segmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "segment_init.mp4", -1)
-		segmentPath := strings.Replace(outputPath, "encrypted.mpd", "segment_init.mp4", -1)
+		segmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "original_einit.mp4", -1)
+		segmentPath := strings.Replace(outputPath, "encrypted.mpd", "original_einit.mp4", -1)
 
 		defer func() {
 			_ = os.Remove(outputPath)
