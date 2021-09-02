@@ -16,9 +16,11 @@ const (
 	MediaStatusReady      MediaStatus = "READY"
 	MediaStatusFailed     MediaStatus = "FAILED"
 
-	MediaTypeVideo string = "video"
-	MediaTypeAudio string = "audio"
-	MediaTypeImage string = "image"
+	MediaTypeVideo       string = "video"
+	MediaTypeAudio       string = "audio"
+	MediaTypeImage       string = "image"
+	MediaTypeText        string = "text"
+	MediaTypeApplication string = "application"
 )
 
 type Media struct {
@@ -190,4 +192,16 @@ func (m *Media) IsAudio() bool {
 
 func (m *Media) IsImage() bool {
 	return m.MediaType == MediaTypeImage
+}
+
+func (m *Media) IsText() bool {
+	return m.MediaType == MediaTypeText
+}
+
+func (m *Media) IsApplication() bool {
+	return m.MediaType == MediaTypeApplication
+}
+
+func (m *Media) IsNotMedia() bool {
+	return m.IsText() || m.IsApplication()
 }
