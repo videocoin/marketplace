@@ -55,6 +55,20 @@ func GenMediaID() string {
 	return id
 }
 
+func (m *Media) GetMediaType() string {
+	if m.ContentType == "video/quicktime" {
+		return MediaTypeApplication
+	}
+
+	if m.MediaType == MediaTypeVideo ||
+		m.MediaType == MediaTypeAudio ||
+		m.MediaType == MediaTypeImage {
+		return m.MediaType
+	}
+
+	return MediaTypeApplication
+}
+
 func (m *Media) GetUrl(locked bool) string {
 	if !m.Featured && locked {
 		return m.GetEncryptedUrl()
@@ -199,9 +213,5 @@ func (m *Media) IsText() bool {
 }
 
 func (m *Media) IsApplication() bool {
-	return m.MediaType == MediaTypeApplication
-}
-
-func (m *Media) IsNotMedia() bool {
-	return m.IsText() || m.IsApplication()
+	return m.GetMediaType() == MediaTypeApplication
 }

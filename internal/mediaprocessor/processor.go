@@ -309,38 +309,6 @@ func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata) (
 	return outputMPDPath, nil
 }
 
-func (mp *MediaProcessor) EncryptImage(inputURI string, drmMeta *drm.Metadata) (string, error) {
-	logger := mp.logger.WithField("input_uri", inputURI)
-
-	inputPath := genTempFilepath("", filepath.Ext(inputURI))
-	outputPath := genTempFilepath("", filepath.Ext(inputURI))
-
-	logger.Info("downloading input url")
-
-	err := downloadFile(inputURI, inputPath)
-	if err != nil {
-		return "", err
-	}
-
-	logger = logger.WithField("input_path", outputPath)
-
-	ctx := context.Background()
-	cmdArgs := []string{
-		"enc", "-e", "-aes-128-cbc", "-in", inputPath, "-out", outputPath, "-K",
-		drmMeta.Key, "-iv", drmMeta.FirstIV, "-e", "-A", "-base64",
-	}
-
-	logger.Debugf("openssl %s", strings.Join(cmdArgs, " "))
-
-	cmd := exec.CommandContext(ctx, "openssl", cmdArgs...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("%s: %s", err.Error(), string(out))
-	}
-
-	return outputPath, nil
-}
-
 func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata) (string, error) {
 	logger := mp.logger.WithField("input_uri", inputURI)
 
@@ -375,6 +343,36 @@ func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata) (s
 
 func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, drmMeta *drm.Metadata) error {
 	logger := mp.logger.WithField("media_id", media.ID)
+
+	if media.IsApplication() || media.IsImage() {
+		logger.Info("encrypting file")
+
+		outputPath, err := mp.EncryptFile(media.GetOriginalUrl(), drmMeta)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = os.Remove(outputPath) }()
+
+		logger.Info("uploading encrypted file")
+
+		cid, err := mp.storage.Upload(outputPath, media.EncryptedKey)
+		if err != nil {
+			return err
+		}
+
+		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+			EncryptedCID: pointer.ToString(cid),
+		})
+		if err != nil {
+			return err
+		}
+
+		logger.
+			WithField("encrypted_cid", cid).
+			Info("encrypt file job has been completed")
+
+		return nil
+	}
 
 	if media.IsVideo() {
 		outputPath, err := mp.EncryptVideo(media.GetOriginalUrl(), drmMeta)
@@ -424,6 +422,8 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 		logger.
 			WithField("encrypted_cid", cid).
 			Info("encrypt media job has been completed")
+
+		return nil
 	}
 
 	if media.IsAudio() {
@@ -466,54 +466,8 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 		logger.
 			WithField("encrypted_cid", cid).
 			Info("encrypt media job has been completed")
-	}
 
-	if media.IsImage() {
-		outputPath, err := mp.EncryptImage(media.GetOriginalUrl(), drmMeta)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = os.Remove(outputPath) }()
-
-		cid, err := mp.storage.Upload(outputPath, media.EncryptedKey)
-		if err != nil {
-			return err
-		}
-
-		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-			EncryptedCID: pointer.ToString(cid),
-		})
-		if err != nil {
-			return err
-		}
-
-		logger.
-			WithField("encrypted_cid", cid).
-			Info("encrypt media job has been completed")
-	}
-
-	if media.IsNotMedia() {
-		outputPath, err := mp.EncryptFile(media.GetOriginalUrl(), drmMeta)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = os.Remove(outputPath) }()
-
-		cid, err := mp.storage.Upload(outputPath, media.EncryptedKey)
-		if err != nil {
-			return err
-		}
-
-		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-			EncryptedCID: pointer.ToString(cid),
-		})
-		if err != nil {
-			return err
-		}
-
-		logger.
-			WithField("encrypted_cid", cid).
-			Info("encrypt file job has been completed")
+		return nil
 	}
 
 	return nil
