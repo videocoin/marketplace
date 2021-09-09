@@ -93,7 +93,7 @@ func (mp *MediaProcessor) GenerateThumbnail(ctx context.Context, media *model.Me
 		if err != nil {
 			return err
 		}
-	} else if media.IsImage() {
+	} else if media.GetMediaType() == model.MediaTypeImage {
 		f, err := os.Open(meta.LocalDest)
 		if err != nil {
 			return err
