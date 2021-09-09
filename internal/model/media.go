@@ -60,6 +60,11 @@ func (m *Media) GetMediaType() string {
 		return MediaTypeApplication
 	}
 
+	if m.ContentType == "image/webp" ||
+		m.ContentType == "image/gif" {
+		return MediaTypeApplication
+	}
+
 	if m.MediaType == MediaTypeVideo ||
 		m.MediaType == MediaTypeAudio ||
 		m.MediaType == MediaTypeImage {
