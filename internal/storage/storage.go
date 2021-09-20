@@ -232,3 +232,7 @@ func (s *Storage) UploadToCloud(src io.Reader, path string) error {
 
 	return w.Close()
 }
+
+func (s *Storage) ObjReader(objKey string) (*gcpstorage.Reader, error) {
+	return s.gcpBh.Object(objKey).NewReader(context.Background())
+}

@@ -127,7 +127,7 @@ func (mp *MediaProcessor) GenerateThumbnail(ctx context.Context, media *model.Me
 	return nil
 }
 
-func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata) (string, error) {
+func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata, key string) (string, error) {
 	tmpFolder := filepath.Join("/tmp", random.RandomString(16))
 	err := os.MkdirAll(tmpFolder, 0777)
 	if err != nil {
@@ -159,7 +159,12 @@ func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata) (
 		WithField("output_path", inputPath).
 		Info("downloading input url")
 
-	err = downloadFile(inputURI, inputPath)
+	ir, err := mp.storage.ObjReader(key)
+	if err != nil {
+		return "", err
+	}
+
+	err = downloadFile(inputURI, inputPath, ir)
 	if err != nil {
 		return "", err
 	}
@@ -263,7 +268,7 @@ func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata) (
 		WithField("output_path", inputPath).
 		Info("downloading input url")
 
-	err = downloadFile(inputURI, inputPath)
+	err = downloadFile(inputURI, inputPath, nil)
 	if err != nil {
 		return "", err
 	}
@@ -317,7 +322,7 @@ func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata) (s
 
 	logger.Info("downloading input url")
 
-	err := downloadFile(inputURI, inputPath)
+	err := downloadFile(inputURI, inputPath, nil)
 	if err != nil {
 		return "", err
 	}
@@ -375,7 +380,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	}
 
 	if media.IsVideo() {
-		outputPath, err := mp.EncryptVideo(media.GetOriginalUrl(), drmMeta)
+		outputPath, err := mp.EncryptVideo(media.GetOriginalUrl(), drmMeta, media.Key)
 		if err != nil {
 			return err
 		}

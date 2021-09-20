@@ -1,6 +1,7 @@
 package mediaprocessor
 
 import (
+	"cloud.google.com/go/storage"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -16,7 +17,7 @@ func genTempFilepath(prefix, suffix string) string {
 	return filepath.Join(os.TempDir(), prefix+hex.EncodeToString(randBytes)+suffix)
 }
 
-func downloadFile(url string, filepath string) (err error) {
+func downloadFile(url string, filepath string, ir *storage.Reader) (err error) {
 	out, err := os.Create(filepath)
 	if err != nil  {
 		return err
@@ -33,7 +34,14 @@ func downloadFile(url string, filepath string) (err error) {
 		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	_, err = io.Copy(out, resp.Body)
+	var src io.Reader
+	if ir == nil {
+		src = resp.Body
+	} else {
+		src = ir
+	}
+
+	_, err = io.Copy(out, src)
 	if err != nil  {
 		return err
 	}
