@@ -2,10 +2,12 @@ package datastore
 
 import (
 	"context"
+	"github.com/AlekSi/pointer"
 	"github.com/gocraft/dbr/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	_ "github.com/lib/pq" // nolint
 	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/wyvern"
 	"github.com/videocoin/marketplace/pkg/dbrutil"
 )
 
@@ -107,6 +109,22 @@ func (ds *Datastore) GetAssetsListCount(ctx context.Context, fltr *AssetsFilter)
 	return count, nil
 }
 
+func (ds *Datastore) GetOrderList(ctx context.Context, fltr *OrderFilter, limitOpts *LimitOpts) ([]*model.Order, error) {
+	accounts, err := ds.Accounts.List(ctx, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	orders, err := ds.Orders.List(ctx, fltr, limitOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	JoinAccountsToOrder(ctx, orders, accounts)
+
+	return orders, nil
+}
+
 func JoinAccountsToAsset(ctx context.Context, assets []*model.Asset, accounts []*model.Account) {
 	byID := map[int64]*model.Account{}
 	for _, item := range accounts {
@@ -115,6 +133,46 @@ func JoinAccountsToAsset(ctx context.Context, assets []*model.Asset, accounts []
 	for _, asset := range assets {
 		asset.CreatedBy = byID[asset.CreatedByID]
 		asset.Owner = byID[asset.OwnerID]
+	}
+}
+
+func JoinAccountsToOrder(ctx context.Context, orders []*model.Order, accounts []*model.Account) {
+	byID := map[int64]*model.Account{}
+	for _, item := range accounts {
+		byID[item.ID] = item
+	}
+	for _, order := range orders {
+		if order.MakerID != nil {
+			maker := byID[*order.MakerID]
+			if maker != nil {
+				order.WyvernOrder.Maker = &wyvern.Account{
+					ID:      maker.ID,
+					Address: maker.Address,
+					User: &wyvern.User{
+						Username: pointer.ToString(maker.Username.String),
+						Name:     pointer.ToString(maker.Name.String),
+					},
+					IsVerified: maker.IsVerified,
+					ImageUrl:   maker.GetImageURL(),
+				}
+			}
+		}
+
+		if order.TakerID != nil {
+			taker := byID[*order.TakerID]
+			if taker != nil {
+				order.WyvernOrder.Taker = &wyvern.Account{
+					ID:      taker.ID,
+					Address: taker.Address,
+					User: &wyvern.User{
+						Username: pointer.ToString(taker.Username.String),
+						Name:     pointer.ToString(taker.Name.String),
+					},
+					IsVerified: taker.IsVerified,
+					ImageUrl:   taker.GetImageURL(),
+				}
+			}
+		}
 	}
 }
 

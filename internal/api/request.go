@@ -42,6 +42,7 @@ type CreateAssetRequest struct {
 	Royalty          uint                 `json:"royalty"`
 	OnSale           bool                 `json:"on_sale"`
 	InstantSalePrice float64              `json:"instant_sale_price"`
+	PutOnSalePrice   float64              `json:"put_on_sale_price"`
 	Locked           bool                 `json:"locked"`
 }
 

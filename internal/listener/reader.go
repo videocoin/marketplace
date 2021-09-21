@@ -29,9 +29,9 @@ func NewEventReader(cli *ethclient.Client, contractAddress string, logger *logru
 	}
 
 	return &EventReader{
-		ca:  []common.Address{ca},
-		cli: cli,
-		pa:  pa,
+		ca:     []common.Address{ca},
+		cli:    cli,
+		pa:     pa,
 		logger: logger,
 	}, nil
 }
@@ -108,10 +108,11 @@ func (reader *EventReader) toOrdersMatchedEvent(log *types.Log) (*OrderEvent, er
 		return nil, err
 	}
 	return &OrderEvent{
-		Type:  OrdersMatched,
-		Hash:  event.SellHash,
-		Maker: event.Maker,
-		Taker: event.Taker,
+		Type:     OrdersMatched,
+		SellHash: event.SellHash,
+		BuyHash:  event.BuyHash,
+		Maker:    event.Maker,
+		Taker:    event.Taker,
 	}, nil
 }
 

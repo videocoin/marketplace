@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/AlekSi/pointer"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
@@ -16,7 +15,6 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/internal/token"
-	"github.com/videocoin/marketplace/internal/wyvern"
 	"path"
 )
 
@@ -83,72 +81,68 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		return nil
 	}
 
-	if order.Side == wyvern.Sell && order.SaleKind == wyvern.FixedPrice {
-		asset, err := book.ds.Assets.GetByTokenID(ctx, order.TokenID)
-		if err != nil {
-			return err
-		}
+	asset, err := book.ds.Assets.GetByTokenID(ctx, order.TokenID)
+	if err != nil {
+		return err
+	}
 
-		account, err := book.ds.Accounts.GetByID(ctx, asset.CreatedByID)
-		if err != nil {
-			return err
-		}
-		asset.CreatedBy = account
+	account, err := book.ds.Accounts.GetByID(ctx, asset.CreatedByID)
+	if err != nil {
+		return err
+	}
+	asset.CreatedBy = account
 
-		mediaItems, err := book.ds.Media.ListByAssetID(ctx, asset.ID)
-		if err != nil {
-			return err
-		}
+	mediaItems, err := book.ds.Media.ListByAssetID(ctx, asset.ID)
+	if err != nil {
+		return err
+	}
 
-		asset.Media = mediaItems
+	asset.Media = mediaItems
 
-		logger = logger.
-			WithField("asset_id", asset.ID).
-			WithField("on_sale", asset.OnSale)
+	logger = logger.
+		WithField("asset_id", asset.ID).
+		WithField("on_sale", asset.OnSale)
 
-		if !asset.OnSale {
-			logger.Warning("asset is not for sale")
-			return nil
-		}
-
-		logger.Info("marking order as processing")
-		err = book.ds.Orders.MarkStatusAsProcessing(ctx, order)
-		if err != nil {
-			return err
-		}
-
-		logger.Info("transferring asset")
-
-		err = book.ds.Assets.MarkStatusAsTransferring(ctx, asset)
-		if err != nil {
-			return fmt.Errorf("failed to mark asset as transferring: %s", err)
-		}
-
-		err = book.transferAsset(ctx, asset, newOwner)
-		if err != nil {
-			return fmt.Errorf("failed to transfer asset: %s", err)
-		}
-
-		logger.Info("marking asset as ready")
-
-		err = book.ds.Assets.MarkStatusAsTransfered(ctx, asset)
-		if err != nil {
-			return fmt.Errorf("failed to mark asset as transferred: %s", err)
-		}
-
-		logger.Info("asset has been transferred")
-
-		err = book.ds.Orders.MarkStatusAsProcessed(ctx, order)
-		if err != nil {
-			return fmt.Errorf("failed to mark order as processed: %s", err)
-		}
-
-		logger.Info("order has been processed")
-
+	if !asset.OnSale {
+		logger.Warning("asset is not for sale")
 		return nil
 	}
 
-	return errors.New("order not processed")
+	logger.Info("marking order as processing")
+	err = book.ds.Orders.MarkStatusAsProcessing(ctx, order)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("transferring asset")
+
+	err = book.ds.Assets.MarkStatusAsTransferring(ctx, asset)
+	if err != nil {
+		return fmt.Errorf("failed to mark asset as transferring: %s", err)
+	}
+
+	err = book.transferAsset(ctx, asset, newOwner)
+	if err != nil {
+		return fmt.Errorf("failed to transfer asset: %s", err)
+	}
+
+	logger.Info("marking asset as ready")
+
+	err = book.ds.Assets.MarkStatusAsTransfered(ctx, asset)
+	if err != nil {
+		return fmt.Errorf("failed to mark asset as transferred: %s", err)
+	}
+
+	logger.Info("asset has been transferred")
+
+	err = book.ds.Orders.MarkStatusAsProcessed(ctx, order)
+	if err != nil {
+		return fmt.Errorf("failed to mark order as processed: %s", err)
+	}
+
+	logger.Info("order has been processed")
+
+	return nil
 }
 
 func (book *OrderBook) transferAsset(ctx context.Context, asset *model.Asset, newOwner *model.Account) error {

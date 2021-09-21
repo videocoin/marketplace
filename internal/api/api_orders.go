@@ -2,6 +2,10 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/AlekSi/pointer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/copier"
@@ -10,9 +14,6 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/wyvern"
 	"github.com/videocoin/marketplace/pkg/ethutil"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 func (s *Server) postOrder(c echo.Context) error {
@@ -73,8 +74,10 @@ func (s *Server) postOrder(c echo.Context) error {
 		return err
 	}
 
-	if asset.OwnerID != account.ID {
-		return echo.ErrForbidden
+	if order.Side == wyvern.Sell {
+		if asset.OwnerID != account.ID {
+			return echo.ErrForbidden
+		}
 	}
 
 	if asset.StatusIsTransferred() {
@@ -153,6 +156,14 @@ func (s *Server) postOrder(c echo.Context) error {
 		return err
 	}
 
+	if maker.Address != wyvern.NullAddress {
+		resp.Maker = toAccountResponse(maker)
+	}
+
+	if taker.Address != wyvern.NullAddress {
+		resp.Taker = toAccountResponse(taker)
+	}
+
 	if resp.Metadata != nil && resp.Metadata.Asset != nil {
 		resp.PaymentTokenContract = &TokenResponse{}
 		token, _ := s.ds.Tokens.GetByAddress(ctx, resp.PaymentToken)
@@ -161,9 +172,30 @@ func (s *Server) postOrder(c echo.Context) error {
 		}
 	}
 
+	if order.Side == wyvern.Buy {
+		basePrice, err := ethutil.ParseBigInt(req.BasePrice)
+		if err != nil {
+			return err
+		}
+
+		bid := ethutil.WeiToEther(basePrice)
+		bidFloat, _ := bid.Float64()
+		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+			CurrentBid: pointer.ToFloat64(bidFloat),
+		})
+		if err != nil {
+			s.logger.
+				WithField("asset_id", asset.ID).
+				WithError(err).
+				Error("failed to update current bid")
+			return err
+		}
+	}
+
 	if order.Side == wyvern.Sell {
 		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			OnSale: pointer.ToBool(true),
+			PaymnetTokenAddress: pointer.ToString(order.PaymentTokenAddress),
+			OnSale:              pointer.ToBool(true),
 		})
 		if err != nil {
 			s.logger.
@@ -254,7 +286,7 @@ func (s *Server) getOrders(c echo.Context) error {
 		fltr.TakerID = pointer.ToInt64(taker.ID)
 	}
 
-	orders, err := s.ds.Orders.List(ctx, fltr, limitOpts)
+	orders, err := s.ds.GetOrderList(ctx, fltr, limitOpts)
 	if err != nil {
 		return err
 	}

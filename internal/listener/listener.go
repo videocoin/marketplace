@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/videocoin/marketplace/internal/model"
+	"github.com/videocoin/marketplace/internal/wyvern"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -140,11 +142,31 @@ func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 	for _, event := range events {
 		ctx := context.Background()
 
-		order, err := listener.orderbook.GetBySignHash(ctx, event.Hash.String())
-		if err != nil {
+		var order *model.Order
+		var orderHashErr error
+		orderSignHashFound := false
+		hashes := []string{event.Hash.String(), event.SellHash.String(), event.BuyHash.String()}
+
+		for _, orderHash := range hashes {
+			if orderHash == wyvern.NullAddress {
+				continue
+			}
+
+			order, orderHashErr = listener.orderbook.GetBySignHash(ctx, orderHash)
+			if orderHashErr == nil {
+				orderSignHashFound = true
+				break
+			}
+
 			listener.logger.
-				WithField("order_hash", event.Hash.String()).
-				WithError(err).
+				WithField("order_hash", orderHash).
+				WithError(orderHashErr).
+				Error("failed to get order by hash")
+		}
+
+		if !orderSignHashFound {
+			listener.logger.
+				WithField("order_hashes", hashes).
 				Error("failed to get order by hash")
 			continue
 		}
@@ -170,19 +192,36 @@ func (listener *ExchangeListener) processEvents(events []*OrderEvent) error {
 			{
 				logger := listener.logger.
 					WithField("hash", event.Hash.String()).
+					WithField("sell_hash", event.SellHash.String()).
+					WithField("buy_hash", event.BuyHash.String()).
 					WithField("maker", event.Maker.String()).
 					WithField("taker", event.Taker.String()).
+					WithField("maker", event.Maker.String()).
 					WithField("event", "OrdersMatched")
 
 				logger.Info("event received")
 
-				taker, err := listener.ds.Accounts.GetByAddress(ctx, event.Taker.String())
-				if err != nil {
-					logger.WithError(err).Error("failed to get taker")
-					return err
+				var newOwner *model.Account
+
+				if order.Side == wyvern.Sell {
+					taker, err := listener.ds.Accounts.GetByAddress(ctx, event.Taker.String())
+					if err != nil {
+						logger.WithError(err).Error("failed to get new owner")
+						return err
+					}
+					newOwner = taker
 				}
 
-				return listener.orderbook.Process(ctx, order, taker)
+				if order.Side == wyvern.Buy {
+					maker, err := listener.ds.Accounts.GetByAddress(ctx, event.Maker.String())
+					if err != nil {
+						logger.WithError(err).Error("failed to get new owner")
+						return err
+					}
+					newOwner = maker
+				}
+
+				return listener.orderbook.Process(ctx, order, newOwner)
 			}
 		}
 	}

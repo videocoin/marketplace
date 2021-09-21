@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/videocoin/marketplace/internal/wyvern"
 	"strconv"
 	"time"
 
@@ -85,6 +86,14 @@ type MediaResponse struct {
 	ThumbnailURL string            `json:"thumbnail_url"`
 }
 
+type AssetAuctionResponse struct {
+	IsOpen              bool       `json:"is_open"`
+	StartedAt           *time.Time `json:"started_at"`
+	Duration            int        `json:"duration"`
+	CurrentBid          *float64   `json:"current_bid"`
+	PaymentTokenAddress *string    `json:"payment_token_address"`
+}
+
 type AssetResponse struct {
 	ID          int64             `json:"id"`
 	TokenID     *string           `json:"token_id"`
@@ -111,11 +120,13 @@ type AssetResponse struct {
 
 	OnSale           bool    `json:"on_sale"`
 	InstantSalePrice float64 `json:"instant_sale_price"`
+	PutOnSalePrice   float64 `json:"put_on_sale_price"`
 	Locked           bool    `json:"locked"`
 
 	Sold bool `json:"sold"`
 
-	Media []*MediaResponse `json:"media"`
+	Media   []*MediaResponse      `json:"media"`
+	Auction *AssetAuctionResponse `json:"auction"`
 }
 
 type AssetsResponse struct {
@@ -197,6 +208,23 @@ func toAccountResponse(account *model.Account) *AccountResponse {
 	return resp
 }
 
+func toAccountResponseFromWyvernAccount(account *wyvern.Account) *AccountResponse {
+	resp := &AccountResponse{
+		ID:         account.ID,
+		Address:    account.Address,
+		User:       &UserResponse{},
+		IsVerified: account.IsVerified,
+		ImageUrl:   account.ImageUrl,
+	}
+
+	if account.User != nil {
+		resp.User.Username = account.User.Username
+		resp.User.Name = account.User.Name
+	}
+
+	return resp
+}
+
 func toAssetResponse(asset *model.Asset) *AssetResponse {
 	contract := &AssetContractResponse{
 		SchemaName:                  model.ContractSchemaTypeERC721.String(),
@@ -222,8 +250,16 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		},
 		OnSale:           asset.OnSale,
 		InstantSalePrice: asset.Price,
+		PutOnSalePrice:   asset.PutOnSalePrice.Float64,
 		Sold:             !asset.OnSale && asset.StatusIsTransferred(),
 		Locked:           asset.Locked,
+		Auction: &AssetAuctionResponse{
+			IsOpen:              model.AuctionIsOpen(asset.CreatedAt, model.DefaultAuctionDuration),
+			StartedAt:           asset.CreatedAt,
+			Duration:            model.DefaultAuctionDuration,
+			CurrentBid:          pointer.ToFloat64(asset.CurrentBid.Float64),
+			PaymentTokenAddress: pointer.ToString(asset.PaymentTokenAddress.String),
+		},
 	}
 
 	if asset.DRMKey != "" {
@@ -346,6 +382,12 @@ func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, cou
 	for _, order := range orders {
 		item := new(OrderResponse)
 		_ = copier.Copy(item, order.WyvernOrder)
+		if order.WyvernOrder.Maker != nil {
+			item.Maker = toAccountResponseFromWyvernAccount(order.WyvernOrder.Maker)
+		}
+		if order.WyvernOrder.Taker != nil {
+			item.Taker = toAccountResponseFromWyvernAccount(order.WyvernOrder.Taker)
+		}
 
 		if item.Metadata != nil && item.Metadata.Asset != nil {
 			if tokens != nil {

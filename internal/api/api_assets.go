@@ -127,6 +127,8 @@ func (s *Server) createAsset(c echo.Context) error {
 		OnSale:          false,
 		Royalty:         req.Royalty,
 		Price:           req.InstantSalePrice,
+		PutOnSalePrice:  dbr.NewNullFloat64(req.PutOnSalePrice),
+		CurrentBid:      dbr.NewNullFloat64(req.PutOnSalePrice),
 	}
 
 	err = s.ds.Assets.Create(ctx, asset)

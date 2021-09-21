@@ -16,20 +16,22 @@ var (
 )
 
 type AssetUpdatedFields struct {
-	Name            *string
-	Desc            *string
-	YTVideoLink     *string
-	ContractAddress *string
-	MintTxID        *string
-	OnSale          *bool
-	Price           *float64
-	Royalty         *uint
-	Status          *string
-	DRMKey          *string
-	DRMMeta         *string
-	EK              *string
-	OwnerID         *int64
-	TokenCID        *string
+	Name                *string
+	Desc                *string
+	YTVideoLink         *string
+	ContractAddress     *string
+	MintTxID            *string
+	OnSale              *bool
+	Price               *float64
+	Royalty             *uint
+	Status              *string
+	DRMKey              *string
+	DRMMeta             *string
+	EK                  *string
+	OwnerID             *int64
+	TokenCID            *string
+	CurrentBid          *float64
+	PaymnetTokenAddress *string
 }
 
 type AssetDatastore struct {
@@ -69,7 +71,7 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 		"name", "description", "yt_video_link",
 		"drm_key", "drm_meta",
 		"contract_address", "on_sale", "royalty", "price",
-		"locked",
+		"locked", "put_on_sale_price", "current_bid",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -235,6 +237,16 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if fields.Price != nil {
 		stmt.Set("price", *fields.Price)
 		asset.Price = *fields.Price
+	}
+
+	if fields.CurrentBid != nil {
+		stmt.Set("current_bid", *fields.CurrentBid)
+		asset.CurrentBid = dbr.NewNullFloat64(*fields.CurrentBid)
+	}
+
+	if fields.PaymnetTokenAddress != nil {
+		stmt.Set("payment_token_address", *fields.PaymnetTokenAddress)
+		asset.PaymentTokenAddress = dbr.NewNullString(*fields.PaymnetTokenAddress)
 	}
 
 	if fields.DRMMeta != nil {
