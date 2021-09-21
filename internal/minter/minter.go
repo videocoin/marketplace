@@ -27,7 +27,7 @@ type Minter struct {
 	mtx      sync.Mutex
 }
 
-func NewMinter(url string, contractAddress string, contractKey string, contractKeyPass string) (*Minter, error) {
+func NewMinter(url string, chainId uint64, contractAddress string, contractKey string, contractKeyPass string) (*Minter, error) {
 	cli, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, err
@@ -44,11 +44,16 @@ func NewMinter(url string, contractAddress string, contractKey string, contractK
 		return nil, fmt.Errorf("failed to decrypt a key %s: %v", contractKey, err)
 	}
 
+	opts, err := bind.NewKeyedTransactorWithChainID(key.PrivateKey, big.NewInt(int64(chainId)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tx signer: %v", err)
+	}
+
 	return &Minter{
 		ca:       ca,
 		cli:      cli,
 		contract: contract,
-		opts:     *bind.NewKeyedTransactor(key.PrivateKey),
+		opts:     *opts,
 	}, nil
 }
 
