@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/gocraft/dbr/v2"
 	"net/http"
 	"strconv"
 	"strings"
@@ -190,6 +191,25 @@ func (s *Server) postOrder(c echo.Context) error {
 				Error("failed to update current bid")
 			return err
 		}
+
+		go func() {
+			err = s.ds.Activity.Create(ctx, &model.Activity{
+				IsNew:       true,
+				CreatedByID: *order.TakerID,
+				AssetID:     dbr.NewNullInt64(asset.ID),
+				OrderID:     dbr.NewNullInt64(order.ID),
+				TypeID:      model.ActivityTypeVIDReceived,
+				GroupID:     model.ActivityGroupBids,
+			})
+			if err != nil {
+				s.logger.
+					WithField("asset_id", asset.ID).
+					WithField("order_id", order.ID).
+					WithError(err).
+					Error("failed to create activity item")
+				return
+			}
+		}()
 	}
 
 	if order.Side == wyvern.Sell {

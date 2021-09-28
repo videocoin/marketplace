@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/AlekSi/pointer"
+	"github.com/gocraft/dbr/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
@@ -86,6 +87,8 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		return err
 	}
 
+	oldOwnerID := asset.OwnerID
+
 	account, err := book.ds.Accounts.GetByID(ctx, asset.CreatedByID)
 	if err != nil {
 		return err
@@ -141,6 +144,32 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 	}
 
 	logger.Info("order has been processed")
+
+	go func() {
+		err = book.ds.Activity.Create(ctx, &model.Activity{
+			IsNew:       true,
+			CreatedByID: newOwner.ID,
+			TypeID:      model.ActivityTypePurchased,
+			GroupID:     model.ActivityGroupPurchases,
+			AssetID:     dbr.NewNullInt64(asset.ID),
+			OrderID:     dbr.NewNullInt64(order.ID),
+		})
+		if err != nil {
+			logger.WithError(err).Error("failed to create activity item (purchased)")
+		}
+
+		err = book.ds.Activity.Create(ctx, &model.Activity{
+			IsNew:       true,
+			CreatedByID: oldOwnerID,
+			TypeID:      model.ActivityTypeSold,
+			GroupID:     model.ActivityGroupSales,
+			AssetID:     dbr.NewNullInt64(asset.ID),
+			OrderID:     dbr.NewNullInt64(order.ID),
+		})
+		if err != nil {
+			logger.WithError(err).Error("failed to create activity item (sold)")
+		}
+	}()
 
 	return nil
 }

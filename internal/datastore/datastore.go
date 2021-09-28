@@ -20,6 +20,7 @@ type Datastore struct {
 	Tokens    *TokenDatastore
 	Orders    *OrderDatastore
 	ChainMeta *ChainMetaDatastore
+	Activity  *ActivityDatastore
 }
 
 func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
@@ -80,6 +81,13 @@ func NewDatastore(ctx context.Context, uri string) (*Datastore, error) {
 	}
 
 	ds.ChainMeta = chainMetaDs
+
+	activityDs, err := NewActivityDatastore(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	ds.Activity = activityDs
 
 	return ds, nil
 }
@@ -204,6 +212,77 @@ func (ds *Datastore) JoinMediaToAssets(ctx context.Context, assets []*model.Asse
 
 	for _, asset := range assets {
 		asset.Media = mediaByAssetID[asset.ID]
+	}
+
+	return nil
+}
+
+func (ds *Datastore) JoinAssetToActivity(ctx context.Context, activity []*model.Activity) error {
+	uids := map[int64]struct{}{}
+	for _, item := range activity {
+		if item.AssetID.Valid {
+			uids[item.AssetID.Int64] = struct{}{}
+		}
+	}
+	ids := make([]int64, 0)
+	for id, _ := range uids {
+		ids = append(ids, id)
+	}
+
+	if len(ids) > 0 {
+		assets, err := ds.GetAssetsList(ctx, &AssetsFilter{Ids: ids}, nil)
+		if err != nil {
+			return err
+		}
+
+		err = ds.JoinMediaToAssets(ctx, assets)
+		if err != nil {
+			return err
+		}
+
+		byID := map[int64]*model.Asset{}
+		for _, asset := range assets {
+			byID[asset.ID] = asset
+		}
+
+		for _, item := range activity {
+			if item.AssetID.Valid {
+				item.Asset = byID[item.AssetID.Int64]
+			}
+		}
+	}
+
+	return nil
+}
+
+func (ds *Datastore) JoinOrderToActivity(ctx context.Context, activity []*model.Activity) error {
+	uids := map[int64]struct{}{}
+	for _, item := range activity {
+		if item.OrderID.Valid {
+			uids[item.OrderID.Int64] = struct{}{}
+		}
+	}
+	ids := make([]int64, 0)
+	for id, _ := range uids {
+		ids = append(ids, id)
+	}
+
+	if len(ids) > 0 {
+		orders, err := ds.GetOrderList(ctx, &OrderFilter{Ids: ids}, nil)
+		if err != nil {
+			return err
+		}
+
+		byID := map[int64]*model.Order{}
+		for _, order := range orders {
+			byID[order.ID] = order
+		}
+
+		for _, item := range activity {
+			if item.OrderID.Valid {
+				item.Order = byID[item.OrderID.Int64]
+			}
+		}
 	}
 
 	return nil

@@ -97,6 +97,10 @@ func (s *Server) route() {
 	spotlightGroup.GET("/assets/featured", s.getSpotlightFeaturedAssets)
 	spotlightGroup.GET("/assets/live", s.getSpotlightLiveAssets)
 	spotlightGroup.GET("/creators/featured", s.getSpotlightFeaturedCreators)
+
+	activityGroup := v1.Group("/activity")
+	activityGroup.Use(auth.JWTAuth(s.logger, s.ds, s.authSecret))
+	activityGroup.GET("", s.getActivity)
 }
 
 func (s *Server) health(c echo.Context) error {

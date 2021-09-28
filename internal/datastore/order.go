@@ -277,6 +277,9 @@ func applyOrderFilters(stmt *dbr.SelectStmt, fltr *OrderFilter, applySort bool) 
 	if fltr.SaleKind != nil {
 		stmt = stmt.Where("sale_kind = ?", *fltr.SaleKind)
 	}
+	if len(fltr.Ids) > 0 {
+		stmt = stmt.Where("id IN ?", fltr.Ids)
+	}
 
 	if applySort {
 		if fltr.Sort != nil && fltr.Sort.Field != "" {

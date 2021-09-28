@@ -86,6 +86,10 @@ type Asset struct {
 	Media     []*Media `db:"-"`
 }
 
+func (a *Asset) IsAuction() bool {
+	return a.PutOnSalePrice.Valid && a.PutOnSalePrice.Float64 > 0
+}
+
 func (a *Asset) StatusIsFailed() bool {
 	return a.Status == AssetStatusFailed
 }

@@ -160,6 +160,23 @@ type ItemsCountResponse struct {
 	Limit      uint64
 }
 
+type ActivityItemResponse struct {
+	IsNew     bool           `json:"is_new"`
+	CreatedAt *time.Time     `json:"created_at"`
+	TypeID    string         `json:"type_id"`
+	GroupID   string         `json:"group_id"`
+	Asset     *AssetResponse `json:"asset"`
+	Order     *OrderResponse `json:"order"`
+}
+
+type ActivityResponse struct {
+	Items      []*ActivityItemResponse `json:"items"`
+	TotalCount int64                   `json:"total_count"`
+	Count      int64                   `json:"count"`
+	Prev       bool                    `json:"prev"`
+	Next       bool                    `json:"next"`
+}
+
 func toNonceResponse(account *model.Account) *NonceResponse {
 	return &NonceResponse{
 		Nonce: NoncePrefix + account.Nonce.String,
@@ -372,6 +389,28 @@ func toTokensResponse(tokens []*model.Token) []*TokenResponse {
 
 	return resp
 }
+func toOrderResponse(order *model.Order, tokens map[string]*model.Token) *OrderResponse {
+	item := new(OrderResponse)
+	_ = copier.Copy(item, order.WyvernOrder)
+	if order.WyvernOrder.Maker != nil {
+		item.Maker = toAccountResponseFromWyvernAccount(order.WyvernOrder.Maker)
+	}
+	if order.WyvernOrder.Taker != nil {
+		item.Taker = toAccountResponseFromWyvernAccount(order.WyvernOrder.Taker)
+	}
+
+	if item.Metadata != nil && item.Metadata.Asset != nil {
+		if tokens != nil {
+			token := tokens[item.PaymentToken]
+			if token != nil {
+				item.PaymentTokenContract = &TokenResponse{}
+				item.PaymentTokenContract = toTokenResponse(token)
+			}
+		}
+	}
+
+	return item
+}
 
 func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, count *ItemsCountResponse) *OrdersResponse {
 	resp := &OrdersResponse{
@@ -380,25 +419,7 @@ func toOrdersResponse(orders []*model.Order, tokens map[string]*model.Token, cou
 	}
 
 	for _, order := range orders {
-		item := new(OrderResponse)
-		_ = copier.Copy(item, order.WyvernOrder)
-		if order.WyvernOrder.Maker != nil {
-			item.Maker = toAccountResponseFromWyvernAccount(order.WyvernOrder.Maker)
-		}
-		if order.WyvernOrder.Taker != nil {
-			item.Taker = toAccountResponseFromWyvernAccount(order.WyvernOrder.Taker)
-		}
-
-		if item.Metadata != nil && item.Metadata.Asset != nil {
-			if tokens != nil {
-				token := tokens[item.PaymentToken]
-				if token != nil {
-					item.PaymentTokenContract = &TokenResponse{}
-					item.PaymentTokenContract = toTokenResponse(token)
-				}
-			}
-		}
-
+		item := toOrderResponse(order, tokens)
 		resp.Orders = append(resp.Orders, item)
 	}
 
@@ -427,6 +448,49 @@ func toMediaResponse(media *model.Media, locked bool) *MediaResponse {
 
 	if media.CreatedBy != nil {
 		resp.Creator = toAccountResponse(media.CreatedBy)
+	}
+
+	return resp
+}
+
+func toActivityItemResponse(item *model.Activity) *ActivityItemResponse {
+	var (
+		assetResp *AssetResponse
+		orderResp *OrderResponse
+	)
+
+	if item.Asset != nil {
+		assetResp = toAssetResponse(item.Asset)
+	}
+
+	if item.Order != nil {
+		orderResp = toOrderResponse(item.Order, nil)
+	}
+
+	return &ActivityItemResponse{
+		IsNew:     item.IsNew,
+		CreatedAt: item.CreatedAt,
+		GroupID:   item.GroupID,
+		TypeID:    item.TypeID,
+		Asset:     assetResp,
+		Order:     orderResp,
+	}
+}
+
+func toActivityResponse(items []*model.Activity, count *ItemsCountResponse) *ActivityResponse {
+	resp := &ActivityResponse{
+		Items: make([]*ActivityItemResponse, 0),
+	}
+
+	for _, item := range items {
+		resp.Items = append(resp.Items, toActivityItemResponse(item))
+	}
+
+	resp.Count = int64(len(resp.Items))
+	if count != nil {
+		resp.TotalCount = count.TotalCount
+		resp.Prev = resp.Count > 0 && count.Offset > 0
+		resp.Next = resp.Count > 0 && resp.TotalCount > (resp.Count+int64(count.Offset))
 	}
 
 	return resp

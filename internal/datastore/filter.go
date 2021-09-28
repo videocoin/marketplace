@@ -7,6 +7,7 @@ type SortOption struct {
 
 type AssetsFilter struct {
 	Statuses    []string
+	Ids         []int64
 	CreatedByID *int64
 	OwnerID     *int64
 	OnSale      *bool
@@ -27,6 +28,7 @@ type TokensFilter struct {
 }
 
 type OrderFilter struct {
+	Ids                  []int64
 	Side                 *int
 	SaleKind             *int
 	PaymentTokenAddress  *string
@@ -35,4 +37,10 @@ type OrderFilter struct {
 	MakerID              *int64
 	TakerID              *int64
 	Sort                 *SortOption
+}
+
+type ActivityFilter struct {
+	GroupID     *string
+	CreatedByID *int64
+	Sort        *SortOption
 }

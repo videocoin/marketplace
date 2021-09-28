@@ -361,6 +361,9 @@ func (ds *AssetDatastore) List(ctx context.Context, fltr *AssetsFilter, limit *L
 		if len(fltr.Statuses) > 0 {
 			selectStmt = selectStmt.Where("status IN ?", fltr.Statuses)
 		}
+		if len(fltr.Ids) > 0 {
+			selectStmt = selectStmt.Where("id IN ?", fltr.Ids)
+		}
 		if fltr.OnSale != nil && *fltr.OnSale {
 			selectStmt = selectStmt.Where("on_sale = ?", *fltr.OnSale)
 		}
@@ -421,6 +424,9 @@ func (ds *AssetDatastore) Count(ctx context.Context, fltr *AssetsFilter) (int64,
 		}
 		if len(fltr.Statuses) > 0 {
 			selectStmt = selectStmt.Where("status IN ?", fltr.Statuses)
+		}
+		if len(fltr.Ids) > 0 {
+			selectStmt = selectStmt.Where("id IN ?", fltr.Ids)
 		}
 		if fltr.OnSale != nil && *fltr.OnSale {
 			selectStmt = selectStmt.Where("on_sale = ?", *fltr.OnSale)
