@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AlekSi/pointer"
 	ethcommon "github.com/ethereum/go-ethereum/common"
@@ -89,11 +90,23 @@ func (s *Server) postOrder(c echo.Context) error {
 
 		price := ethutil.WeiToEther(basePrice)
 		priceFloat, _ := price.Float64()
-		err = s.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
-			Price:  pointer.ToFloat64(priceFloat),
+		fields := datastore.AssetUpdatedFields{
 			OnSale: pointer.ToBool(true),
 			Status: pointer.ToString(string(model.AssetStatusReady)),
-		})
+		}
+
+		if order.IsAuction() {
+			fields.Price = pointer.ToFloat64(0)
+			fields.PutOnSalePrice = pointer.ToFloat64(priceFloat)
+			fields.CurrentBid = pointer.ToFloat64(priceFloat)
+			fields.AuctionStartedAt = pointer.ToTime(time.Now())
+		} else {
+			fields.Price = pointer.ToFloat64(priceFloat)
+			fields.PutOnSalePrice = pointer.ToFloat64(0)
+			fields.CurrentBid = pointer.ToFloat64(0)
+		}
+
+		err = s.ds.Assets.Update(ctx, asset, fields)
 		if err != nil {
 			return err
 		}

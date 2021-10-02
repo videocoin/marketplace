@@ -23,6 +23,7 @@ type AssetUpdatedFields struct {
 	MintTxID            *string
 	OnSale              *bool
 	Price               *float64
+	PutOnSalePrice      *float64
 	Royalty             *uint
 	Status              *string
 	DRMKey              *string
@@ -32,6 +33,7 @@ type AssetUpdatedFields struct {
 	TokenCID            *string
 	CurrentBid          *float64
 	PaymnetTokenAddress *string
+	AuctionStartedAt    *time.Time
 }
 
 type AssetDatastore struct {
@@ -66,12 +68,17 @@ func (ds *AssetDatastore) Create(ctx context.Context, asset *model.Asset) error 
 		asset.CreatedAt = pointer.ToTime(time.Now())
 	}
 
+	if asset.IsAuction() {
+		asset.AuctionStartedAt = asset.CreatedAt
+	}
+
 	cols := []string{
 		"created_at", "created_by_id", "owner_id", "status",
 		"name", "description", "yt_video_link",
 		"drm_key", "drm_meta",
 		"contract_address", "on_sale", "royalty", "price",
 		"locked", "put_on_sale_price", "current_bid",
+		"auction_started_at",
 	}
 	err = tx.
 		InsertInto(ds.table).
@@ -239,9 +246,19 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 		asset.Price = *fields.Price
 	}
 
+	if fields.PutOnSalePrice != nil {
+		stmt.Set("put_on_sale_price", *fields.PutOnSalePrice)
+		asset.PutOnSalePrice = dbr.NewNullFloat64(*fields.PutOnSalePrice)
+	}
+
 	if fields.CurrentBid != nil {
 		stmt.Set("current_bid", *fields.CurrentBid)
 		asset.CurrentBid = dbr.NewNullFloat64(*fields.CurrentBid)
+	}
+
+	if fields.AuctionStartedAt != nil {
+		stmt.Set("auction_started_at", *fields.AuctionStartedAt)
+		asset.AuctionStartedAt = fields.AuctionStartedAt
 	}
 
 	if fields.PaymnetTokenAddress != nil {

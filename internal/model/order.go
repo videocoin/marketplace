@@ -43,3 +43,7 @@ func (o *Order) IsCanceled() bool {
 func (o *Order) IsProcessing() bool {
 	return o.Status == OrderStatusProcessing
 }
+
+func (o *Order) IsAuction() bool {
+	return o.WyvernOrder != nil && len(o.WyvernOrder.ExpirationTime) > 1
+}

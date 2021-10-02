@@ -81,6 +81,8 @@ type Asset struct {
 
 	Locked bool `db:"locked"`
 
+	AuctionStartedAt *time.Time `db:"auction_started_at"`
+
 	CreatedBy *Account `db:"-"`
 	Owner     *Account `db:"-"`
 	Media     []*Media `db:"-"`

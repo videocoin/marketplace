@@ -271,12 +271,26 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		Sold:             !asset.OnSale && asset.StatusIsTransferred(),
 		Locked:           asset.Locked,
 		Auction: &AssetAuctionResponse{
-			IsOpen:              model.AuctionIsOpen(asset.CreatedAt, model.DefaultAuctionDuration),
+			IsOpen:              false,
 			StartedAt:           asset.CreatedAt,
+			Duration:            0,
+			//CurrentBid:          pointer.ToFloat64(0),
+			PaymentTokenAddress: pointer.ToString(asset.PaymentTokenAddress.String),
+		},
+	}
+
+	if asset.IsAuction() {
+		auctionStartedAt := asset.AuctionStartedAt
+		if auctionStartedAt == nil || auctionStartedAt.IsZero() {
+			auctionStartedAt = asset.CreatedAt
+		}
+		resp.Auction = &AssetAuctionResponse{
+			IsOpen:              model.AuctionIsOpen(auctionStartedAt, model.DefaultAuctionDuration),
+			StartedAt:           auctionStartedAt,
 			Duration:            model.DefaultAuctionDuration,
 			CurrentBid:          pointer.ToFloat64(asset.CurrentBid.Float64),
 			PaymentTokenAddress: pointer.ToString(asset.PaymentTokenAddress.String),
-		},
+		}
 	}
 
 	if asset.DRMKey != "" {
