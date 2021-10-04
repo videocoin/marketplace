@@ -32,6 +32,7 @@ type AssetUpdatedFields struct {
 	OwnerID             *int64
 	TokenCID            *string
 	CurrentBid          *float64
+	PurchasedBid        *float64
 	PaymnetTokenAddress *string
 	AuctionStartedAt    *time.Time
 }
@@ -254,6 +255,11 @@ func (ds *AssetDatastore) Update(ctx context.Context, asset *model.Asset, fields
 	if fields.CurrentBid != nil {
 		stmt.Set("current_bid", *fields.CurrentBid)
 		asset.CurrentBid = dbr.NewNullFloat64(*fields.CurrentBid)
+	}
+
+	if fields.PurchasedBid != nil {
+		stmt.Set("purchased_bid", *fields.PurchasedBid)
+		asset.PurchasedBid = dbr.NewNullFloat64(*fields.PurchasedBid)
 	}
 
 	if fields.AuctionStartedAt != nil {

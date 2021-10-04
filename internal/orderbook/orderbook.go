@@ -16,6 +16,7 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/internal/token"
+	"github.com/videocoin/marketplace/pkg/ethutil"
 	"path"
 )
 
@@ -129,7 +130,7 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		return fmt.Errorf("failed to transfer asset: %s", err)
 	}
 
-	logger.Info("marking asset as ready")
+	logger.Info("marking asset as transferred")
 
 	err = book.ds.Assets.MarkStatusAsTransfered(ctx, asset)
 	if err != nil {
@@ -137,6 +138,20 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 	}
 
 	logger.Info("asset has been transferred")
+
+	basePrice, err := ethutil.ParseBigInt(order.WyvernOrder.BasePrice)
+	if err != nil {
+		return err
+	}
+
+	price := ethutil.WeiToEther(basePrice)
+	priceFloat, _ := price.Float64()
+	err = book.ds.Assets.Update(ctx, asset, datastore.AssetUpdatedFields{
+		PurchasedBid: pointer.ToFloat64(priceFloat),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update asset purchased bid: %s", err)
+	}
 
 	err = book.ds.Orders.MarkStatusAsProcessed(ctx, order)
 	if err != nil {

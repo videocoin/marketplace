@@ -67,6 +67,7 @@ type Asset struct {
 	PutOnSalePrice      dbr.NullFloat64 `db:"put_on_sale_price"`
 	Royalty             uint            `db:"royalty"`
 	CurrentBid          dbr.NullFloat64 `db:"current_bid"`
+	PurchasedBid        dbr.NullFloat64 `db:"purchased_bid"`
 	PaymentTokenAddress dbr.NullString  `db:"payment_token_address"`
 
 	YTVideoLink dbr.NullString `db:"yt_video_link"`

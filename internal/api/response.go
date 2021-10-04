@@ -91,6 +91,7 @@ type AssetAuctionResponse struct {
 	StartedAt           *time.Time `json:"started_at"`
 	Duration            int        `json:"duration"`
 	CurrentBid          *float64   `json:"current_bid"`
+	PurchasedBid        *float64   `json:"purchased_bid"`
 	PaymentTokenAddress *string    `json:"payment_token_address"`
 }
 
@@ -274,7 +275,6 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			IsOpen:              false,
 			StartedAt:           asset.CreatedAt,
 			Duration:            0,
-			//CurrentBid:          pointer.ToFloat64(0),
 			PaymentTokenAddress: pointer.ToString(asset.PaymentTokenAddress.String),
 		},
 	}
@@ -289,6 +289,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 			StartedAt:           auctionStartedAt,
 			Duration:            model.DefaultAuctionDuration,
 			CurrentBid:          pointer.ToFloat64(asset.CurrentBid.Float64),
+			PurchasedBid:        pointer.ToFloat64(asset.PurchasedBid.Float64),
 			PaymentTokenAddress: pointer.ToString(asset.PaymentTokenAddress.String),
 		}
 	}
