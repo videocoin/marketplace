@@ -240,7 +240,7 @@ func (mp *MediaProcessor) EncryptVideo(inputURI string, drmMeta *drm.Metadata, k
 	return outputMPDPath, nil
 }
 
-func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata) (string, error) {
+func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata, key string) (string, error) {
 	tmpFolder := filepath.Join("/tmp", random.RandomString(16))
 	err := os.MkdirAll(tmpFolder, 0777)
 	if err != nil {
@@ -268,7 +268,12 @@ func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata) (
 		WithField("output_path", inputPath).
 		Info("downloading input url")
 
-	err = downloadFile(inputURI, inputPath, nil)
+	ir, err := mp.storage.ObjReader(key)
+	if err != nil {
+		return "", err
+	}
+
+	err = downloadFile(inputURI, inputPath, ir)
 	if err != nil {
 		return "", err
 	}
@@ -314,7 +319,7 @@ func (mp *MediaProcessor) EncryptAudio(inputURI string, drmMeta *drm.Metadata) (
 	return outputMPDPath, nil
 }
 
-func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata) (string, error) {
+func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata, key string) (string, error) {
 	logger := mp.logger.WithField("input_uri", inputURI)
 
 	inputPath := genTempFilepath("", filepath.Ext(inputURI))
@@ -322,7 +327,12 @@ func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata) (s
 
 	logger.Info("downloading input url")
 
-	err := downloadFile(inputURI, inputPath, nil)
+	ir, err := mp.storage.ObjReader(key)
+	if err != nil {
+		return "", err
+	}
+
+	err = downloadFile(inputURI, inputPath, ir)
 	if err != nil {
 		return "", err
 	}
@@ -352,7 +362,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	if media.IsApplication() || media.IsImage() {
 		logger.Info("encrypting file")
 
-		outputPath, err := mp.EncryptFile(media.GetOriginalUrl(), drmMeta)
+		outputPath, err := mp.EncryptFile(media.GetOriginalUrl(), drmMeta, media.Key)
 		if err != nil {
 			return err
 		}
@@ -432,7 +442,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	}
 
 	if media.IsAudio() {
-		outputPath, err := mp.EncryptAudio(media.GetOriginalUrl(), drmMeta)
+		outputPath, err := mp.EncryptAudio(media.GetOriginalUrl(), drmMeta, media.Key)
 		if err != nil {
 			return err
 		}
