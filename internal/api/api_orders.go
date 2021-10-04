@@ -245,6 +245,7 @@ func (s *Server) postOrder(c echo.Context) error {
 func (s *Server) getOrders(c echo.Context) error {
 	ctx := context.Background()
 	fltr := &datastore.OrderFilter{
+		IsArchive: pointer.ToBool(false),
 		Sort: &datastore.SortOption{
 			Field: "created_date",
 			IsAsc: false,

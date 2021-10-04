@@ -280,10 +280,41 @@ func applyOrderFilters(stmt *dbr.SelectStmt, fltr *OrderFilter, applySort bool) 
 	if len(fltr.Ids) > 0 {
 		stmt = stmt.Where("id IN ?", fltr.Ids)
 	}
+	if fltr.IsArchive != nil {
+		stmt = stmt.Where("is_archive = ?", *fltr.IsArchive)
+	}
 
 	if applySort {
 		if fltr.Sort != nil && fltr.Sort.Field != "" {
 			stmt = stmt.OrderDir(fltr.Sort.Field, fltr.Sort.IsAsc)
 		}
 	}
+}
+
+func (ds *OrderDatastore) ArchiveByTokenID(ctx context.Context, tokenID int64) error {
+	var err error
+	tx, ok := dbrutil.DbTxFromContext(ctx)
+	if !ok {
+		sess := ds.conn.NewSession(nil)
+		tx, err = sess.Begin()
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			err = tx.Commit()
+			tx.RollbackUnlessCommitted()
+		}()
+	}
+
+	_, err = tx.
+		Update(ds.table).
+		Set("is_archive", true).
+		Where("token_id = ?", tokenID).
+		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -36,6 +36,7 @@ type OrderFilter struct {
 	TokenID              *int64
 	MakerID              *int64
 	TakerID              *int64
+	IsArchive            *bool
 	Sort                 *SortOption
 }
 

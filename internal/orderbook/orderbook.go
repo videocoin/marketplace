@@ -153,6 +153,11 @@ func (book *OrderBook) Process(ctx context.Context, order *model.Order, newOwner
 		return fmt.Errorf("failed to update asset purchased bid: %s", err)
 	}
 
+	err = book.ds.Orders.ArchiveByTokenID(ctx, asset.ID)
+	if err != nil {
+		return fmt.Errorf("failed to archive orders: %s", err)
+	}
+
 	err = book.ds.Orders.MarkStatusAsProcessed(ctx, order)
 	if err != nil {
 		return fmt.Errorf("failed to mark order as processed: %s", err)

@@ -17,6 +17,7 @@ const (
 
 type Order struct {
 	ID                   int64            `db:"id"`
+	IsArchive            bool             `db:"is_archive"`
 	CreatedByID          int64            `db:"created_by_id"`
 	Status               OrderStatus      `db:"status"`
 	Hash                 string           `db:"hash"`
