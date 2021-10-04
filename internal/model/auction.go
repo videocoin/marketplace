@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultAuctionDuration = 48 * 60 * 60
+	DefaultAuctionDuration = 5 * 60
 )
 
 func AuctionIsOpen(startedAt *time.Time, duration int) bool {
