@@ -123,6 +123,7 @@ type AssetResponse struct {
 	InstantSalePrice float64 `json:"instant_sale_price"`
 	PutOnSalePrice   float64 `json:"put_on_sale_price"`
 	Locked           bool    `json:"locked"`
+	IsAction         bool    `json:"is_auction"`
 
 	Sold bool `json:"sold"`
 
@@ -271,6 +272,7 @@ func toAssetResponse(asset *model.Asset) *AssetResponse {
 		PutOnSalePrice:   asset.PutOnSalePrice.Float64,
 		Sold:             !asset.OnSale && asset.StatusIsTransferred(),
 		Locked:           asset.Locked,
+		IsAction:         asset.IsAuction(),
 		Auction: &AssetAuctionResponse{
 			IsOpen:              false,
 			StartedAt:           asset.CreatedAt,
