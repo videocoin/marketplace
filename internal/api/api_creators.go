@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"github.com/AlekSi/pointer"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/datastore"
+	"github.com/videocoin/marketplace/internal/model"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,13 +47,24 @@ func (s *Server) GetCreators(c echo.Context) error {
 }
 
 func (s *Server) GetCreator(c echo.Context) error {
-	creatorID, _ := strconv.ParseInt(c.Param("creator_id"), 10, 64)
-	if creatorID == 0 {
-		return echo.ErrNotFound
-	}
-
+	creatorID := strings.ToLower(c.Param("creator_id"))
 	ctx := context.Background()
-	creator, err := s.ds.Accounts.GetByID(ctx, creatorID)
+
+	var (
+		creator *model.Account
+		err error
+	)
+
+	if ethcommon.IsHexAddress(creatorID) {
+		creator, err = s.ds.Accounts.GetByAddress(ctx, creatorID)
+	} else {
+		id, _ := strconv.ParseInt(creatorID, 10, 64)
+		if id == 0 {
+			return echo.ErrNotFound
+		}
+
+		creator, err = s.ds.Accounts.GetByID(ctx, id)
+	}
 	if err != nil {
 		if err == datastore.ErrAccountNotFound {
 			return echo.ErrNotFound
