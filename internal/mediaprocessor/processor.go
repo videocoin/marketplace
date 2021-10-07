@@ -62,7 +62,23 @@ func (mp *MediaProcessor) GenerateThumbnail(ctx context.Context, media *model.Me
 			_ = os.Remove(meta.LocalThumbBluredDest)
 		}()
 
+		cid, err := mp.storage.PushPath(meta.DestThumbKey, f, true)
+		if err != nil {
+			return err
+		}
+
+		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+			ThumbnailCID: pointer.ToString(cid),
+		})
+		if err != nil {
+			return err
+		}
+		f.Seek(0, 0)
+
 		srcImage, _, err := image.Decode(f)
+		if err != nil {
+			return err
+		}
 		blurredImage := imaging.Blur(srcImage, 20)
 
 		blurred, err := os.Create(meta.LocalThumbBluredDest)
@@ -72,18 +88,6 @@ func (mp *MediaProcessor) GenerateThumbnail(ctx context.Context, media *model.Me
 		defer blurred.Close()
 
 		err = imaging.Encode(blurred, blurredImage, imaging.JPEG)
-		if err != nil {
-			return err
-		}
-
-		cid, err := mp.storage.PushPath(meta.DestThumbKey, f, true)
-		if err != nil {
-			return err
-		}
-
-		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-			ThumbnailCID: pointer.ToString(cid),
-		})
 		if err != nil {
 			return err
 		}
