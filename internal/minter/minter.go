@@ -43,12 +43,16 @@ func NewMinter(url string, contractAddress string, contractKey string, contractK
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt a key %s: %v", contractKey, err)
 	}
-
+	chainId :=  big.NewInt(137)
+	opts, err := bind.NewKeyedTransactorWithChainID(key.PrivateKey,  chainId)
+	if err != nil {
+		return nil, fmt.Errorf("failed NewKeyedTransactorWithChainIDs: %v",  err)
+	}
 	return &Minter{
 		ca:       ca,
 		cli:      cli,
 		contract: contract,
-		opts:     *bind.NewKeyedTransactor(key.PrivateKey),
+		opts:     *opts,
 	}, nil
 }
 
