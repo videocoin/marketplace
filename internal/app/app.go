@@ -77,6 +77,7 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 
 	m, err := minter.NewMinter(
 		cfg.BlockchainURL,
+		cfg.BlockchainId,
 		cfg.ERC721ContractAddress,
 		cfg.ERC721ContractKeyFile,
 		cfg.ERC721ContractKeyPass,

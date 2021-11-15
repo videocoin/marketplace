@@ -26,6 +26,7 @@ type Config struct {
 
 	BlockchainURL                string `envconfig:"BLOCKCHAIN_URL" default:"http://localhost:8545"`
 	BlockchainScanFrom           uint64 `envconfig:"BLOCKCHAIN_SCAN_FROM" default:"0"`
+	BlockchainId                 uint64 `envconfig:"BLOCKCHAIN_ID" default:"4"`
 	ERC721ContractAddress        string `envconfig:"ERC721_CONTRACT_ADDRESS"`
 	ERC721AuctionContractAddress string `envconfig:"ERC721_AUCTION_CONTRACT_ADDRESS"`
 	ERC721ContractKeyFile        string `envconfig:"ERC721_CONTRACT_KEY"`
