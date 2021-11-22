@@ -191,11 +191,18 @@ func (s *Storage) MultiUpload(inputs []string, to []string) (string, error) {
 
 	if s.backend == NftStorage {
 		srcs := make([]io.Reader, 0)
-		for _, input := range inputs {
+		for idx, input := range inputs {
 			f, err := os.Open(input)
 			if err != nil {
 				return "", err
 			}
+
+			err = s.UploadToCloud(f, to[idx])
+			if err != nil {
+				return "", err
+			}
+
+			f.Seek(0, 0)
 			srcs = append(srcs, f)
 		}
 		cid, err := s.nsCli.PushPaths(inputs, srcs)
