@@ -4,7 +4,7 @@
     "title": "Marketplace API",
     "version": "1.0"
   },
-  "host": "marketplace.dev.videocoin.network",
+  "host": "playground.nft.videocoin.network",
   "schemes": [
     "https"
   ],
@@ -222,6 +222,87 @@
         ],
         "tags": [
           "Auth"
+        ]
+      }
+    },
+    "/api/v1/media": {
+      "post": {
+        "summary": "Upload media",
+        "operationId": "UploadMedia",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/MediaResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "type": "file",
+            "required": true
+          },
+          {
+            "name": "featured",
+            "in": "formData",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/api/v1/media/{id}": {
+      "get": {
+        "summary": "Get detail media info",
+        "operationId": "GetMedia",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/MediaResponse"
+            }
+          },
+          "401": {
+            "description": "Returned when the user is not logged in.",
+            "schema": {}
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {}
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "example": {
+                "message": "Not found",
+                "fields": null
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Media"
         ]
       }
     },
@@ -800,11 +881,14 @@
         }
       }
     },
-    "YTUploadRequest": {
+    "AssetMediaRequest": {
       "type": "object",
       "properties": {
-        "link": {
+        "id": {
           "type": "string"
+        },
+        "featured": {
+          "type": "boolean"
         }
       }
     },
@@ -814,26 +898,28 @@
         "name": {
           "type": "string"
         },
-        "asset_id": {
-          "type": "number",
-          "format": "integer"
-        },
         "desc": {
-          "type": "string"
-        },
-        "yt_video_link": {
           "type": "string"
         },
         "on_sale": {
           "type": "boolean"
         },
-        "royalty": {
-          "type": "number",
-          "format": "integer"
-        },
         "instant_sale_price": {
           "type": "number",
           "format": "float"
+        },
+        "put_on_sale_price": {
+          "type": "number",
+          "format": "float"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "media_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetMediaRequest"
+          }
         }
       }
     },
@@ -995,6 +1081,25 @@
         }
       }
     },
+    "AssetAuctionResponse": {
+      "type": "object",
+      "properties": {
+        "is_open": {
+          "type": "boolean"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "current_bid": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
     "AssetResponse": {
       "type": "object",
       "properties": {
@@ -1023,13 +1128,7 @@
         "thumbnail_url": {
           "type": "string"
         },
-        "preview_url": {
-          "type": "string"
-        },
         "encrypted_url": {
-          "type": "string"
-        },
-        "qr_url": {
           "type": "string"
         },
         "ipfs_url": {
@@ -1053,15 +1152,75 @@
         "sold": {
           "type": "boolean"
         },
+        "locked": {
+          "type": "boolean"
+        },
+        "is_auction": {
+          "type": "boolean"
+        },
+        "auction": {
+          "$ref": "#/definitions/AssetAuctionResponse"
+        },
         "instant_sale_price": {
+          "type": "number",
+          "format": "float"
+        },
+        "put_on_sale_price": {
           "type": "number",
           "format": "float"
         },
         "owner": {
           "$ref": "#/definitions/AccountResponse"
         },
+        "creator": {
+          "$ref": "#/definitions/AccountResponse"
+        },
         "asset_contract": {
           "$ref": "#/definitions/AssetContractResponse"
+        },
+        "media": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MediaResponse"
+          }
+        }
+      }
+    },
+    "MediaResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "content_type": {
+          "type": "string"
+        },
+        "media_type": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "size": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string"
+        },
+        "thumbnail_url": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "creator": {
+          "$ref": "#/definitions/AccountResponse"
+        },
+        "featured": {
+          "type": "boolean"
         }
       }
     },
