@@ -20,6 +20,7 @@ type MediaUpdatedFields struct {
 	ThumbnailCID *string
 	EncryptedCID *string
 	EncryptedKey *string
+	EncryptedURL *string
 	Status       *string
 	AssetID      *int64
 	Featured     *bool
@@ -205,6 +206,11 @@ func (ds *MediaDatastore) Update(ctx context.Context, media *model.Media, fields
 	if fields.EncryptedKey != nil {
 		stmt.Set("encrypted_key", *fields.EncryptedKey)
 		media.EncryptedKey = *fields.EncryptedKey
+	}
+
+	if fields.EncryptedURL != nil {
+		stmt.Set("encrypted_url", *fields.EncryptedURL)
+		media.EncryptedURL = dbr.NewNullString(*fields.EncryptedURL)
 	}
 
 	if fields.Status != nil {

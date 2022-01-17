@@ -2,11 +2,12 @@ package model
 
 import (
 	"fmt"
-	"github.com/gocraft/dbr/v2"
-	"github.com/videocoin/marketplace/pkg/uuid4"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/gocraft/dbr/v2"
+	"github.com/videocoin/marketplace/pkg/uuid4"
 )
 
 type MediaStatus string
@@ -44,6 +45,7 @@ type Media struct {
 	CID          dbr.NullString `db:"cid"`
 	ThumbnailCID dbr.NullString `db:"thumbnail_cid"`
 	EncryptedCID dbr.NullString `db:"encrypted_cid"`
+	EncryptedURL dbr.NullString `db:"encrypted_url"`
 
 	AssetID dbr.NullInt64 `db:"asset_id"`
 
@@ -194,6 +196,9 @@ func (m *Media) GetCachedThumbnailUrl(locked bool) string {
 }
 
 func (m *Media) GetCachedEncryptedUrl() string {
+	if m.EncryptedURL.String != "" {
+		return m.EncryptedURL.String
+	}
 	if m.CacheRootKey.String != "" {
 		return fmt.Sprintf(CachedGateway, m.CacheRootKey.String, m.EncryptedKey)
 	}

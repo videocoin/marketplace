@@ -26,4 +26,6 @@ type Config struct {
 	ERC721AuctionContractAddress string `envconfig:"ERC721_AUCTION_CONTRACT_ADDRESS"`
 	ERC721ContractKeyFile        string `envconfig:"ERC721_CONTRACT_KEY"`
 	ERC721ContractKeyPass        string `envconfig:"ERC721_CONTRACT_KEY_PASS"`
+
+	VideocoinApiKey string `envconfig:"VIDEOCOIN_API_KEY" required:"false"`
 }

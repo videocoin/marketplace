@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/videocoin/marketplace/internal/mediaprocessor"
+	"github.com/videocoin/marketplace/pkg/videocoin"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
@@ -61,6 +62,12 @@ func NewApp(ctx context.Context, cfg *Config) (*App, error) {
 		mediaprocessor.WithLogger(logger.WithField("system", "mediaprocessor")),
 		mediaprocessor.WithDatastore(ds),
 		mediaprocessor.WithStorage(storageCli),
+	}
+
+	if cfg.VideocoinApiKey != "" {
+		logger.Info("initializing videocoin client")
+		vcCli := videocoin.NewClient(cfg.VideocoinApiKey)
+		mpOpts = append(mpOpts, mediaprocessor.WithVideocoin(vcCli))
 	}
 
 	mc, err := mediaprocessor.NewMediaProcessor(ctx, mpOpts...)

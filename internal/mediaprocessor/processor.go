@@ -3,6 +3,14 @@ package mediaprocessor
 import (
 	"context"
 	"fmt"
+	"image"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/AlekSi/pointer"
 	"github.com/disintegration/imaging"
 	"github.com/sirupsen/logrus"
@@ -11,19 +19,15 @@ import (
 	"github.com/videocoin/marketplace/internal/model"
 	"github.com/videocoin/marketplace/internal/storage"
 	"github.com/videocoin/marketplace/pkg/random"
+	"github.com/videocoin/marketplace/pkg/videocoin"
 	"gopkg.in/vansante/go-ffprobe.v2"
-	"image"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 )
 
 type MediaProcessor struct {
 	logger  *logrus.Entry
 	ds      *datastore.Datastore
 	storage *storage.Storage
+	vc      *videocoin.Client
 }
 
 func NewMediaProcessor(ctx context.Context, opts ...Option) (*MediaProcessor, error) {
@@ -394,55 +398,7 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	}
 
 	if media.IsVideo() {
-		outputPath, err := mp.EncryptVideo(media.GetOriginalUrl(), drmMeta, media.Key)
-		if err != nil {
-			return err
-		}
-
-		videoSegmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "videoinit.mp4", -1)
-		audioSegmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "audioinit.mp4", -1)
-		videoSegmentPath := strings.Replace(outputPath, "encrypted.mpd", "videoinit.mp4", -1)
-		audioSegmentPath := strings.Replace(outputPath, "encrypted.mpd", "audioinit.mp4", -1)
-
-		defer func() {
-			_ = os.Remove(outputPath)
-			_ = os.Remove(videoSegmentPath)
-			_ = os.Remove(audioSegmentPath)
-		}()
-
-		outputPaths := []string{
-			outputPath,
-			videoSegmentPath,
-		}
-		to := []string{
-			media.EncryptedKey,
-			videoSegmentKey,
-		}
-
-		if _, err := os.Stat(audioSegmentPath); err == nil {
-			outputPaths = append(outputPaths, audioSegmentPath)
-			to = append(to, audioSegmentKey)
-		}
-
-		logger.Info("uploading dash manifest and segments")
-
-		cid, err := mp.storage.MultiUpload(outputPaths, to)
-		if err != nil {
-			return err
-		}
-
-		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
-			EncryptedCID: pointer.ToString(cid),
-		})
-		if err != nil {
-			return err
-		}
-
-		logger.
-			WithField("encrypted_cid", cid).
-			Info("encrypt media job has been completed")
-
-		return nil
+		return mp.RunEncryptVideoPipeline(ctx, media, drmMeta)
 	}
 
 	if media.IsAudio() {
@@ -490,4 +446,161 @@ func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, 
 	}
 
 	return nil
+}
+
+func (mp *MediaProcessor) RunEncryptVideoPipeline(ctx context.Context, media *model.Media, drmMeta *drm.Metadata) error {
+	if mp.vc != nil {
+		outputURL, err := mp.RunVideocoinEncryptVideoPipeline(ctx, media, drmMeta)
+		if err != nil {
+			return err
+		}
+
+		err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+			EncryptedURL: pointer.ToString(outputURL),
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return mp.RunGeneralEncryptVideoPipeline(ctx, media, drmMeta)
+}
+
+func (mp *MediaProcessor) RunGeneralEncryptVideoPipeline(ctx context.Context, media *model.Media, drmMeta *drm.Metadata) error {
+	logger := mp.logger.WithField("media_id", media.ID)
+
+	outputPath, err := mp.EncryptVideo(media.GetOriginalUrl(), drmMeta, media.Key)
+	if err != nil {
+		return err
+	}
+
+	videoSegmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "videoinit.mp4", -1)
+	audioSegmentKey := strings.Replace(media.EncryptedKey, "encrypted.mpd", "audioinit.mp4", -1)
+	videoSegmentPath := strings.Replace(outputPath, "encrypted.mpd", "videoinit.mp4", -1)
+	audioSegmentPath := strings.Replace(outputPath, "encrypted.mpd", "audioinit.mp4", -1)
+
+	defer func() {
+		_ = os.Remove(outputPath)
+		_ = os.Remove(videoSegmentPath)
+		_ = os.Remove(audioSegmentPath)
+	}()
+
+	outputPaths := []string{
+		outputPath,
+		videoSegmentPath,
+	}
+	to := []string{
+		media.EncryptedKey,
+		videoSegmentKey,
+	}
+
+	if _, err := os.Stat(audioSegmentPath); err == nil {
+		outputPaths = append(outputPaths, audioSegmentPath)
+		to = append(to, audioSegmentKey)
+	}
+
+	logger.Info("uploading dash manifest and segments")
+
+	cid, err := mp.storage.MultiUpload(outputPaths, to)
+	if err != nil {
+		return err
+	}
+
+	err = mp.ds.Media.Update(ctx, media, datastore.MediaUpdatedFields{
+		EncryptedCID: pointer.ToString(cid),
+	})
+	if err != nil {
+		return err
+	}
+
+	logger.
+		WithField("encrypted_cid", cid).
+		Info("encrypt media job has been completed")
+
+	return nil
+}
+
+func (mp *MediaProcessor) RunVideocoinEncryptVideoPipeline(ctx context.Context, media *model.Media, drmMeta *drm.Metadata) (string, error) {
+	logger := mp.logger.
+		WithField("media_id", media.ID).
+		WithField("pipeline", "videocoin").
+		WithField("original_url", media.GetOriginalUrl())
+
+	logger.Info("creating stream")
+
+	streamName := fmt.Sprintf("nft-%d-%s", media.AssetID.Int64, media.ID)
+	stream, err := mp.vc.CreateStream(ctx, streamName, drm.GenerateDrmXml(drmMeta))
+	if err != nil {
+		return "", err
+	}
+
+	logger = logger.WithField("stream_id", stream.ID)
+	logger.Info("running stream")
+
+	err = mp.vc.RunStream(ctx, stream.ID)
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		stream, err = mp.vc.GetStream(ctx, stream.ID)
+		if err != nil {
+			return "", err
+		}
+
+		logger.WithField("stream_status", stream.Status).Info("stream info")
+
+		if stream.Status == "STREAM_STATUS_PREPARED" {
+			break
+		}
+
+		if stream.Status == "STREAM_STATUS_CANCELLED" {
+			return "", fmt.Errorf("stream %s has been canceled", stream.ID)
+		}
+
+		if stream.Status == "STREAM_STATUS_FAILED" ||
+			stream.InputStatus == "INPUT_STATUS_ERROR" {
+			return "", fmt.Errorf("stream %s has been failed", stream.ID)
+		}
+
+		time.Sleep(time.Second * 2)
+	}
+
+	logger.Info("uploading video file")
+
+	err = mp.vc.UploadVideoFile(ctx, stream.ID, media.GetOriginalUrl())
+	if err != nil {
+		return "", err
+	}
+
+	logger.Info("waiting stream")
+
+	for {
+		stream, err = mp.vc.GetStream(ctx, stream.ID)
+		if err != nil {
+			return "", err
+		}
+
+		logger.
+			WithField("stream_status", stream.Status).
+			WithField("stream_input_status", stream.InputStatus).
+			Info("stream info")
+
+		if stream.Status == "STREAM_STATUS_COMPLETED" {
+			return stream.OutputMpdURL, nil
+		}
+
+		if stream.Status == "STREAM_STATUS_CANCELLED" {
+			return "", fmt.Errorf("stream %s has been canceled", stream.ID)
+		}
+
+		if stream.Status == "STREAM_STATUS_FAILED" ||
+			stream.InputStatus == "INPUT_STATUS_ERROR" {
+			return "", fmt.Errorf("stream %s has been failed", stream.ID)
+		}
+
+		time.Sleep(time.Second * 2)
+	}
 }

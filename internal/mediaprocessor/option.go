@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/videocoin/marketplace/internal/datastore"
 	"github.com/videocoin/marketplace/internal/storage"
+	"github.com/videocoin/marketplace/pkg/videocoin"
 )
 
 type Option func(*MediaProcessor) error
@@ -25,6 +26,13 @@ func WithDatastore(ds *datastore.Datastore) Option {
 func WithStorage(s *storage.Storage) Option {
 	return func(mc *MediaProcessor) error {
 		mc.storage = s
+		return nil
+	}
+}
+
+func WithVideocoin(vc *videocoin.Client) Option {
+	return func(mc *MediaProcessor) error {
+		mc.vc = vc
 		return nil
 	}
 }
