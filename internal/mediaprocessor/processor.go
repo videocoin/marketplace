@@ -535,7 +535,7 @@ func (mp *MediaProcessor) RunVideocoinEncryptVideoPipeline(ctx context.Context, 
 
 	logger.Info("creating stream")
 
-	streamName := fmt.Sprintf("nft-%d-%s", media.AssetID.Int64, media.ID)
+	streamName := fmt.Sprintf("nft-%s", media.ID)
 	stream, err := mp.vc.CreateStream(ctx, streamName, drm.GenerateDrmXml(drmMeta))
 	if err != nil {
 		return "", err
