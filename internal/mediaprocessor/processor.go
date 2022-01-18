@@ -367,7 +367,12 @@ func (mp *MediaProcessor) EncryptFile(inputURI string, drmMeta *drm.Metadata, ke
 func (mp *MediaProcessor) EncryptMedia(ctx context.Context, media *model.Media, drmMeta *drm.Metadata) error {
 	logger := mp.logger.WithField("media_id", media.ID)
 
-	if media.IsApplication() || media.IsImage() {
+	isApplication := media.IsApplication() || media.IsImage()
+	if mp.vc == nil && media.IsQTVideo() {
+		isApplication = true
+	}
+
+	if isApplication {
 		logger.Info("encrypting file")
 
 		outputPath, err := mp.EncryptFile(media.GetOriginalUrl(), drmMeta, media.Key)

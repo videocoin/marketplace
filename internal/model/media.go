@@ -58,9 +58,9 @@ func GenMediaID() string {
 }
 
 func (m *Media) GetMediaType() string {
-	if m.ContentType == "video/quicktime" {
-		return MediaTypeApplication
-	}
+	// if m.ContentType == "video/quicktime" {
+	// 	return MediaTypeApplication
+	// }
 
 	if m.ContentType == "image/webp" ||
 		m.ContentType == "image/gif" {
@@ -224,4 +224,8 @@ func (m *Media) IsText() bool {
 
 func (m *Media) IsApplication() bool {
 	return m.GetMediaType() == MediaTypeApplication
+}
+
+func (m *Media) IsQTVideo() bool {
+	return m.ContentType == "video/quicktime"
 }
