@@ -6,16 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gocraft/dbr/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/videocoin/marketplace/internal/drm"
 	"github.com/videocoin/marketplace/internal/token"
 	pkgyt "github.com/videocoin/marketplace/pkg/youtube"
-	"math/big"
-	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/videocoin/marketplace/internal/datastore"
@@ -388,6 +389,17 @@ func (s *Server) getAssetByContractAddressAndTokenID(c echo.Context) error {
 		return err
 	}
 	asset.Owner = owner
+
+	media, err := s.ds.Media.ListByAssetID(ctx, asset.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range media {
+		item.CreatedBy = asset.CreatedBy
+	}
+
+	asset.Media = media
 
 	resp := toAssetResponse(asset)
 	return c.JSON(http.StatusOK, resp)
