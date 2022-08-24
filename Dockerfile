@@ -9,10 +9,10 @@ ENV GOARCH=amd64
 RUN make build
 
 
-FROM registry.videocoin.net/cloud/marketplace:b9b53061d9ea9872beb9f44686e43439121e2682
+FROM ubuntu:20.04
 
-#RUN apt-get update
-#RUN apt-get install -y ca-certificates ffmpeg gpac
+RUN apt-get update -y
+RUN apt-get install -y ca-certificates ffmpeg gpac
 
 COPY --from=builder /go/src/github.com/videocoin/marketplace/api /api
 COPY --from=builder /go/src/github.com/videocoin/marketplace/bin/marketplace /marketplace
